@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request,
 from flask_login import login_required, current_user
 from functools import wraps
 from app import db
-from models import User
+from models import User, Project, SWOT, PESTLE, BMC
 
 routes_bp = Blueprint('routes', __name__)
 
@@ -32,61 +32,154 @@ def dashboard():
 @routes_bp.route('/projects')
 @login_required
 def projects():
-    """Halaman daftar proyek"""
-    return render_template('projects.html', title='Manajemen Proyek')
+    user_projects = Project.query.filter_by(user_id=current_user.id).all()
+    return render_template('project.html', projects=user_projects)
 
 @routes_bp.route('/project/new', methods=['GET', 'POST'])
 @login_required
 @roles_required('admin', 'rnd_staff')
 def new_project():
-    """Halaman buat proyek baru"""
     if request.method == 'POST':
-        # Sementara hanya flash pesan
-        flash('Fitur tambah proyek sedang dalam pengembangan.', 'info')
+        name = request.form.get('name')
+        description = request.form.get('description')
+        project_type = request.form.get('project_type', 'Main')
+        
+        if not name:
+            flash('Nama proyek harus diisi.', 'danger')
+            return render_template('project_form.html')
+        
+        new_project = Project(
+            name=name,
+            description=description,
+            project_type=project_type,
+            user_id=current_user.id
+        )
+        db.session.add(new_project)
+        db.session.commit()
+        flash('Proyek berhasil dibuat!', 'success')
         return redirect(url_for('routes.projects'))
-    return render_template('project_form.html', title='Buat Proyek Baru')
+    
+    return render_template('project_form.html')
 
-# ==================== FITUR SWOT ====================
-@routes_bp.route('/swot')
+# ==================== CRUD SWOT (DENGAN POST & GET) ====================
+@routes_bp.route('/swot', methods=['GET', 'POST'])
 @login_required
 def swot():
-    """Halaman analisis SWOT"""
-    return render_template('swot.html', title='Analisis SWOT')
+    if request.method == 'POST':
+        strengths = request.form.get('strengths')
+        weaknesses = request.form.get('weaknesses')
+        opportunities = request.form.get('opportunities')
+        threats = request.form.get('threats')
+        
+        swot_data = SWOT.query.filter_by(user_id=current_user.id).first()
+        if swot_data:
+            swot_data.strengths = strengths
+            swot_data.weaknesses = weaknesses
+            swot_data.opportunities = opportunities
+            swot_data.threats = threats
+            flash('Data SWOT berhasil diupdate!', 'success')
+        else:
+            new_swot = SWOT(
+                strengths=strengths,
+                weaknesses=weaknesses,
+                opportunities=opportunities,
+                threats=threats,
+                user_id=current_user.id
+            )
+            db.session.add(new_swot)
+            flash('Data SWOT berhasil disimpan!', 'success')
+        
+        db.session.commit()
+        return redirect(url_for('routes.swot'))
+    
+    swot_data = SWOT.query.filter_by(user_id=current_user.id).first()
+    return render_template('swot.html', swot=swot_data)
 
-@routes_bp.route('/swot/new', methods=['GET', 'POST'])
-@login_required
-@roles_required('admin', 'rnd_staff')
-def new_swot():
-    """Halaman tambah SWOT (placeholder)"""
-    flash('Fitur tambah SWOT sedang dalam pengembangan.', 'info')
-    return redirect(url_for('routes.swot'))
-
-# ==================== FITUR PESTLE ====================
-@routes_bp.route('/pestle')
+# ==================== CRUD PESTLE (DENGAN POST & GET) ====================
+@routes_bp.route('/pestle', methods=['GET', 'POST'])
 @login_required
 def pestle():
-    """Halaman analisis PESTLE"""
-    return render_template('pestle.html', title='Analisis PESTLE')
+    if request.method == 'POST':
+        political = request.form.get('political')
+        economic = request.form.get('economic')
+        social = request.form.get('social')
+        technological = request.form.get('technological')
+        legal = request.form.get('legal')
+        environmental = request.form.get('environmental')
+        
+        pestle_data = PESTLE.query.filter_by(user_id=current_user.id).first()
+        if pestle_data:
+            pestle_data.political = political
+            pestle_data.economic = economic
+            pestle_data.social = social
+            pestle_data.technological = technological
+            pestle_data.legal = legal
+            pestle_data.environmental = environmental
+            flash('Data PESTLE berhasil diupdate!', 'success')
+        else:
+            new_pestle = PESTLE(
+                political=political,
+                economic=economic,
+                social=social,
+                technological=technological,
+                legal=legal,
+                environmental=environmental,
+                user_id=current_user.id
+            )
+            db.session.add(new_pestle)
+            flash('Data PESTLE berhasil disimpan!', 'success')
+        
+        db.session.commit()
+        return redirect(url_for('routes.pestle'))
+    
+    pestle_data = PESTLE.query.filter_by(user_id=current_user.id).first()
+    return render_template('pestle.html', pestle=pestle_data)
 
-@routes_bp.route('/pestle/new', methods=['GET', 'POST'])
-@login_required
-@roles_required('admin', 'rnd_staff')
-def new_pestle():
-    """Halaman tambah PESTLE (placeholder)"""
-    flash('Fitur tambah PESTLE sedang dalam pengembangan.', 'info')
-    return redirect(url_for('routes.pestle'))
-
-# ==================== FITUR BMC ====================
-@routes_bp.route('/bmc')
+# ==================== CRUD BMC (DENGAN POST & GET) ====================
+@routes_bp.route('/bmc', methods=['GET', 'POST'])
 @login_required
 def bmc():
-    """Halaman Business Model Canvas"""
-    return render_template('bmc.html', title='Business Model Canvas')
-
-@routes_bp.route('/bmc/new', methods=['GET', 'POST'])
-@login_required
-@roles_required('admin', 'rnd_staff')
-def new_bmc():
-    """Halaman tambah BMC (placeholder)"""
-    flash('Fitur tambah BMC sedang dalam pengembangan.', 'info')
-    return redirect(url_for('routes.bmc'))
+    if request.method == 'POST':
+        key_partners = request.form.get('key_partners')
+        key_activities = request.form.get('key_activities')
+        key_resources = request.form.get('key_resources')
+        value_proposition = request.form.get('value_proposition')
+        customer_relationships = request.form.get('customer_relationships')
+        channels = request.form.get('channels')
+        customer_segments = request.form.get('customer_segments')
+        cost_structure = request.form.get('cost_structure')
+        revenue_streams = request.form.get('revenue_streams')
+        
+        bmc_data = BMC.query.filter_by(user_id=current_user.id).first()
+        if bmc_data:
+            bmc_data.key_partners = key_partners
+            bmc_data.key_activities = key_activities
+            bmc_data.key_resources = key_resources
+            bmc_data.value_proposition = value_proposition
+            bmc_data.customer_relationships = customer_relationships
+            bmc_data.channels = channels
+            bmc_data.customer_segments = customer_segments
+            bmc_data.cost_structure = cost_structure
+            bmc_data.revenue_streams = revenue_streams
+            flash('Data BMC berhasil diupdate!', 'success')
+        else:
+            new_bmc = BMC(
+                key_partners=key_partners,
+                key_activities=key_activities,
+                key_resources=key_resources,
+                value_proposition=value_proposition,
+                customer_relationships=customer_relationships,
+                channels=channels,
+                customer_segments=customer_segments,
+                cost_structure=cost_structure,
+                revenue_streams=revenue_streams,
+                user_id=current_user.id
+            )
+            db.session.add(new_bmc)
+            flash('Data BMC berhasil disimpan!', 'success')
+        
+        db.session.commit()
+        return redirect(url_for('routes.bmc'))
+    
+    bmc_data = BMC.query.filter_by(user_id=current_user.id).first()
+    return render_template('bmc.html', bmc=bmc_data)
