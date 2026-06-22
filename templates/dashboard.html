@@ -11,24 +11,82 @@
     </div>
 </div>
 
-<div class="row">
-    <div class="col-md-12">
-        <div class="card shadow">
+<!-- ============ MENU UTAMA ============ -->
+<div class="row g-4">
+    <!-- Manajemen Proyek -->
+    <div class="col-md-6 col-lg-4">
+        <div class="card shadow h-100">
             <div class="card-header bg-primary text-white">
-                <h5 class="mb-0"><i class="fas fa-info-circle"></i> Selamat Datang di Sistem R&D</h5>
+                <h5 class="mb-0"><i class="fas fa-project-diagram"></i> Manajemen Proyek</h5>
+            </div>
+            <div class="card-body d-flex flex-column">
+                <p>Buat dan kelola proyek R&D kamu.</p>
+                <a href="{{ url_for('routes.projects') }}" class="btn btn-primary mt-auto">Lihat Proyek</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Analisis SWOT -->
+    <div class="col-md-6 col-lg-4">
+        <div class="card shadow h-100">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0"><i class="fas fa-chess-board"></i> Analisis SWOT</h5>
+            </div>
+            <div class="card-body d-flex flex-column">
+                <p>Identifikasi Strengths, Weaknesses, Opportunities, Threats.</p>
+                <a href="{{ url_for('routes.swot') }}" class="btn btn-warning mt-auto">Buka SWOT</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Analisis PESTLE -->
+    <div class="col-md-6 col-lg-4">
+        <div class="card shadow h-100">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-globe"></i> Analisis PESTLE</h5>
+            </div>
+            <div class="card-body d-flex flex-column">
+                <p>Analisis Political, Economic, Social, Technological, Legal, Environmental.</p>
+                <a href="{{ url_for('routes.pestle') }}" class="btn btn-info mt-auto">Buka PESTLE</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Business Model Canvas -->
+    <div class="col-md-6 col-lg-4">
+        <div class="card shadow h-100">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-chart-pie"></i> Business Model Canvas</h5>
+            </div>
+            <div class="card-body d-flex flex-column">
+                <p>Visualisasikan bisnis model proyek R&D.</p>
+                <a href="{{ url_for('routes.bmc') }}" class="btn btn-success mt-auto">Buka BMC</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tambah Proyek Cepat -->
+    <div class="col-md-6 col-lg-4">
+        <div class="card shadow h-100 border-dashed">
+            <div class="card-body d-flex flex-column align-items-center justify-content-center">
+                <i class="fas fa-plus-circle fa-3x text-primary mb-3"></i>
+                <h5>Buat Proyek Baru</h5>
+                <a href="{{ url_for('routes.new_project') }}" class="btn btn-outline-primary mt-auto">+ Tambah Proyek</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============ INFORMASI ============ -->
+<div class="row mt-5">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header bg-secondary text-white">
+                <i class="fas fa-info-circle"></i> Tentang Aplikasi
             </div>
             <div class="card-body">
-                <p>Aplikasi ini digunakan untuk mengelola proyek penelitian dan pengembangan.</p>
-                <p>Fitur yang tersedia:</p>
-                <ul>
-                    <li>Manajemen Proyek R&D</li>
-                    <li>Analisis SWOT</li>
-                    <li>Analisis PESTLE</li>
-                    <li>Business Model Canvas (BMC)</li>
-                    <li>Sistem Login dengan Role (Admin, R&D Staff, Manager, Viewer)</li>
-                </ul>
-                <hr>
-                <p class="text-muted">Aplikasi ini dibangun dengan Flask dan SQLite.</p>
+                <p>Sistem R&D ini digunakan untuk mengelola proyek penelitian dan pengembangan.</p>
+                <p class="text-muted">Dibangun dengan Flask, SQLite, dan Bootstrap.</p>
             </div>
         </div>
     </div>

@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+
+{% block title %}Business Model Canvas - R&D System{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-chart-pie"></i> Business Model Canvas</h2>
+    <a href="#" class="btn btn-success">
+        <i class="fas fa-plus-circle"></i> Tambah BMC
+    </a>
+</div>
+
+<div class="alert alert-info">
+    <i class="fas fa-info-circle"></i> Business Model Canvas untuk proyek R&D. Isi setiap blok sesuai kategori.
+</div>
+
+<!-- ============ LAYOUT BMC 9 BLOK ============ -->
+<div class="row g-2">
+    <!-- Key Partners -->
+    <div class="col-md-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-header bg-primary text-white text-center">
+                <h6 class="mb-0"><i class="fas fa-handshake"></i> Key Partners</h6>
+            </div>
+            <div class="card-body">
+                <p class="text-muted small">Mitra kunci yang mendukung proyek R&D.</p>
+                <ul class="list-unstyled small">
+                    <li><i class="fas fa-check text-primary"></i> Vendor material</li>
+                    <li><i class="fas fa-check text-primary"></i> Lembaga penelitian</li>
+                </ul>
+                <button class="btn btn-sm btn-outline-primary w-100">+ Tambah</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Activities -->
+    <div class="col-md-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-header bg-info text-white text-center">
+                <h6 class="mb-0"><i class="fas fa-tasks"></i> Key Activities</h6>
+            </div>
+            <div class="card-body">
+                <p class="text-muted small">Aktivitas utama dalam proyek R&D.</p>
+                <ul class="list-unstyled small">
+                    <li><i class="fas fa-check text-info"></i> Riset pasar</li>
+                    <li><i class="fas fa-check text-info"></i> Pengujian prototipe</li>
+                </ul>
+                <button class="btn btn-sm btn-outline-info w-100">+ Tambah</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Resources -->
+    <div class="col-md-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-header bg-warning text-dark text-center">
+                <h6 class="mb-0"><i class="fas fa-cogs"></i> Key Resources</h6>
+            </div>
+            <div class="card-body">
+                <p class="text-muted small">Sumber daya yang dibutuhkan.</p>
+                <ul class="list-unstyled small">
+                    <li><i class="fas fa-check text-warning"></i> Tim R&D</li>
+                    <li><i class="fas fa-check text-warning"></i> Laboratorium</li>
+                </ul>
+                <button class="btn btn-sm btn-outline-warning w-100">+ Tambah</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Value Proposition -->
+    <div class="col-md-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-header bg-success text-white text-center">
+                <h6 class="mb-0"><i class="fas fa-star"></i> Value Proposition</h6>
+            </div>
+            <div class="card-body">
+                <p class="text-muted small">Nilai yang ditawarkan ke pelanggan.</p>
+                <ul class="list-unstyled small">
+                    <li><i class="fas fa-check text-success"></i> Inovasi produk</li>
+                    <li><i class="fas fa-check text-success"></i> Kualitas premium</li>
+                </ul>
+                <button class="btn btn-sm btn-outline-success w-100">+ Tambah</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Customer Relationships -->
+    <div class="col-md-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-header bg-danger text-white text-center">
+                <h6 class="mb-0"><i class="fas fa-heart"></i> Customer Relationships</h6>
+            </div>
+            <div class="card-body">
+                <p class="text-muted small">Hubungan dengan pelanggan.</p>
+                <ul class="list-unstyled small">
+                    <li><i class="fas fa-check text-danger"></i> Dukungan teknis</li>
+                    <li><i class="fas fa-check text-danger"></i> Komunitas user</li>
+                </ul>
+                <button class="btn btn-sm btn-outline-danger w-100">+ Tambah</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Channels -->
+    <div class="col-md-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-header bg-secondary text-white text-center">
+                <h6 class="mb-0"><i class="fas fa-route"></i> Channels</h6>
+            </div>
+            <div class="card-body">
+                <p class="text-muted small">Saluran distribusi ke pelanggan.</p>
+                <ul class="list-unstyled small">
+                    <li><i class="fas fa-check text-secondary"></i> E-commerce</li>
+                    <li><i class="fas fa-check text-secondary"></i> Distributor</li>
+                </ul>
+                <button class="btn btn-sm btn-outline-secondary w-100">+ Tambah</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Customer Segments -->
+    <div class="col-md-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-header bg-dark text-white text-center">
+                <h6 class="mb-0"><i class="fas fa-users"></i> Customer Segments</h6>
+            </div>
+            <div class="card-body">
+                <p class="text-muted small">Segmen pelanggan target.</p>
+                <ul class="list-unstyled small">
+                    <li><i class="fas fa-check text-dark"></i> Pengguna supermoto</li>
+                    <li><i class="fas fa-check text-dark"></i> Komunitas trail</li>
+                </ul>
+                <button class="btn btn-sm btn-outline-dark w-100">+ Tambah</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cost Structure -->
+    <div class="col-md-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-header bg-light text-dark text-center">
+                <h6 class="mb-0"><i class="fas fa-coins"></i> Cost Structure</h6>
+            </div>
+            <div class="card-body">
+                <p class="text-muted small">Struktur biaya proyek.</p>
+                <ul class="list-unstyled small">
+                    <li><i class="fas fa-check text-muted"></i> Biaya material</li>
+                    <li><i class="fas fa-check text-muted"></i> Biaya SDM</li>
+                </ul>
+                <button class="btn btn-sm btn-outline-secondary w-100">+ Tambah</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Revenue Streams -->
+    <div class="col-md-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-header bg-warning text-dark text-center">
+                <h6 class="mb-0"><i class="fas fa-money-bill-wave"></i> Revenue Streams</h6>
+            </div>
+            <div class="card-body">
+                <p class="text-muted small">Aliran pendapatan proyek.</p>
+                <ul class="list-unstyled small">
+                    <li><i class="fas fa-check text-warning"></i> Penjualan produk</li>
+                    <li><i class="fas fa-check text-warning"></i> Royalti lisensi</li>
+                </ul>
+                <button class="btn btn-sm btn-outline-warning w-100">+ Tambah</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============ TOMBOL SIMPAN ============ -->
+<div class="row mt-4">
+    <div class="col-12 text-center">
+        <button class="btn btn-primary btn-lg">
+            <i class="fas fa-save"></i> Simpan Business Model Canvas
+        </button>
+    </div>
+</div>
+{% endblock %}
