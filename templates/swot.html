@@ -5,92 +5,58 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2><i class="fas fa-chess-board"></i> Analisis SWOT</h2>
-    <a href="#" class="btn btn-warning">
-        <i class="fas fa-plus-circle"></i> Tambah SWOT
-    </a>
 </div>
 
-<div class="alert alert-info">
-    <i class="fas fa-info-circle"></i> Analisis SWOT untuk proyek R&D. Isi setiap kolom dengan data yang relevan.
-</div>
-
-<!-- ============ LAYOUT SWOT 2x2 ============ -->
-<div class="row g-3">
-    <!-- STRENGTHS (Kiri Atas) -->
-    <div class="col-md-6">
-        <div class="card h-100 border-success shadow">
-            <div class="card-header bg-success text-white text-center">
-                <h4 class="mb-0"><i class="fas fa-check-circle"></i> STRENGTHS (Kekuatan)</h4>
+<form method="POST" action="{{ url_for('routes.swot') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="row g-3">
+        <div class="col-md-6">
+            <div class="card h-100 border-success shadow">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0"><i class="fas fa-check-circle"></i> STRENGTHS (Kekuatan)</h4>
+                </div>
+                <div class="card-body">
+                    <textarea class="form-control" name="strengths" rows="6" placeholder="Masukkan kekuatan...">{{ swot.strengths if swot else '' }}</textarea>
+                </div>
             </div>
-            <div class="card-body">
-                <p class="text-muted">Faktor internal yang menjadi keunggulan proyek R&D.</p>
-                <ul class="list-unstyled">
-                    <li><i class="fas fa-check text-success"></i> Contoh: Tim R&D berpengalaman</li>
-                    <li><i class="fas fa-check text-success"></i> Contoh: Teknologi proprietary</li>
-                </ul>
-                <button class="btn btn-sm btn-outline-success">+ Tambah</button>
+        </div>
+        <div class="col-md-6">
+            <div class="card h-100 border-danger shadow">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0"><i class="fas fa-times-circle"></i> WEAKNESSES (Kelemahan)</h4>
+                </div>
+                <div class="card-body">
+                    <textarea class="form-control" name="weaknesses" rows="6" placeholder="Masukkan kelemahan...">{{ swot.weaknesses if swot else '' }}</textarea>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card h-100 border-info shadow">
+                <div class="card-header bg-info text-white">
+                    <h4 class="mb-0"><i class="fas fa-arrow-up"></i> OPPORTUNITIES (Peluang)</h4>
+                </div>
+                <div class="card-body">
+                    <textarea class="form-control" name="opportunities" rows="6" placeholder="Masukkan peluang...">{{ swot.opportunities if swot else '' }}</textarea>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card h-100 border-dark shadow">
+                <div class="card-header bg-dark text-white">
+                    <h4 class="mb-0"><i class="fas fa-arrow-down"></i> THREATS (Ancaman)</h4>
+                </div>
+                <div class="card-body">
+                    <textarea class="form-control" name="threats" rows="6" placeholder="Masukkan ancaman...">{{ swot.threats if swot else '' }}</textarea>
+                </div>
             </div>
         </div>
     </div>
-
-    <!-- WEAKNESSES (Kanan Atas) -->
-    <div class="col-md-6">
-        <div class="card h-100 border-danger shadow">
-            <div class="card-header bg-danger text-white text-center">
-                <h4 class="mb-0"><i class="fas fa-times-circle"></i> WEAKNESSES (Kelemahan)</h4>
-            </div>
-            <div class="card-body">
-                <p class="text-muted">Faktor internal yang menjadi kelemahan proyek R&D.</p>
-                <ul class="list-unstyled">
-                    <li><i class="fas fa-times text-danger"></i> Contoh: Keterbatasan anggaran</li>
-                    <li><i class="fas fa-times text-danger"></i> Contoh: Kurangnya SDM</li>
-                </ul>
-                <button class="btn btn-sm btn-outline-danger">+ Tambah</button>
-            </div>
+    <div class="row mt-4">
+        <div class="col-12 text-center">
+            <button type="submit" class="btn btn-primary btn-lg">
+                <i class="fas fa-save"></i> Simpan Analisis SWOT
+            </button>
         </div>
     </div>
-
-    <!-- OPPORTUNITIES (Kiri Bawah) -->
-    <div class="col-md-6">
-        <div class="card h-100 border-info shadow">
-            <div class="card-header bg-info text-white text-center">
-                <h4 class="mb-0"><i class="fas fa-arrow-up"></i> OPPORTUNITIES (Peluang)</h4>
-            </div>
-            <div class="card-body">
-                <p class="text-muted">Faktor eksternal yang bisa dimanfaatkan sebagai peluang.</p>
-                <ul class="list-unstyled">
-                    <li><i class="fas fa-arrow-up text-info"></i> Contoh: Tren pasar yang berkembang</li>
-                    <li><i class="fas fa-arrow-up text-info"></i> Contoh: Insentif pemerintah</li>
-                </ul>
-                <button class="btn btn-sm btn-outline-info">+ Tambah</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- THREATS (Kanan Bawah) -->
-    <div class="col-md-6">
-        <div class="card h-100 border-dark shadow">
-            <div class="card-header bg-dark text-white text-center">
-                <h4 class="mb-0"><i class="fas fa-arrow-down"></i> THREATS (Ancaman)</h4>
-            </div>
-            <div class="card-body">
-                <p class="text-muted">Faktor eksternal yang menjadi ancaman bagi proyek R&D.</p>
-                <ul class="list-unstyled">
-                    <li><i class="fas fa-arrow-down text-muted"></i> Contoh: Kompetitor baru</li>
-                    <li><i class="fas fa-arrow-down text-muted"></i> Contoh: Regulasi baru</li>
-                </ul>
-                <button class="btn btn-sm btn-outline-dark">+ Tambah</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- ============ TOMBOL SIMPAN ============ -->
-<div class="row mt-4">
-    <div class="col-12 text-center">
-        <button class="btn btn-primary btn-lg">
-            <i class="fas fa-save"></i> Simpan Analisis SWOT
-        </button>
-    </div>
-</div>
+</form>
 {% endblock %}

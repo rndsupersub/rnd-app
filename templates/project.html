@@ -1,40 +1,37 @@
 {% extends "base.html" %}
 
-{% block title %}Buat Proyek Baru - R&D System{% endblock %}
+{% block title %}Manajemen Proyek - R&D System{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-8">
-        <div class="card shadow">
-            <div class="card-header bg-primary text-white">
-                <h4 class="mb-0"><i class="fas fa-plus-circle"></i> Buat Proyek Baru</h4>
-            </div>
-            <div class="card-body">
-                <form method="POST" action="{{ url_for('routes.new_project') }}">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <div class="mb-3">
-                        <label for="name" class="form-label">Nama Proyek</label>
-                        <input type="text" class="form-control" id="name" name="name" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="description" class="form-label">Deskripsi</label>
-                        <textarea class="form-control" id="description" name="description" rows="3"></textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label for="project_type" class="form-label">Tipe Proyek</label>
-                        <select class="form-select" id="project_type" name="project_type">
-                            <option value="Main">Proyek Utama (Main)</option>
-                            <option value="Improvement">Proyek Perbaikan (Improvement)</option>
-                            <option value="Side">Proyek Sampingan (Side)</option>
-                        </select>
-                    </div>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save"></i> Simpan Proyek
-                    </button>
-                    <a href="{{ url_for('routes.projects') }}" class="btn btn-secondary">Batal</a>
-                </form>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-project-diagram"></i> Manajemen Proyek</h2>
+    <a href="{{ url_for('routes.new_project') }}" class="btn btn-primary">
+        <i class="fas fa-plus-circle"></i> Proyek Baru
+    </a>
+</div>
+
+{% if projects %}
+    <div class="row">
+        {% for project in projects %}
+        <div class="col-md-6 col-lg-4 mb-3">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">{{ project.name }}</h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">{{ project.description or 'Tidak ada deskripsi.' }}</p>
+                    <p><span class="badge bg-secondary">{{ project.project_type }}</span></p>
+                    <p class="text-muted small">Dibuat: {{ project.created_at.strftime('%d-%m-%Y') }}</p>
+                </div>
             </div>
         </div>
+        {% endfor %}
     </div>
-</div>
+{% else %}
+    <div class="card shadow">
+        <div class="card-body">
+            <p class="text-muted">Belum ada proyek. Klik tombol "Proyek Baru" untuk memulai.</p>
+        </div>
+    </div>
+{% endif %}
 {% endblock %}
