@@ -17,7 +17,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 # ==================== INISIALISASI EXTENSION ====================
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
-login_manager.login_view = 'login'
+login_manager.login_view = 'auth.login'
 login_manager.login_message = "Silakan login terlebih dahulu."
 csrf = CSRFProtect(app)
 

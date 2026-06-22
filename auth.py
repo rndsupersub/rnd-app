@@ -6,7 +6,22 @@ from models import User
 
 auth_bp = Blueprint('auth', __name__)
 
-@auth_bp.route('/register', methods=['GET', 'POST'])
+@auth_bp.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        
+        user = User.query.filter_by(username=username).first()
+        
+        if user and check_password_hash(user.password_hash, password):
+            login_user(user)
+            flash(f'Selamat datang, {user.username}!', 'success')
+            return redirect(url_for('routes.dashboard'))  # ← ini sudah benar
+        else:
+            flash('Username atau password salah!', 'danger')
+    
+    return render_template('login.html')
 def register():
     if request.method == 'POST':
         username = request.form.get('username')
@@ -22,7 +37,7 @@ def register():
             return render_template('register.html')
         if email_exists:
             flash('Email sudah terdaftar!', 'danger')
-            return render_template('register.html')
+            return render_template('regiscccter.html')
         
         hashed_password = generate_password_hash(password)
         

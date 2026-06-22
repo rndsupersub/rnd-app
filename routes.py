@@ -12,7 +12,7 @@ def roles_required(*roles):
         def decorated_function(*args, **kwargs):
             if not current_user.is_authenticated:
                 flash('Silakan login terlebih dahulu.', 'warning')
-                return redirect(url_for('auth.login'))
+                return redirect(url_for('auth.login'))  # ← ini yang diganti
             if current_user.role not in roles:
                 flash('Anda tidak memiliki akses ke halaman ini.', 'danger')
                 return redirect(url_for('routes.dashboard'))
