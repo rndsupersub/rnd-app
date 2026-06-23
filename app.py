@@ -37,9 +37,8 @@ app.register_blueprint(routes_bp)
 
 # ==================== RESET & BUAT TABEL DATABASE ====================
 with app.app_context():
-    db.drop_all()      # ← HAPUS SEMUA TABEL LAMA
-    db.create_all()    # ← BUAT ULANG DENGAN STRUKTUR BARU
-    print("✅ Database berhasil di-reset dengan nullable project_id!")
+    db.create_all()
+    print("✅ Database tables created!")
 
 # ==================== MENJALANKAN APLIKASI (LOKAL) ====================
 if __name__ == '__main__':
