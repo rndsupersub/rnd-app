@@ -13,61 +13,19 @@
     <h2><i class="fas fa-chart-pie"></i> Business Model Canvas</h2>
 </div>
 
-<!-- ============ FORM PILIH PROYEK & ISI BMC ============ -->
+<!-- ============ FORM ISI BMC (TANPA PILIH PROYEK) ============ -->
 <form method="POST" action="{{ url_for('routes.bmc') }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     
-    <!-- Pilih Proyek -->
-    <div class="row mb-4">
-        <div class="col-md-6">
-            <div class="card border-primary shadow">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0"><i class="fas fa-project-diagram"></i> Pilih Proyek</h5>
-                </div>
-                <div class="card-body">
-                    <select class="form-select" name="project_id" id="projectSelect" required onchange="this.form.submit()">
-                        <option value="">-- Pilih Proyek --</option>
-                        {% for project in projects %}
-                        <option value="{{ project.id }}" {% if request.form.get('project_id')|string == project.id|string %}selected{% endif %}>
-                            {{ project.name }}
-                        </option>
-                        {% endfor %}
-                    </select>
-                    <small class="text-muted">Pilih proyek yang akan dianalisis. Jika sudah ada data, akan otomatis ditampilkan.</small>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="card border-info shadow">
-                <div class="card-header bg-info text-white">
-                    <h5 class="mb-0"><i class="fas fa-info-circle"></i> Informasi</h5>
-                </div>
-                <div class="card-body">
-                    <p class="text-muted mb-0">Isi data Business Model Canvas untuk proyek yang dipilih. Klik "Simpan" untuk menyimpan data.</p>
-                    <p class="text-muted small mt-2">
-                        {% if bmc_list %}
-                        <i class="fas fa-check-circle text-success"></i> {{ bmc_list|length }} data BMC tersimpan.
-                        {% else %}
-                        <i class="fas fa-info-circle text-warning"></i> Belum ada data BMC.
-                        {% endif %}
-                    </p>
-                </div>
-            </div>
-        </div>
-    </div>
-    
     <!-- ============ LAYOUT BMC 9 BLOK ============ -->
     <div class="row g-2">
-        {% set selected_project_id = request.form.get('project_id')|int %}
-        {% set bmc_data = bmc_dict.get(selected_project_id) if selected_project_id else None %}
-        
         <div class="col-md-4">
             <div class="card h-100 shadow-sm">
                 <div class="card-header bg-primary text-white text-center">
                     <h6>Key Partners</h6>
                 </div>
                 <div class="card-body">
-                    <textarea class="form-control" name="key_partners" rows="4" placeholder="Mitra kunci...">{{ bmc_data.key_partners if bmc_data else '' }}</textarea>
+                    <textarea class="form-control" name="key_partners" rows="4" placeholder="Mitra kunci...">{{ bmc.key_partners if bmc else '' }}</textarea>
                 </div>
             </div>
         </div>
@@ -77,7 +35,7 @@
                     <h6>Key Activities</h6>
                 </div>
                 <div class="card-body">
-                    <textarea class="form-control" name="key_activities" rows="4" placeholder="Aktivitas utama...">{{ bmc_data.key_activities if bmc_data else '' }}</textarea>
+                    <textarea class="form-control" name="key_activities" rows="4" placeholder="Aktivitas utama...">{{ bmc.key_activities if bmc else '' }}</textarea>
                 </div>
             </div>
         </div>
@@ -87,7 +45,7 @@
                     <h6>Key Resources</h6>
                 </div>
                 <div class="card-body">
-                    <textarea class="form-control" name="key_resources" rows="4" placeholder="Sumber daya...">{{ bmc_data.key_resources if bmc_data else '' }}</textarea>
+                    <textarea class="form-control" name="key_resources" rows="4" placeholder="Sumber daya...">{{ bmc.key_resources if bmc else '' }}</textarea>
                 </div>
             </div>
         </div>
@@ -97,7 +55,7 @@
                     <h6>Value Proposition</h6>
                 </div>
                 <div class="card-body">
-                    <textarea class="form-control" name="value_proposition" rows="4" placeholder="Nilai yang ditawarkan...">{{ bmc_data.value_proposition if bmc_data else '' }}</textarea>
+                    <textarea class="form-control" name="value_proposition" rows="4" placeholder="Nilai yang ditawarkan...">{{ bmc.value_proposition if bmc else '' }}</textarea>
                 </div>
             </div>
         </div>
@@ -107,7 +65,7 @@
                     <h6>Customer Relationships</h6>
                 </div>
                 <div class="card-body">
-                    <textarea class="form-control" name="customer_relationships" rows="4" placeholder="Hubungan pelanggan...">{{ bmc_data.customer_relationships if bmc_data else '' }}</textarea>
+                    <textarea class="form-control" name="customer_relationships" rows="4" placeholder="Hubungan pelanggan...">{{ bmc.customer_relationships if bmc else '' }}</textarea>
                 </div>
             </div>
         </div>
@@ -117,7 +75,7 @@
                     <h6>Channels</h6>
                 </div>
                 <div class="card-body">
-                    <textarea class="form-control" name="channels" rows="4" placeholder="Saluran distribusi...">{{ bmc_data.channels if bmc_data else '' }}</textarea>
+                    <textarea class="form-control" name="channels" rows="4" placeholder="Saluran distribusi...">{{ bmc.channels if bmc else '' }}</textarea>
                 </div>
             </div>
         </div>
@@ -127,7 +85,7 @@
                     <h6>Customer Segments</h6>
                 </div>
                 <div class="card-body">
-                    <textarea class="form-control" name="customer_segments" rows="4" placeholder="Segmen pelanggan...">{{ bmc_data.customer_segments if bmc_data else '' }}</textarea>
+                    <textarea class="form-control" name="customer_segments" rows="4" placeholder="Segmen pelanggan...">{{ bmc.customer_segments if bmc else '' }}</textarea>
                 </div>
             </div>
         </div>
@@ -137,7 +95,7 @@
                     <h6>Cost Structure</h6>
                 </div>
                 <div class="card-body">
-                    <textarea class="form-control" name="cost_structure" rows="4" placeholder="Struktur biaya...">{{ bmc_data.cost_structure if bmc_data else '' }}</textarea>
+                    <textarea class="form-control" name="cost_structure" rows="4" placeholder="Struktur biaya...">{{ bmc.cost_structure if bmc else '' }}</textarea>
                 </div>
             </div>
         </div>
@@ -147,7 +105,7 @@
                     <h6>Revenue Streams</h6>
                 </div>
                 <div class="card-body">
-                    <textarea class="form-control" name="revenue_streams" rows="4" placeholder="Aliran pendapatan...">{{ bmc_data.revenue_streams if bmc_data else '' }}</textarea>
+                    <textarea class="form-control" name="revenue_streams" rows="4" placeholder="Aliran pendapatan...">{{ bmc.revenue_streams if bmc else '' }}</textarea>
                 </div>
             </div>
         </div>
@@ -172,20 +130,18 @@
             <table class="table table-bordered table-hover shadow">
                 <thead class="table-dark">
                     <tr>
-                        <th>Proyek</th>
                         <th>Tanggal Dibuat</th>
                         <th>Tanggal Update</th>
                         <th>Action</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for bmc in bmc_list %}
+                    {% for item in bmc_list %}
                     <tr>
-                        <td>{{ bmc.project.name if bmc.project else 'Tidak ada proyek' }}</td>
-                        <td>{{ bmc.created_at.strftime('%d-%m-%Y %H:%M') }}</td>
-                        <td>{{ bmc.updated_at.strftime('%d-%m-%Y %H:%M') }}</td>
+                        <td>{{ item.created_at.strftime('%d-%m-%Y %H:%M') }}</td>
+                        <td>{{ item.updated_at.strftime('%d-%m-%Y %H:%M') }}</td>
                         <td>
-                            <a href="{{ url_for('routes.bmc') }}?edit={{ bmc.id }}" class="btn btn-sm btn-warning">
+                            <a href="{{ url_for('routes.bmc') }}?edit={{ item.id }}" class="btn btn-sm btn-warning">
                                 <i class="fas fa-edit"></i> Edit
                             </a>
                         </td>
@@ -206,8 +162,15 @@ document.addEventListener('DOMContentLoaded', function() {
         const bmcData = {{ bmc_list|tojson }};
         const found = bmcData.find(b => b.id == editId);
         if (found) {
-            document.querySelector('select[name="project_id"]').value = found.project_id;
-            document.querySelector('select[name="project_id"]').dispatchEvent(new Event('change'));
+            document.querySelector('textarea[name="key_partners"]').value = found.key_partners || '';
+            document.querySelector('textarea[name="key_activities"]').value = found.key_activities || '';
+            document.querySelector('textarea[name="key_resources"]').value = found.key_resources || '';
+            document.querySelector('textarea[name="value_proposition"]').value = found.value_proposition || '';
+            document.querySelector('textarea[name="customer_relationships"]').value = found.customer_relationships || '';
+            document.querySelector('textarea[name="channels"]').value = found.channels || '';
+            document.querySelector('textarea[name="customer_segments"]').value = found.customer_segments || '';
+            document.querySelector('textarea[name="cost_structure"]').value = found.cost_structure || '';
+            document.querySelector('textarea[name="revenue_streams"]').value = found.revenue_streams || '';
         }
     }
 });

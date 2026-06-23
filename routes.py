@@ -1,169 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, abort, send_file
-from flask_login import login_required, current_user
-from functools import wraps
-from datetime import datetime
-import os
-from werkzeug.utils import secure_filename
-from app import db
-from models import User, Project, SWOT, PESTLE, BMC
-
-# ==================== KONFIGURASI UPLOAD ====================
-UPLOAD_FOLDER = '/tmp'
-ALLOWED_EXTENSIONS = {'pdf', 'docx', 'xlsx', 'xls', 'doc'}
-
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-routes_bp = Blueprint('routes', __name__)
-
-# ==================== DECORATOR RBAC ====================
-def roles_required(*roles):
-    def decorator(f):
-        @wraps(f)
-        def decorated_function(*args, **kwargs):
-            if not current_user.is_authenticated:
-                flash('Silakan login terlebih dahulu.', 'warning')
-                return redirect(url_for('auth.login'))
-            if current_user.role not in roles:
-                flash('Anda tidak memiliki akses ke halaman ini.', 'danger')
-                return redirect(url_for('routes.dashboard'))
-            return f(*args, **kwargs)
-        return decorated_function
-    return decorator
-
-# ==================== HALAMAN DASHBOARD ====================
-@routes_bp.route('/')
-@routes_bp.route('/dashboard')
-@login_required
-def dashboard():
-    return render_template('dashboard.html', title='Dashboard')
-
-# ==================== FITUR PROYEK ====================
-@routes_bp.route('/projects')
-@login_required
-def projects():
-    user_projects = Project.query.filter_by(user_id=current_user.id).all()
-    return render_template('project.html', projects=user_projects)
-
-@routes_bp.route('/project/new', methods=['GET', 'POST'])
-@login_required
-@roles_required('admin', 'rnd_staff')
-def new_project():
-    if request.method == 'POST':
-        name = request.form.get('name')
-        description = request.form.get('description')
-        project_type = request.form.get('project_type', 'Main')
-        status = request.form.get('status', 'On Track')
-        google_drive_link = request.form.get('google_drive_link')
-        
-        if not name:
-            flash('Nama proyek harus diisi.', 'danger')
-            return render_template('project_form.html')
-        
-        new_project = Project(
-            name=name,
-            description=description,
-            project_type=project_type,
-            status=status,
-            google_drive_link=google_drive_link,
-            user_id=current_user.id
-        )
-        
-        start_date = request.form.get('start_date')
-        end_date = request.form.get('end_date')
-        if start_date:
-            new_project.start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
-        if end_date:
-            new_project.end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
-        
-        if 'file' in request.files:
-            file = request.files['file']
-            if file and file.filename and allowed_file(file.filename):
-                filename = secure_filename(file.filename)
-                unique_filename = f"{datetime.utcnow().timestamp()}_{filename}"
-                file_path = os.path.join(UPLOAD_FOLDER, unique_filename)
-                file.save(file_path)
-                new_project.file_path = file_path
-        
-        db.session.add(new_project)
-        db.session.commit()
-        flash('Proyek berhasil dibuat!', 'success')
-        return redirect(url_for('routes.projects'))
-    
-    return render_template('project_form.html')
-
-@routes_bp.route('/project/<int:project_id>/edit', methods=['GET', 'POST'])
-@login_required
-@roles_required('admin', 'rnd_staff')
-def edit_project(project_id):
-    project = Project.query.get_or_404(project_id)
-    
-    if project.user_id != current_user.id and current_user.role != 'admin':
-        flash('Anda tidak memiliki akses ke proyek ini.', 'danger')
-        return redirect(url_for('routes.projects'))
-    
-    if request.method == 'POST':
-        project.name = request.form.get('name')
-        project.description = request.form.get('description')
-        project.project_type = request.form.get('project_type', 'Main')
-        project.status = request.form.get('status', 'On Track')
-        project.google_drive_link = request.form.get('google_drive_link')
-        
-        start_date = request.form.get('start_date')
-        end_date = request.form.get('end_date')
-        if start_date:
-            project.start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
-        else:
-            project.start_date = None
-        if end_date:
-            project.end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
-        else:
-            project.end_date = None
-        
-        if 'file' in request.files:
-            file = request.files['file']
-            if file and file.filename and allowed_file(file.filename):
-                if project.file_path and os.path.exists(project.file_path):
-                    os.remove(project.file_path)
-                filename = secure_filename(file.filename)
-                unique_filename = f"{datetime.utcnow().timestamp()}_{filename}"
-                file_path = os.path.join(UPLOAD_FOLDER, unique_filename)
-                file.save(file_path)
-                project.file_path = file_path
-        
-        db.session.commit()
-        flash('Proyek berhasil diperbarui!', 'success')
-        return redirect(url_for('routes.view_project', project_id=project.id))
-    
-    return render_template('project_edit.html', project=project)
-
-@routes_bp.route('/project/<int:project_id>')
-@login_required
-def view_project(project_id):
-    project = Project.query.get_or_404(project_id)
-    
-    if project.user_id != current_user.id and current_user.role != 'admin':
-        flash('Anda tidak memiliki akses ke proyek ini.', 'danger')
-        return redirect(url_for('routes.projects'))
-    
-    return render_template('project_detail.html', project=project)
-
-@routes_bp.route('/project/<int:project_id>/download')
-@login_required
-def download_file(project_id):
-    project = Project.query.get_or_404(project_id)
-    
-    if project.user_id != current_user.id and current_user.role != 'admin':
-        flash('Anda tidak memiliki akses.', 'danger')
-        return redirect(url_for('routes.projects'))
-    
-    if not project.file_path or not os.path.exists(project.file_path):
-        flash('File tidak ditemukan.', 'danger')
-        return redirect(url_for('routes.view_project', project_id=project.id))
-    
-    return send_file(project.file_path, as_attachment=True)
-
-# ==================== CRUD SWOT (LAYOUT TETAP) ====================
+# ==================== CRUD SWOT (TANPA PROYEK) ====================
 @routes_bp.route('/swot', methods=['GET', 'POST'])
 @login_required
 def swot():
@@ -172,9 +7,8 @@ def swot():
         weaknesses = request.form.get('weaknesses')
         opportunities = request.form.get('opportunities')
         threats = request.form.get('threats')
-        project_id = request.form.get('project_id')
         
-        swot_data = SWOT.query.filter_by(user_id=current_user.id, project_id=project_id).first()
+        swot_data = SWOT.query.filter_by(user_id=current_user.id).first()
         
         if swot_data:
             swot_data.strengths = strengths
@@ -188,8 +22,7 @@ def swot():
                 weaknesses=weaknesses,
                 opportunities=opportunities,
                 threats=threats,
-                user_id=current_user.id,
-                project_id=project_id if project_id else None
+                user_id=current_user.id
             )
             db.session.add(new_swot)
             flash('Data SWOT berhasil disimpan!', 'success')
@@ -197,16 +30,11 @@ def swot():
         db.session.commit()
         return redirect(url_for('routes.swot'))
     
-    user_projects = Project.query.filter_by(user_id=current_user.id).all()
-    swot_data = SWOT.query.filter_by(user_id=current_user.id).all()
-    
-    swot_dict = {}
-    for swot in swot_data:
-        swot_dict[swot.project_id] = swot
-    
-    return render_template('swot.html', projects=user_projects, swot_dict=swot_dict, swot_list=swot_data)
+    swot_data = SWOT.query.filter_by(user_id=current_user.id).first()
+    swot_list = SWOT.query.filter_by(user_id=current_user.id).all()
+    return render_template('swot.html', swot=swot_data, swot_list=swot_list)
 
-# ==================== CRUD PESTLE (LAYOUT TETAP) ====================
+# ==================== CRUD PESTLE (TANPA PROYEK) ====================
 @routes_bp.route('/pestle', methods=['GET', 'POST'])
 @login_required
 def pestle():
@@ -217,9 +45,8 @@ def pestle():
         technological = request.form.get('technological')
         legal = request.form.get('legal')
         environmental = request.form.get('environmental')
-        project_id = request.form.get('project_id')
         
-        pestle_data = PESTLE.query.filter_by(user_id=current_user.id, project_id=project_id).first()
+        pestle_data = PESTLE.query.filter_by(user_id=current_user.id).first()
         
         if pestle_data:
             pestle_data.political = political
@@ -237,8 +64,7 @@ def pestle():
                 technological=technological,
                 legal=legal,
                 environmental=environmental,
-                user_id=current_user.id,
-                project_id=project_id if project_id else None
+                user_id=current_user.id
             )
             db.session.add(new_pestle)
             flash('Data PESTLE berhasil disimpan!', 'success')
@@ -246,16 +72,11 @@ def pestle():
         db.session.commit()
         return redirect(url_for('routes.pestle'))
     
-    user_projects = Project.query.filter_by(user_id=current_user.id).all()
-    pestle_data = PESTLE.query.filter_by(user_id=current_user.id).all()
-    
-    pestle_dict = {}
-    for pestle in pestle_data:
-        pestle_dict[pestle.project_id] = pestle
-    
-    return render_template('pestle.html', projects=user_projects, pestle_dict=pestle_dict, pestle_list=pestle_data)
+    pestle_data = PESTLE.query.filter_by(user_id=current_user.id).first()
+    pestle_list = PESTLE.query.filter_by(user_id=current_user.id).all()
+    return render_template('pestle.html', pestle=pestle_data, pestle_list=pestle_list)
 
-# ==================== CRUD BMC (LAYOUT TETAP) ====================
+# ==================== CRUD BMC (TANPA PROYEK) ====================
 @routes_bp.route('/bmc', methods=['GET', 'POST'])
 @login_required
 def bmc():
@@ -269,9 +90,8 @@ def bmc():
         customer_segments = request.form.get('customer_segments')
         cost_structure = request.form.get('cost_structure')
         revenue_streams = request.form.get('revenue_streams')
-        project_id = request.form.get('project_id')
         
-        bmc_data = BMC.query.filter_by(user_id=current_user.id, project_id=project_id).first()
+        bmc_data = BMC.query.filter_by(user_id=current_user.id).first()
         
         if bmc_data:
             bmc_data.key_partners = key_partners
@@ -295,8 +115,7 @@ def bmc():
                 customer_segments=customer_segments,
                 cost_structure=cost_structure,
                 revenue_streams=revenue_streams,
-                user_id=current_user.id,
-                project_id=project_id if project_id else None
+                user_id=current_user.id
             )
             db.session.add(new_bmc)
             flash('Data BMC berhasil disimpan!', 'success')
@@ -304,11 +123,6 @@ def bmc():
         db.session.commit()
         return redirect(url_for('routes.bmc'))
     
-    user_projects = Project.query.filter_by(user_id=current_user.id).all()
-    bmc_data = BMC.query.filter_by(user_id=current_user.id).all()
-    
-    bmc_dict = {}
-    for bmc in bmc_data:
-        bmc_dict[bmc.project_id] = bmc
-    
-    return render_template('bmc.html', projects=user_projects, bmc_dict=bmc_dict, bmc_list=bmc_data)
+    bmc_data = BMC.query.filter_by(user_id=current_user.id).first()
+    bmc_list = BMC.query.filter_by(user_id=current_user.id).all()
+    return render_template('bmc.html', bmc=bmc_data, bmc_list=bmc_list)

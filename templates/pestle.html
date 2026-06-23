@@ -13,48 +13,9 @@
     <h2><i class="fas fa-globe"></i> Analisis PESTLE</h2>
 </div>
 
-<!-- ============ FORM PILIH PROYEK & ISI PESTLE ============ -->
+<!-- ============ FORM ISI PESTLE (TANPA PILIH PROYEK) ============ -->
 <form method="POST" action="{{ url_for('routes.pestle') }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    
-    <!-- Pilih Proyek -->
-    <div class="row mb-4">
-        <div class="col-md-6">
-            <div class="card border-primary shadow">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0"><i class="fas fa-project-diagram"></i> Pilih Proyek</h5>
-                </div>
-                <div class="card-body">
-                    <select class="form-select" name="project_id" id="projectSelect" required onchange="this.form.submit()">
-                        <option value="">-- Pilih Proyek --</option>
-                        {% for project in projects %}
-                        <option value="{{ project.id }}" {% if request.form.get('project_id')|string == project.id|string %}selected{% endif %}>
-                            {{ project.name }}
-                        </option>
-                        {% endfor %}
-                    </select>
-                    <small class="text-muted">Pilih proyek yang akan dianalisis. Jika sudah ada data, akan otomatis ditampilkan.</small>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="card border-info shadow">
-                <div class="card-header bg-info text-white">
-                    <h5 class="mb-0"><i class="fas fa-info-circle"></i> Informasi</h5>
-                </div>
-                <div class="card-body">
-                    <p class="text-muted mb-0">Isi data PESTLE untuk proyek yang dipilih. Klik "Simpan" untuk menyimpan data.</p>
-                    <p class="text-muted small mt-2">
-                        {% if pestle_list %}
-                        <i class="fas fa-check-circle text-success"></i> {{ pestle_list|length }} data PESTLE tersimpan.
-                        {% else %}
-                        <i class="fas fa-info-circle text-warning"></i> Belum ada data PESTLE.
-                        {% endif %}
-                    </p>
-                </div>
-            </div>
-        </div>
-    </div>
     
     <!-- ============ LAYOUT PESTLE 6 KOLOM ============ -->
     <div class="table-responsive">
@@ -71,14 +32,12 @@
             </thead>
             <tbody>
                 <tr>
-                    {% set selected_project_id = request.form.get('project_id')|int %}
-                    {% set pestle_data = pestle_dict.get(selected_project_id) if selected_project_id else None %}
-                    <td><textarea class="form-control" name="political" rows="4" placeholder="Faktor politik...">{{ pestle_data.political if pestle_data else '' }}</textarea></td>
-                    <td><textarea class="form-control" name="economic" rows="4" placeholder="Faktor ekonomi...">{{ pestle_data.economic if pestle_data else '' }}</textarea></td>
-                    <td><textarea class="form-control" name="social" rows="4" placeholder="Faktor sosial...">{{ pestle_data.social if pestle_data else '' }}</textarea></td>
-                    <td><textarea class="form-control" name="technological" rows="4" placeholder="Faktor teknologi...">{{ pestle_data.technological if pestle_data else '' }}</textarea></td>
-                    <td><textarea class="form-control" name="legal" rows="4" placeholder="Faktor hukum...">{{ pestle_data.legal if pestle_data else '' }}</textarea></td>
-                    <td><textarea class="form-control" name="environmental" rows="4" placeholder="Faktor lingkungan...">{{ pestle_data.environmental if pestle_data else '' }}</textarea></td>
+                    <td><textarea class="form-control" name="political" rows="4" placeholder="Faktor politik...">{{ pestle.political if pestle else '' }}</textarea></td>
+                    <td><textarea class="form-control" name="economic" rows="4" placeholder="Faktor ekonomi...">{{ pestle.economic if pestle else '' }}</textarea></td>
+                    <td><textarea class="form-control" name="social" rows="4" placeholder="Faktor sosial...">{{ pestle.social if pestle else '' }}</textarea></td>
+                    <td><textarea class="form-control" name="technological" rows="4" placeholder="Faktor teknologi...">{{ pestle.technological if pestle else '' }}</textarea></td>
+                    <td><textarea class="form-control" name="legal" rows="4" placeholder="Faktor hukum...">{{ pestle.legal if pestle else '' }}</textarea></td>
+                    <td><textarea class="form-control" name="environmental" rows="4" placeholder="Faktor lingkungan...">{{ pestle.environmental if pestle else '' }}</textarea></td>
                 </tr>
             </tbody>
         </table>
@@ -103,20 +62,18 @@
             <table class="table table-bordered table-hover shadow">
                 <thead class="table-dark">
                     <tr>
-                        <th>Proyek</th>
                         <th>Tanggal Dibuat</th>
                         <th>Tanggal Update</th>
                         <th>Action</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for pestle in pestle_list %}
+                    {% for item in pestle_list %}
                     <tr>
-                        <td>{{ pestle.project.name if pestle.project else 'Tidak ada proyek' }}</td>
-                        <td>{{ pestle.created_at.strftime('%d-%m-%Y %H:%M') }}</td>
-                        <td>{{ pestle.updated_at.strftime('%d-%m-%Y %H:%M') }}</td>
+                        <td>{{ item.created_at.strftime('%d-%m-%Y %H:%M') }}</td>
+                        <td>{{ item.updated_at.strftime('%d-%m-%Y %H:%M') }}</td>
                         <td>
-                            <a href="{{ url_for('routes.pestle') }}?edit={{ pestle.id }}" class="btn btn-sm btn-warning">
+                            <a href="{{ url_for('routes.pestle') }}?edit={{ item.id }}" class="btn btn-sm btn-warning">
                                 <i class="fas fa-edit"></i> Edit
                             </a>
                         </td>
@@ -137,8 +94,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const pestleData = {{ pestle_list|tojson }};
         const found = pestleData.find(p => p.id == editId);
         if (found) {
-            document.querySelector('select[name="project_id"]').value = found.project_id;
-            document.querySelector('select[name="project_id"]').dispatchEvent(new Event('change'));
+            document.querySelector('textarea[name="political"]').value = found.political || '';
+            document.querySelector('textarea[name="economic"]').value = found.economic || '';
+            document.querySelector('textarea[name="social"]').value = found.social || '';
+            document.querySelector('textarea[name="technological"]').value = found.technological || '';
+            document.querySelector('textarea[name="legal"]').value = found.legal || '';
+            document.querySelector('textarea[name="environmental"]').value = found.environmental || '';
         }
     }
 });
