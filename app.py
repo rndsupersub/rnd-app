@@ -35,10 +35,12 @@ from routes import routes_bp
 app.register_blueprint(auth_bp)
 app.register_blueprint(routes_bp)
 
-# ==================== BUAT TABEL DATABASE ====================
+# ==================== RESET & BUAT TABEL DATABASE ====================
 with app.app_context():
+    # Hapus semua tabel dulu (biar struktur project_id nullable terpakai)
+    db.drop_all()
     db.create_all()
-    print("Database tables created!")
+    print("Database tables re-created with nullable project_id!")
 
 # ==================== MENJALANKAN APLIKASI (LOKAL) ====================
 if __name__ == '__main__':
