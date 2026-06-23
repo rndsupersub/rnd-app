@@ -3,65 +3,171 @@
 {% block title %}Analisis SWOT - R&D System{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <a href="{{ url_for('routes.dashboard') }}" class="btn btn-secondary btn-sm">
-            <i class="fas fa-arrow-left"></i> Kembali ke Dashboard
-        </a>
-        <h2 class="d-inline-block ms-3"><i class="fas fa-chess-board"></i> Analisis SWOT</h2>
-    </div>
+<div class="mb-4">
+    <a href="{{ url_for('routes.dashboard') }}" class="btn btn-secondary btn-sm">
+        <i class="fas fa-arrow-left"></i> Kembali ke Dashboard
+    </a>
 </div>
 
-<form method="POST" action="{{ url_for('routes.swot') }}">
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-chess-board"></i> Analisis SWOT</h2>
+</div>
+
+<form method="POST" action="{{ url_for('routes.swot') }}" class="mb-4">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    
     <div class="row g-3">
         <div class="col-md-6">
-            <div class="card h-100 border-success shadow">
-                <div class="card-header bg-success text-white">
-                    <h4 class="mb-0"><i class="fas fa-check-circle"></i> STRENGTHS (Kekuatan)</h4>
+            <div class="card border-primary shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-project-diagram"></i> Pilih Proyek</h5>
                 </div>
                 <div class="card-body">
-                    <textarea class="form-control" name="strengths" rows="6" placeholder="Masukkan kekuatan...">{{ swot.strengths if swot else '' }}</textarea>
+                    <select class="form-select" name="project_id" required>
+                        <option value="">-- Pilih Proyek --</option>
+                        {% for project in projects %}
+                        <option value="{{ project.id }}">{{ project.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <small class="text-muted">Pilih proyek yang akan dianalisis.</small>
                 </div>
             </div>
         </div>
         <div class="col-md-6">
-            <div class="card h-100 border-danger shadow">
-                <div class="card-header bg-danger text-white">
-                    <h4 class="mb-0"><i class="fas fa-times-circle"></i> WEAKNESSES (Kelemahan)</h4>
-                </div>
-                <div class="card-body">
-                    <textarea class="form-control" name="weaknesses" rows="6" placeholder="Masukkan kelemahan...">{{ swot.weaknesses if swot else '' }}</textarea>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="card h-100 border-info shadow">
+            <div class="card border-info shadow">
                 <div class="card-header bg-info text-white">
-                    <h4 class="mb-0"><i class="fas fa-arrow-up"></i> OPPORTUNITIES (Peluang)</h4>
+                    <h5 class="mb-0"><i class="fas fa-info-circle"></i> Informasi</h5>
                 </div>
                 <div class="card-body">
-                    <textarea class="form-control" name="opportunities" rows="6" placeholder="Masukkan peluang...">{{ swot.opportunities if swot else '' }}</textarea>
+                    <p class="text-muted mb-0">Isi data SWOT untuk proyek yang dipilih. Data akan tersimpan dan bisa diedit kapan saja.</p>
                 </div>
             </div>
-        </div>
-        <div class="col-md-6">
-            <div class="card h-100 border-dark shadow">
-                <div class="card-header bg-dark text-white">
-                    <h4 class="mb-0"><i class="fas fa-arrow-down"></i> THREATS (Ancaman)</h4>
-                </div>
-                <div class="card-body">
-                    <textarea class="form-control" name="threats" rows="6" placeholder="Masukkan ancaman...">{{ swot.threats if swot else '' }}</textarea>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="row mt-4">
-        <div class="col-12 text-center">
-            <button type="submit" class="btn btn-primary btn-lg">
-                <i class="fas fa-save"></i> Simpan Analisis SWOT
-            </button>
         </div>
     </div>
 </form>
+
+{% if swot_list %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <h5><i class="fas fa-list"></i> Data SWOT Tersimpan</h5>
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover shadow">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Proyek</th>
+                            <th>Tanggal Dibuat</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for swot in swot_list %}
+                        <tr>
+                            <td>{{ swot.project.name if swot.project else 'Tidak ada proyek' }}</td>
+                            <td>{{ swot.created_at.strftime('%d-%m-%Y %H:%M') }}</td>
+                            <td>
+                                <button class="btn btn-sm btn-warning" onclick="editSWOT('{{ swot.id }}')">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+<div id="swotFormContainer" style="display:none;" class="mt-4">
+    <form method="POST" action="{{ url_for('routes.swot') }}" id="swotForm">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="project_id" id="swotProjectId">
+        
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div class="card h-100 border-success shadow">
+                    <div class="card-header bg-success text-white">
+                        <h4 class="mb-0"><i class="fas fa-check-circle"></i> STRENGTHS</h4>
+                    </div>
+                    <div class="card-body">
+                        <textarea class="form-control" name="strengths" id="swotStrengths" rows="5"></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card h-100 border-danger shadow">
+                    <div class="card-header bg-danger text-white">
+                        <h4 class="mb-0"><i class="fas fa-times-circle"></i> WEAKNESSES</h4>
+                    </div>
+                    <div class="card-body">
+                        <textarea class="form-control" name="weaknesses" id="swotWeaknesses" rows="5"></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card h-100 border-info shadow">
+                    <div class="card-header bg-info text-white">
+                        <h4 class="mb-0"><i class="fas fa-arrow-up"></i> OPPORTUNITIES</h4>
+                    </div>
+                    <div class="card-body">
+                        <textarea class="form-control" name="opportunities" id="swotOpportunities" rows="5"></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card h-100 border-dark shadow">
+                    <div class="card-header bg-dark text-white">
+                        <h4 class="mb-0"><i class="fas fa-arrow-down"></i> THREATS</h4>
+                    </div>
+                    <div class="card-body">
+                        <textarea class="form-control" name="threats" id="swotThreats" rows="5"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-4">
+            <div class="col-12 text-center">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="fas fa-save"></i> Simpan Analisis SWOT
+                </button>
+                <button type="button" class="btn btn-secondary btn-lg" onclick="closeSWOT()">
+                    <i class="fas fa-times"></i> Batal
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+const swotData = {
+    {% for swot in swot_list %}
+    "{{ swot.id }}": {
+        project_id: "{{ swot.project_id }}",
+        strengths: {{ swot.strengths|tojson }},
+        weaknesses: {{ swot.weaknesses|tojson }},
+        opportunities: {{ swot.opportunities|tojson }},
+        threats: {{ swot.threats|tojson }}
+    },
+    {% endfor %}
+};
+
+function editSWOT(id) {
+    const data = swotData[id];
+    if (!data) return;
+    
+    document.getElementById('swotProjectId').value = data.project_id;
+    document.getElementById('swotStrengths').value = data.strengths || '';
+    document.getElementById('swotWeaknesses').value = data.weaknesses || '';
+    document.getElementById('swotOpportunities').value = data.opportunities || '';
+    document.getElementById('swotThreats').value = data.threats || '';
+    
+    document.getElementById('swotFormContainer').style.display = 'block';
+    document.getElementById('swotFormContainer').scrollIntoView({ behavior: 'smooth' });
+}
+
+function closeSWOT() {
+    document.getElementById('swotFormContainer').style.display = 'none';
+}
+</script>
 {% endblock %}

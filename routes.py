@@ -69,7 +69,6 @@ def new_project():
             user_id=current_user.id
         )
         
-        # Tanggal
         start_date = request.form.get('start_date')
         end_date = request.form.get('end_date')
         if start_date:
@@ -77,7 +76,6 @@ def new_project():
         if end_date:
             new_project.end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
         
-        # Upload file
         if 'file' in request.files:
             file = request.files['file']
             if file and file.filename and allowed_file(file.filename):
@@ -125,7 +123,6 @@ def edit_project(project_id):
         if 'file' in request.files:
             file = request.files['file']
             if file and file.filename and allowed_file(file.filename):
-                # Hapus file lama kalau ada
                 if project.file_path and os.path.exists(project.file_path):
                     os.remove(project.file_path)
                 filename = secure_filename(file.filename)
@@ -170,13 +167,17 @@ def download_file(project_id):
 @routes_bp.route('/swot', methods=['GET', 'POST'])
 @login_required
 def swot():
+    user_projects = Project.query.filter_by(user_id=current_user.id).all()
+    
     if request.method == 'POST':
+        project_id = request.form.get('project_id')
         strengths = request.form.get('strengths')
         weaknesses = request.form.get('weaknesses')
         opportunities = request.form.get('opportunities')
         threats = request.form.get('threats')
         
-        swot_data = SWOT.query.filter_by(user_id=current_user.id).first()
+        swot_data = SWOT.query.filter_by(user_id=current_user.id, project_id=project_id).first()
+        
         if swot_data:
             swot_data.strengths = strengths
             swot_data.weaknesses = weaknesses
@@ -189,7 +190,8 @@ def swot():
                 weaknesses=weaknesses,
                 opportunities=opportunities,
                 threats=threats,
-                user_id=current_user.id
+                user_id=current_user.id,
+                project_id=project_id if project_id else None
             )
             db.session.add(new_swot)
             flash('Data SWOT berhasil disimpan!', 'success')
@@ -197,14 +199,17 @@ def swot():
         db.session.commit()
         return redirect(url_for('routes.swot'))
     
-    swot_data = SWOT.query.filter_by(user_id=current_user.id).first()
-    return render_template('swot.html', swot=swot_data)
+    swot_data = SWOT.query.filter_by(user_id=current_user.id).all()
+    return render_template('swot.html', projects=user_projects, swot_list=swot_data)
 
 # ==================== CRUD PESTLE ====================
 @routes_bp.route('/pestle', methods=['GET', 'POST'])
 @login_required
 def pestle():
+    user_projects = Project.query.filter_by(user_id=current_user.id).all()
+    
     if request.method == 'POST':
+        project_id = request.form.get('project_id')
         political = request.form.get('political')
         economic = request.form.get('economic')
         social = request.form.get('social')
@@ -212,7 +217,8 @@ def pestle():
         legal = request.form.get('legal')
         environmental = request.form.get('environmental')
         
-        pestle_data = PESTLE.query.filter_by(user_id=current_user.id).first()
+        pestle_data = PESTLE.query.filter_by(user_id=current_user.id, project_id=project_id).first()
+        
         if pestle_data:
             pestle_data.political = political
             pestle_data.economic = economic
@@ -229,7 +235,8 @@ def pestle():
                 technological=technological,
                 legal=legal,
                 environmental=environmental,
-                user_id=current_user.id
+                user_id=current_user.id,
+                project_id=project_id if project_id else None
             )
             db.session.add(new_pestle)
             flash('Data PESTLE berhasil disimpan!', 'success')
@@ -237,14 +244,17 @@ def pestle():
         db.session.commit()
         return redirect(url_for('routes.pestle'))
     
-    pestle_data = PESTLE.query.filter_by(user_id=current_user.id).first()
-    return render_template('pestle.html', pestle=pestle_data)
+    pestle_data = PESTLE.query.filter_by(user_id=current_user.id).all()
+    return render_template('pestle.html', projects=user_projects, pestle_list=pestle_data)
 
 # ==================== CRUD BMC ====================
 @routes_bp.route('/bmc', methods=['GET', 'POST'])
 @login_required
 def bmc():
+    user_projects = Project.query.filter_by(user_id=current_user.id).all()
+    
     if request.method == 'POST':
+        project_id = request.form.get('project_id')
         key_partners = request.form.get('key_partners')
         key_activities = request.form.get('key_activities')
         key_resources = request.form.get('key_resources')
@@ -255,7 +265,8 @@ def bmc():
         cost_structure = request.form.get('cost_structure')
         revenue_streams = request.form.get('revenue_streams')
         
-        bmc_data = BMC.query.filter_by(user_id=current_user.id).first()
+        bmc_data = BMC.query.filter_by(user_id=current_user.id, project_id=project_id).first()
+        
         if bmc_data:
             bmc_data.key_partners = key_partners
             bmc_data.key_activities = key_activities
@@ -278,7 +289,8 @@ def bmc():
                 customer_segments=customer_segments,
                 cost_structure=cost_structure,
                 revenue_streams=revenue_streams,
-                user_id=current_user.id
+                user_id=current_user.id,
+                project_id=project_id if project_id else None
             )
             db.session.add(new_bmc)
             flash('Data BMC berhasil disimpan!', 'success')
@@ -286,5 +298,5 @@ def bmc():
         db.session.commit()
         return redirect(url_for('routes.bmc'))
     
-    bmc_data = BMC.query.filter_by(user_id=current_user.id).first()
-    return render_template('bmc.html', bmc=bmc_data)
+    bmc_data = BMC.query.filter_by(user_id=current_user.id).all()
+    return render_template('bmc.html', projects=user_projects, bmc_list=bmc_data)

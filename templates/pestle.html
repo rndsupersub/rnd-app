@@ -3,47 +3,157 @@
 {% block title %}Analisis PESTLE - R&D System{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <a href="{{ url_for('routes.dashboard') }}" class="btn btn-secondary btn-sm">
-            <i class="fas fa-arrow-left"></i> Kembali ke Dashboard
-        </a>
-        <h2 class="d-inline-block ms-3"><i class="fas fa-globe"></i> Analisis PESTLE</h2>
-    </div>
+<div class="mb-4">
+    <a href="{{ url_for('routes.dashboard') }}" class="btn btn-secondary btn-sm">
+        <i class="fas fa-arrow-left"></i> Kembali ke Dashboard
+    </a>
 </div>
 
-<form method="POST" action="{{ url_for('routes.pestle') }}">
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-globe"></i> Analisis PESTLE</h2>
+</div>
+
+<form method="POST" action="{{ url_for('routes.pestle') }}" class="mb-4">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <div class="table-responsive">
-        <table class="table table-bordered table-hover shadow">
-            <thead>
-                <tr class="text-center">
-                    <th class="bg-primary text-white">POLITICAL</th>
-                    <th class="bg-success text-white">ECONOMIC</th>
-                    <th class="bg-warning text-dark">SOCIAL</th>
-                    <th class="bg-info text-white">TECHNOLOGICAL</th>
-                    <th class="bg-danger text-white">LEGAL</th>
-                    <th class="bg-secondary text-white">ENVIRONMENTAL</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td><textarea class="form-control" name="political" rows="4" placeholder="Faktor politik...">{{ pestle.political if pestle else '' }}</textarea></td>
-                    <td><textarea class="form-control" name="economic" rows="4" placeholder="Faktor ekonomi...">{{ pestle.economic if pestle else '' }}</textarea></td>
-                    <td><textarea class="form-control" name="social" rows="4" placeholder="Faktor sosial...">{{ pestle.social if pestle else '' }}</textarea></td>
-                    <td><textarea class="form-control" name="technological" rows="4" placeholder="Faktor teknologi...">{{ pestle.technological if pestle else '' }}</textarea></td>
-                    <td><textarea class="form-control" name="legal" rows="4" placeholder="Faktor hukum...">{{ pestle.legal if pestle else '' }}</textarea></td>
-                    <td><textarea class="form-control" name="environmental" rows="4" placeholder="Faktor lingkungan...">{{ pestle.environmental if pestle else '' }}</textarea></td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-    <div class="row mt-4">
-        <div class="col-12 text-center">
-            <button type="submit" class="btn btn-primary btn-lg">
-                <i class="fas fa-save"></i> Simpan Analisis PESTLE
-            </button>
+    
+    <div class="row g-3">
+        <div class="col-md-6">
+            <div class="card border-primary shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-project-diagram"></i> Pilih Proyek</h5>
+                </div>
+                <div class="card-body">
+                    <select class="form-select" name="project_id" required>
+                        <option value="">-- Pilih Proyek --</option>
+                        {% for project in projects %}
+                        <option value="{{ project.id }}">{{ project.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <small class="text-muted">Pilih proyek yang akan dianalisis.</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card border-info shadow">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-info-circle"></i> Informasi</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-0">Isi data PESTLE untuk proyek yang dipilih. Data akan tersimpan dan bisa diedit kapan saja.</p>
+                </div>
+            </div>
         </div>
     </div>
 </form>
+
+{% if pestle_list %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <h5><i class="fas fa-list"></i> Data PESTLE Tersimpan</h5>
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover shadow">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Proyek</th>
+                            <th>Tanggal Dibuat</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for pestle in pestle_list %}
+                        <tr>
+                            <td>{{ pestle.project.name if pestle.project else 'Tidak ada proyek' }}</td>
+                            <td>{{ pestle.created_at.strftime('%d-%m-%Y %H:%M') }}</td>
+                            <td>
+                                <button class="btn btn-sm btn-warning" onclick="editPESTLE('{{ pestle.id }}')">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+<div id="pestleFormContainer" style="display:none;" class="mt-4">
+    <form method="POST" action="{{ url_for('routes.pestle') }}" id="pestleForm">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="project_id" id="pestleProjectId">
+        
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover shadow">
+                <thead>
+                    <tr class="text-center">
+                        <th class="bg-primary text-white">POLITICAL</th>
+                        <th class="bg-success text-white">ECONOMIC</th>
+                        <th class="bg-warning text-dark">SOCIAL</th>
+                        <th class="bg-info text-white">TECHNOLOGICAL</th>
+                        <th class="bg-danger text-white">LEGAL</th>
+                        <th class="bg-secondary text-white">ENVIRONMENTAL</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><textarea class="form-control" name="political" id="pestlePolitical" rows="4"></textarea></td>
+                        <td><textarea class="form-control" name="economic" id="pestleEconomic" rows="4"></textarea></td>
+                        <td><textarea class="form-control" name="social" id="pestleSocial" rows="4"></textarea></td>
+                        <td><textarea class="form-control" name="technological" id="pestleTechnological" rows="4"></textarea></td>
+                        <td><textarea class="form-control" name="legal" id="pestleLegal" rows="4"></textarea></td>
+                        <td><textarea class="form-control" name="environmental" id="pestleEnvironmental" rows="4"></textarea></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="row mt-4">
+            <div class="col-12 text-center">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="fas fa-save"></i> Simpan Analisis PESTLE
+                </button>
+                <button type="button" class="btn btn-secondary btn-lg" onclick="closePESTLE()">
+                    <i class="fas fa-times"></i> Batal
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+const pestleData = {
+    {% for pestle in pestle_list %}
+    "{{ pestle.id }}": {
+        project_id: "{{ pestle.project_id }}",
+        political: {{ pestle.political|tojson }},
+        economic: {{ pestle.economic|tojson }},
+        social: {{ pestle.social|tojson }},
+        technological: {{ pestle.technological|tojson }},
+        legal: {{ pestle.legal|tojson }},
+        environmental: {{ pestle.environmental|tojson }}
+    },
+    {% endfor %}
+};
+
+function editPESTLE(id) {
+    const data = pestleData[id];
+    if (!data) return;
+    
+    document.getElementById('pestleProjectId').value = data.project_id;
+    document.getElementById('pestlePolitical').value = data.political || '';
+    document.getElementById('pestleEconomic').value = data.economic || '';
+    document.getElementById('pestleSocial').value = data.social || '';
+    document.getElementById('pestleTechnological').value = data.technological || '';
+    document.getElementById('pestleLegal').value = data.legal || '';
+    document.getElementById('pestleEnvironmental').value = data.environmental || '';
+    
+    document.getElementById('pestleFormContainer').style.display = 'block';
+    document.getElementById('pestleFormContainer').scrollIntoView({ behavior: 'smooth' });
+}
+
+function closePESTLE() {
+    document.getElementById('pestleFormContainer').style.display = 'none';
+}
+</script>
 {% endblock %}

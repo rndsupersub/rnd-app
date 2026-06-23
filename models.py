@@ -28,14 +28,11 @@ class Project(db.Model):
     name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text)
     project_type = db.Column(db.String(50), default='Main')
-    
-    # ========== KOLOM BARU ==========
     start_date = db.Column(db.Date, nullable=True)
     end_date = db.Column(db.Date, nullable=True)
     status = db.Column(db.String(50), default='On Track')
     google_drive_link = db.Column(db.String(500), nullable=True)
     file_path = db.Column(db.String(500), nullable=True)
-    
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
@@ -56,6 +53,8 @@ class SWOT(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     project_id = db.Column(db.Integer, db.ForeignKey('projects.id'), nullable=True)
 
+    project = db.relationship('Project', backref='swots')
+
     def __repr__(self):
         return f'<SWOT for user {self.user_id}>'
 
@@ -73,6 +72,8 @@ class PESTLE(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     project_id = db.Column(db.Integer, db.ForeignKey('projects.id'), nullable=True)
+
+    project = db.relationship('Project', backref='pestles')
 
     def __repr__(self):
         return f'<PESTLE for user {self.user_id}>'
@@ -94,6 +95,8 @@ class BMC(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     project_id = db.Column(db.Integer, db.ForeignKey('projects.id'), nullable=True)
+
+    project = db.relationship('Project', backref='bmcs')
 
     def __repr__(self):
         return f'<BMC for user {self.user_id}>'
