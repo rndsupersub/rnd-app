@@ -153,27 +153,43 @@ def download_file(project_id):
         return redirect(url_for('routes.view_project', project_id=project.id))
     return send_file(project.file_path, as_attachment=True)
 
-# ==================== CRUD SWOT (BISA BANYAK DATA) ====================
+# ==================== CRUD SWOT (DENGAN EDIT, HAPUS, NAMA PROYEK) ====================
 @routes_bp.route('/swot', methods=['GET', 'POST'])
 @login_required
 def swot():
     if request.method == 'POST':
         try:
+            project_name = request.form.get('project_name')
             strengths = request.form.get('strengths')
             weaknesses = request.form.get('weaknesses')
             opportunities = request.form.get('opportunities')
             threats = request.form.get('threats')
+            edit_id = request.form.get('edit_id')
             
-            new_swot = SWOT(
-                strengths=strengths,
-                weaknesses=weaknesses,
-                opportunities=opportunities,
-                threats=threats,
-                user_id=current_user.id
-            )
-            db.session.add(new_swot)
+            if edit_id:
+                swot_item = SWOT.query.get(edit_id)
+                if swot_item and swot_item.user_id == current_user.id:
+                    swot_item.project_name = project_name
+                    swot_item.strengths = strengths
+                    swot_item.weaknesses = weaknesses
+                    swot_item.opportunities = opportunities
+                    swot_item.threats = threats
+                    flash('Data SWOT berhasil diupdate!', 'success')
+                else:
+                    flash('Data tidak ditemukan.', 'danger')
+            else:
+                new_swot = SWOT(
+                    project_name=project_name,
+                    strengths=strengths,
+                    weaknesses=weaknesses,
+                    opportunities=opportunities,
+                    threats=threats,
+                    user_id=current_user.id
+                )
+                db.session.add(new_swot)
+                flash('Data SWOT berhasil disimpan!', 'success')
+            
             db.session.commit()
-            flash('Data SWOT berhasil disimpan!', 'success')
         except Exception as e:
             print(f"ERROR SWOT: {e}")
             flash(f'Terjadi kesalahan: {e}', 'danger')
@@ -186,6 +202,7 @@ def swot():
     for item in swot_list:
         swot_list_json.append({
             'id': item.id,
+            'project_name': item.project_name,
             'strengths': item.strengths,
             'weaknesses': item.weaknesses,
             'opportunities': item.opportunities,
@@ -194,33 +211,64 @@ def swot():
             'updated_at': item.updated_at.isoformat() if item.updated_at else None
         })
     
-    return render_template('swot.html', swot=None, swot_list_json=swot_list_json)
+    return render_template('swot.html', swot_list_json=swot_list_json)
 
-# ==================== CRUD PESTLE (BISA BANYAK DATA) ====================
+@routes_bp.route('/swot/<int:swot_id>/delete')
+@login_required
+def delete_swot(swot_id):
+    swot_item = SWOT.query.get_or_404(swot_id)
+    if swot_item.user_id != current_user.id:
+        flash('Anda tidak memiliki akses.', 'danger')
+        return redirect(url_for('routes.swot'))
+    
+    db.session.delete(swot_item)
+    db.session.commit()
+    flash('Data SWOT berhasil dihapus!', 'success')
+    return redirect(url_for('routes.swot'))
+
+# ==================== CRUD PESTLE (DENGAN EDIT, HAPUS, NAMA PROYEK) ====================
 @routes_bp.route('/pestle', methods=['GET', 'POST'])
 @login_required
 def pestle():
     if request.method == 'POST':
         try:
+            project_name = request.form.get('project_name')
             political = request.form.get('political')
             economic = request.form.get('economic')
             social = request.form.get('social')
             technological = request.form.get('technological')
             legal = request.form.get('legal')
             environmental = request.form.get('environmental')
+            edit_id = request.form.get('edit_id')
             
-            new_pestle = PESTLE(
-                political=political,
-                economic=economic,
-                social=social,
-                technological=technological,
-                legal=legal,
-                environmental=environmental,
-                user_id=current_user.id
-            )
-            db.session.add(new_pestle)
+            if edit_id:
+                pestle_item = PESTLE.query.get(edit_id)
+                if pestle_item and pestle_item.user_id == current_user.id:
+                    pestle_item.project_name = project_name
+                    pestle_item.political = political
+                    pestle_item.economic = economic
+                    pestle_item.social = social
+                    pestle_item.technological = technological
+                    pestle_item.legal = legal
+                    pestle_item.environmental = environmental
+                    flash('Data PESTLE berhasil diupdate!', 'success')
+                else:
+                    flash('Data tidak ditemukan.', 'danger')
+            else:
+                new_pestle = PESTLE(
+                    project_name=project_name,
+                    political=political,
+                    economic=economic,
+                    social=social,
+                    technological=technological,
+                    legal=legal,
+                    environmental=environmental,
+                    user_id=current_user.id
+                )
+                db.session.add(new_pestle)
+                flash('Data PESTLE berhasil disimpan!', 'success')
+            
             db.session.commit()
-            flash('Data PESTLE berhasil disimpan!', 'success')
         except Exception as e:
             print(f"ERROR PESTLE: {e}")
             flash(f'Terjadi kesalahan: {e}', 'danger')
@@ -233,6 +281,7 @@ def pestle():
     for item in pestle_list:
         pestle_list_json.append({
             'id': item.id,
+            'project_name': item.project_name,
             'political': item.political,
             'economic': item.economic,
             'social': item.social,
@@ -243,14 +292,28 @@ def pestle():
             'updated_at': item.updated_at.isoformat() if item.updated_at else None
         })
     
-    return render_template('pestle.html', pestle=None, pestle_list_json=pestle_list_json)
+    return render_template('pestle.html', pestle_list_json=pestle_list_json)
 
-# ==================== CRUD BMC (BISA BANYAK DATA) ====================
+@routes_bp.route('/pestle/<int:pestle_id>/delete')
+@login_required
+def delete_pestle(pestle_id):
+    pestle_item = PESTLE.query.get_or_404(pestle_id)
+    if pestle_item.user_id != current_user.id:
+        flash('Anda tidak memiliki akses.', 'danger')
+        return redirect(url_for('routes.pestle'))
+    
+    db.session.delete(pestle_item)
+    db.session.commit()
+    flash('Data PESTLE berhasil dihapus!', 'success')
+    return redirect(url_for('routes.pestle'))
+
+# ==================== CRUD BMC (DENGAN EDIT, HAPUS, NAMA PROYEK) ====================
 @routes_bp.route('/bmc', methods=['GET', 'POST'])
 @login_required
 def bmc():
     if request.method == 'POST':
         try:
+            project_name = request.form.get('project_name')
             key_partners = request.form.get('key_partners')
             key_activities = request.form.get('key_activities')
             key_resources = request.form.get('key_resources')
@@ -260,22 +323,42 @@ def bmc():
             customer_segments = request.form.get('customer_segments')
             cost_structure = request.form.get('cost_structure')
             revenue_streams = request.form.get('revenue_streams')
+            edit_id = request.form.get('edit_id')
             
-            new_bmc = BMC(
-                key_partners=key_partners,
-                key_activities=key_activities,
-                key_resources=key_resources,
-                value_proposition=value_proposition,
-                customer_relationships=customer_relationships,
-                channels=channels,
-                customer_segments=customer_segments,
-                cost_structure=cost_structure,
-                revenue_streams=revenue_streams,
-                user_id=current_user.id
-            )
-            db.session.add(new_bmc)
+            if edit_id:
+                bmc_item = BMC.query.get(edit_id)
+                if bmc_item and bmc_item.user_id == current_user.id:
+                    bmc_item.project_name = project_name
+                    bmc_item.key_partners = key_partners
+                    bmc_item.key_activities = key_activities
+                    bmc_item.key_resources = key_resources
+                    bmc_item.value_proposition = value_proposition
+                    bmc_item.customer_relationships = customer_relationships
+                    bmc_item.channels = channels
+                    bmc_item.customer_segments = customer_segments
+                    bmc_item.cost_structure = cost_structure
+                    bmc_item.revenue_streams = revenue_streams
+                    flash('Data BMC berhasil diupdate!', 'success')
+                else:
+                    flash('Data tidak ditemukan.', 'danger')
+            else:
+                new_bmc = BMC(
+                    project_name=project_name,
+                    key_partners=key_partners,
+                    key_activities=key_activities,
+                    key_resources=key_resources,
+                    value_proposition=value_proposition,
+                    customer_relationships=customer_relationships,
+                    channels=channels,
+                    customer_segments=customer_segments,
+                    cost_structure=cost_structure,
+                    revenue_streams=revenue_streams,
+                    user_id=current_user.id
+                )
+                db.session.add(new_bmc)
+                flash('Data BMC berhasil disimpan!', 'success')
+            
             db.session.commit()
-            flash('Data BMC berhasil disimpan!', 'success')
         except Exception as e:
             print(f"ERROR BMC: {e}")
             flash(f'Terjadi kesalahan: {e}', 'danger')
@@ -288,6 +371,7 @@ def bmc():
     for item in bmc_list:
         bmc_list_json.append({
             'id': item.id,
+            'project_name': item.project_name,
             'key_partners': item.key_partners,
             'key_activities': item.key_activities,
             'key_resources': item.key_resources,
@@ -301,4 +385,17 @@ def bmc():
             'updated_at': item.updated_at.isoformat() if item.updated_at else None
         })
     
-    return render_template('bmc.html', bmc=None, bmc_list_json=bmc_list_json)
+    return render_template('bmc.html', bmc_list_json=bmc_list_json)
+
+@routes_bp.route('/bmc/<int:bmc_id>/delete')
+@login_required
+def delete_bmc(bmc_id):
+    bmc_item = BMC.query.get_or_404(bmc_id)
+    if bmc_item.user_id != current_user.id:
+        flash('Anda tidak memiliki akses.', 'danger')
+        return redirect(url_for('routes.bmc'))
+    
+    db.session.delete(bmc_item)
+    db.session.commit()
+    flash('Data BMC berhasil dihapus!', 'success')
+    return redirect(url_for('routes.bmc'))

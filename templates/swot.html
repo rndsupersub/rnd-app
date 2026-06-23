@@ -13,8 +13,14 @@
     <h2><i class="fas fa-chess-board"></i> Analisis SWOT</h2>
 </div>
 
-<form method="POST" action="{{ url_for('routes.swot') }}">
+<form method="POST" action="{{ url_for('routes.swot') }}" id="swotForm">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="edit_id" id="edit_id" value="">
+    
+    <div class="mb-3">
+        <label for="project_name" class="form-label">Nama Proyek</label>
+        <input type="text" class="form-control" id="project_name" name="project_name" placeholder="Masukkan nama proyek..." required>
+    </div>
     
     <div class="row g-3">
         <div class="col-md-6">
@@ -23,7 +29,7 @@
                     <h4 class="mb-0"><i class="fas fa-check-circle"></i> STRENGTHS (Kekuatan)</h4>
                 </div>
                 <div class="card-body">
-                    <textarea class="form-control" name="strengths" rows="6" placeholder="Masukkan kekuatan..."></textarea>
+                    <textarea class="form-control" name="strengths" id="strengths" rows="6" placeholder="Masukkan kekuatan..."></textarea>
                 </div>
             </div>
         </div>
@@ -33,7 +39,7 @@
                     <h4 class="mb-0"><i class="fas fa-times-circle"></i> WEAKNESSES (Kelemahan)</h4>
                 </div>
                 <div class="card-body">
-                    <textarea class="form-control" name="weaknesses" rows="6" placeholder="Masukkan kelemahan..."></textarea>
+                    <textarea class="form-control" name="weaknesses" id="weaknesses" rows="6" placeholder="Masukkan kelemahan..."></textarea>
                 </div>
             </div>
         </div>
@@ -43,7 +49,7 @@
                     <h4 class="mb-0"><i class="fas fa-arrow-up"></i> OPPORTUNITIES (Peluang)</h4>
                 </div>
                 <div class="card-body">
-                    <textarea class="form-control" name="opportunities" rows="6" placeholder="Masukkan peluang..."></textarea>
+                    <textarea class="form-control" name="opportunities" id="opportunities" rows="6" placeholder="Masukkan peluang..."></textarea>
                 </div>
             </div>
         </div>
@@ -53,7 +59,7 @@
                     <h4 class="mb-0"><i class="fas fa-arrow-down"></i> THREATS (Ancaman)</h4>
                 </div>
                 <div class="card-body">
-                    <textarea class="form-control" name="threats" rows="6" placeholder="Masukkan ancaman..."></textarea>
+                    <textarea class="form-control" name="threats" id="threats" rows="6" placeholder="Masukkan ancaman..."></textarea>
                 </div>
             </div>
         </div>
@@ -61,8 +67,11 @@
     
     <div class="row mt-4">
         <div class="col-12 text-center">
-            <button type="submit" class="btn btn-primary btn-lg">
+            <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
                 <i class="fas fa-save"></i> Simpan Analisis SWOT
+            </button>
+            <button type="button" class="btn btn-secondary btn-lg" onclick="resetForm()">
+                <i class="fas fa-times"></i> Batal
             </button>
         </div>
     </div>
@@ -76,6 +85,7 @@
             <table class="table table-bordered table-hover shadow">
                 <thead class="table-dark">
                     <tr>
+                        <th>Nama Proyek</th>
                         <th>Tanggal Dibuat</th>
                         <th>Tanggal Update</th>
                         <th>Action</th>
@@ -84,11 +94,15 @@
                 <tbody>
                     {% for item in swot_list_json %}
                     <tr>
-                        <td>{{ item.created_at if item.created_at else '-' }}</td>
-                        <td>{{ item.updated_at if item.updated_at else '-' }}</td>
+                        <td>{{ item.project_name or '-' }}</td>
+                        <td>{{ item.created_at or '-' }}</td>
+                        <td>{{ item.updated_at or '-' }}</td>
                         <td>
-                            <a href="{{ url_for('routes.swot') }}?edit={{ item.id }}" class="btn btn-sm btn-warning">
+                            <button onclick="editSWOT('{{ item.id }}')" class="btn btn-sm btn-warning">
                                 <i class="fas fa-edit"></i> Edit
+                            </button>
+                            <a href="{{ url_for('routes.delete_swot', swot_id=item.id) }}" class="btn btn-sm btn-danger" onclick="return confirm('Yakin ingin menghapus data ini?')">
+                                <i class="fas fa-trash"></i> Hapus
                             </a>
                         </td>
                     </tr>
@@ -100,31 +114,34 @@
 </div>
 {% endif %}
 
-<script id="swot-data" type="application/json">
-{{ swot_list_json|tojson }}
-</script>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const editId = urlParams.get('edit');
-    if (editId) {
-        let swotData = [];
-        const swotElem = document.getElementById('swot-data');
-        if (swotElem) {
-            try {
-                swotData = JSON.parse(swotElem.textContent || '[]') || [];
-            } catch (e) {
-                swotData = [];
-            }
-        }
-        const found = swotData.find(s => String(s.id) === String(editId));
-        if (found) {
-            document.querySelector('textarea[name="strengths"]').value = found.strengths || '';
-            document.querySelector('textarea[name="weaknesses"]').value = found.weaknesses || '';
-            document.querySelector('textarea[name="opportunities"]').value = found.opportunities || '';
-            document.querySelector('textarea[name="threats"]').value = found.threats || '';
-        }
+function editSWOT(id) {
+    const swotData = {{ swot_list_json|tojson }};
+    const found = swotData.find(s => String(s.id) === String(id));
+    if (found) {
+        document.getElementById('edit_id').value = found.id;
+        document.getElementById('project_name').value = found.project_name || '';
+        document.getElementById('strengths').value = found.strengths || '';
+        document.getElementById('weaknesses').value = found.weaknesses || '';
+        document.getElementById('opportunities').value = found.opportunities || '';
+        document.getElementById('threats').value = found.threats || '';
+        document.getElementById('submitBtn').innerHTML = '<i class="fas fa-edit"></i> Update Analisis SWOT';
+        document.getElementById('submitBtn').classList.remove('btn-primary');
+        document.getElementById('submitBtn').classList.add('btn-warning');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-});
+}
+
+function resetForm() {
+    document.getElementById('edit_id').value = '';
+    document.getElementById('project_name').value = '';
+    document.getElementById('strengths').value = '';
+    document.getElementById('weaknesses').value = '';
+    document.getElementById('opportunities').value = '';
+    document.getElementById('threats').value = '';
+    document.getElementById('submitBtn').innerHTML = '<i class="fas fa-save"></i> Simpan Analisis SWOT';
+    document.getElementById('submitBtn').classList.remove('btn-warning');
+    document.getElementById('submitBtn').classList.add('btn-primary');
+}
 </script>
 {% endblock %}

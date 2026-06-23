@@ -13,8 +13,14 @@
     <h2><i class="fas fa-globe"></i> Analisis PESTLE</h2>
 </div>
 
-<form method="POST" action="{{ url_for('routes.pestle') }}">
+<form method="POST" action="{{ url_for('routes.pestle') }}" id="pestleForm">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="edit_id" id="edit_id" value="">
+    
+    <div class="mb-3">
+        <label for="project_name" class="form-label">Nama Proyek</label>
+        <input type="text" class="form-control" id="project_name" name="project_name" placeholder="Masukkan nama proyek..." required>
+    </div>
     
     <div class="table-responsive">
         <table class="table table-bordered table-hover shadow">
@@ -30,12 +36,12 @@
             </thead>
             <tbody>
                 <tr>
-                    <td><textarea class="form-control" name="political" rows="4" placeholder="Faktor politik..."></textarea></td>
-                    <td><textarea class="form-control" name="economic" rows="4" placeholder="Faktor ekonomi..."></textarea></td>
-                    <td><textarea class="form-control" name="social" rows="4" placeholder="Faktor sosial..."></textarea></td>
-                    <td><textarea class="form-control" name="technological" rows="4" placeholder="Faktor teknologi..."></textarea></td>
-                    <td><textarea class="form-control" name="legal" rows="4" placeholder="Faktor hukum..."></textarea></td>
-                    <td><textarea class="form-control" name="environmental" rows="4" placeholder="Faktor lingkungan..."></textarea></td>
+                    <td><textarea class="form-control" name="political" id="political" rows="4" placeholder="Faktor politik..."></textarea></td>
+                    <td><textarea class="form-control" name="economic" id="economic" rows="4" placeholder="Faktor ekonomi..."></textarea></td>
+                    <td><textarea class="form-control" name="social" id="social" rows="4" placeholder="Faktor sosial..."></textarea></td>
+                    <td><textarea class="form-control" name="technological" id="technological" rows="4" placeholder="Faktor teknologi..."></textarea></td>
+                    <td><textarea class="form-control" name="legal" id="legal" rows="4" placeholder="Faktor hukum..."></textarea></td>
+                    <td><textarea class="form-control" name="environmental" id="environmental" rows="4" placeholder="Faktor lingkungan..."></textarea></td>
                 </tr>
             </tbody>
         </table>
@@ -43,8 +49,11 @@
     
     <div class="row mt-4">
         <div class="col-12 text-center">
-            <button type="submit" class="btn btn-primary btn-lg">
+            <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
                 <i class="fas fa-save"></i> Simpan Analisis PESTLE
+            </button>
+            <button type="button" class="btn btn-secondary btn-lg" onclick="resetForm()">
+                <i class="fas fa-times"></i> Batal
             </button>
         </div>
     </div>
@@ -58,6 +67,7 @@
             <table class="table table-bordered table-hover shadow">
                 <thead class="table-dark">
                     <tr>
+                        <th>Nama Proyek</th>
                         <th>Tanggal Dibuat</th>
                         <th>Tanggal Update</th>
                         <th>Action</th>
@@ -66,11 +76,15 @@
                 <tbody>
                     {% for item in pestle_list_json %}
                     <tr>
-                        <td>{{ item.created_at if item.created_at else '-' }}</td>
-                        <td>{{ item.updated_at if item.updated_at else '-' }}</td>
+                        <td>{{ item.project_name or '-' }}</td>
+                        <td>{{ item.created_at or '-' }}</td>
+                        <td>{{ item.updated_at or '-' }}</td>
                         <td>
-                            <a href="{{ url_for('routes.pestle') }}?edit={{ item.id }}" class="btn btn-sm btn-warning">
+                            <button onclick="editPESTLE('{{ item.id }}')" class="btn btn-sm btn-warning">
                                 <i class="fas fa-edit"></i> Edit
+                            </button>
+                            <a href="{{ url_for('routes.delete_pestle', pestle_id=item.id) }}" class="btn btn-sm btn-danger" onclick="return confirm('Yakin ingin menghapus data ini?')">
+                                <i class="fas fa-trash"></i> Hapus
                             </a>
                         </td>
                     </tr>
@@ -82,33 +96,38 @@
 </div>
 {% endif %}
 
-<script id="pestle-data" type="application/json">
-{{ pestle_list_json|tojson }}
-</script>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const editId = urlParams.get('edit');
-    if (editId) {
-        let pestleData = [];
-        const pestleElem = document.getElementById('pestle-data');
-        if (pestleElem) {
-            try {
-                pestleData = JSON.parse(pestleElem.textContent || '[]') || [];
-            } catch (e) {
-                pestleData = [];
-            }
-        }
-        const found = pestleData.find(p => String(p.id) === String(editId));
-        if (found) {
-            document.querySelector('textarea[name="political"]').value = found.political || '';
-            document.querySelector('textarea[name="economic"]').value = found.economic || '';
-            document.querySelector('textarea[name="social"]').value = found.social || '';
-            document.querySelector('textarea[name="technological"]').value = found.technological || '';
-            document.querySelector('textarea[name="legal"]').value = found.legal || '';
-            document.querySelector('textarea[name="environmental"]').value = found.environmental || '';
-        }
+function editPESTLE(id) {
+    const pestleData = {{ pestle_list_json|tojson }};
+    const found = pestleData.find(p => String(p.id) === String(id));
+    if (found) {
+        document.getElementById('edit_id').value = found.id;
+        document.getElementById('project_name').value = found.project_name || '';
+        document.getElementById('political').value = found.political || '';
+        document.getElementById('economic').value = found.economic || '';
+        document.getElementById('social').value = found.social || '';
+        document.getElementById('technological').value = found.technological || '';
+        document.getElementById('legal').value = found.legal || '';
+        document.getElementById('environmental').value = found.environmental || '';
+        document.getElementById('submitBtn').innerHTML = '<i class="fas fa-edit"></i> Update Analisis PESTLE';
+        document.getElementById('submitBtn').classList.remove('btn-primary');
+        document.getElementById('submitBtn').classList.add('btn-warning');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-});
+}
+
+function resetForm() {
+    document.getElementById('edit_id').value = '';
+    document.getElementById('project_name').value = '';
+    document.getElementById('political').value = '';
+    document.getElementById('economic').value = '';
+    document.getElementById('social').value = '';
+    document.getElementById('technological').value = '';
+    document.getElementById('legal').value = '';
+    document.getElementById('environmental').value = '';
+    document.getElementById('submitBtn').innerHTML = '<i class="fas fa-save"></i> Simpan Analisis PESTLE';
+    document.getElementById('submitBtn').classList.remove('btn-warning');
+    document.getElementById('submitBtn').classList.add('btn-primary');
+}
 </script>
 {% endblock %}

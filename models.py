@@ -40,6 +40,7 @@ class Project(db.Model):
 class SWOT(db.Model):
     __tablename__ = 'swot'
     id = db.Column(db.Integer, primary_key=True)
+    project_name = db.Column(db.String(200), nullable=True)
     strengths = db.Column(db.Text)
     weaknesses = db.Column(db.Text)
     opportunities = db.Column(db.Text)
@@ -56,6 +57,7 @@ class SWOT(db.Model):
 class PESTLE(db.Model):
     __tablename__ = 'pestle'
     id = db.Column(db.Integer, primary_key=True)
+    project_name = db.Column(db.String(200), nullable=True)
     political = db.Column(db.Text)
     economic = db.Column(db.Text)
     social = db.Column(db.Text)
@@ -74,6 +76,7 @@ class PESTLE(db.Model):
 class BMC(db.Model):
     __tablename__ = 'bmc'
     id = db.Column(db.Integer, primary_key=True)
+    project_name = db.Column(db.String(200), nullable=True)
     key_partners = db.Column(db.Text)
     key_activities = db.Column(db.Text)
     key_resources = db.Column(db.Text)

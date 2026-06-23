@@ -13,8 +13,14 @@
     <h2><i class="fas fa-chart-pie"></i> Business Model Canvas</h2>
 </div>
 
-<form method="POST" action="{{ url_for('routes.bmc') }}">
+<form method="POST" action="{{ url_for('routes.bmc') }}" id="bmcForm">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="edit_id" id="edit_id" value="">
+    
+    <div class="mb-3">
+        <label for="project_name" class="form-label">Nama Proyek</label>
+        <input type="text" class="form-control" id="project_name" name="project_name" placeholder="Masukkan nama proyek..." required>
+    </div>
     
     <div class="row g-2">
         <div class="col-md-4">
@@ -23,7 +29,7 @@
                     <h6>Key Partners</h6>
                 </div>
                 <div class="card-body">
-                    <textarea class="form-control" name="key_partners" rows="4" placeholder="Mitra kunci..."></textarea>
+                    <textarea class="form-control" name="key_partners" id="key_partners" rows="4" placeholder="Mitra kunci..."></textarea>
                 </div>
             </div>
         </div>
@@ -33,7 +39,7 @@
                     <h6>Key Activities</h6>
                 </div>
                 <div class="card-body">
-                    <textarea class="form-control" name="key_activities" rows="4" placeholder="Aktivitas utama..."></textarea>
+                    <textarea class="form-control" name="key_activities" id="key_activities" rows="4" placeholder="Aktivitas utama..."></textarea>
                 </div>
             </div>
         </div>
@@ -43,7 +49,7 @@
                     <h6>Key Resources</h6>
                 </div>
                 <div class="card-body">
-                    <textarea class="form-control" name="key_resources" rows="4" placeholder="Sumber daya..."></textarea>
+                    <textarea class="form-control" name="key_resources" id="key_resources" rows="4" placeholder="Sumber daya..."></textarea>
                 </div>
             </div>
         </div>
@@ -53,7 +59,7 @@
                     <h6>Value Proposition</h6>
                 </div>
                 <div class="card-body">
-                    <textarea class="form-control" name="value_proposition" rows="4" placeholder="Nilai yang ditawarkan..."></textarea>
+                    <textarea class="form-control" name="value_proposition" id="value_proposition" rows="4" placeholder="Nilai yang ditawarkan..."></textarea>
                 </div>
             </div>
         </div>
@@ -63,7 +69,7 @@
                     <h6>Customer Relationships</h6>
                 </div>
                 <div class="card-body">
-                    <textarea class="form-control" name="customer_relationships" rows="4" placeholder="Hubungan pelanggan..."></textarea>
+                    <textarea class="form-control" name="customer_relationships" id="customer_relationships" rows="4" placeholder="Hubungan pelanggan..."></textarea>
                 </div>
             </div>
         </div>
@@ -73,7 +79,7 @@
                     <h6>Channels</h6>
                 </div>
                 <div class="card-body">
-                    <textarea class="form-control" name="channels" rows="4" placeholder="Saluran distribusi..."></textarea>
+                    <textarea class="form-control" name="channels" id="channels" rows="4" placeholder="Saluran distribusi..."></textarea>
                 </div>
             </div>
         </div>
@@ -83,7 +89,7 @@
                     <h6>Customer Segments</h6>
                 </div>
                 <div class="card-body">
-                    <textarea class="form-control" name="customer_segments" rows="4" placeholder="Segmen pelanggan..."></textarea>
+                    <textarea class="form-control" name="customer_segments" id="customer_segments" rows="4" placeholder="Segmen pelanggan..."></textarea>
                 </div>
             </div>
         </div>
@@ -93,7 +99,7 @@
                     <h6>Cost Structure</h6>
                 </div>
                 <div class="card-body">
-                    <textarea class="form-control" name="cost_structure" rows="4" placeholder="Struktur biaya..."></textarea>
+                    <textarea class="form-control" name="cost_structure" id="cost_structure" rows="4" placeholder="Struktur biaya..."></textarea>
                 </div>
             </div>
         </div>
@@ -103,7 +109,7 @@
                     <h6>Revenue Streams</h6>
                 </div>
                 <div class="card-body">
-                    <textarea class="form-control" name="revenue_streams" rows="4" placeholder="Aliran pendapatan..."></textarea>
+                    <textarea class="form-control" name="revenue_streams" id="revenue_streams" rows="4" placeholder="Aliran pendapatan..."></textarea>
                 </div>
             </div>
         </div>
@@ -111,8 +117,11 @@
     
     <div class="row mt-4">
         <div class="col-12 text-center">
-            <button type="submit" class="btn btn-primary btn-lg">
+            <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
                 <i class="fas fa-save"></i> Simpan Business Model Canvas
+            </button>
+            <button type="button" class="btn btn-secondary btn-lg" onclick="resetForm()">
+                <i class="fas fa-times"></i> Batal
             </button>
         </div>
     </div>
@@ -126,6 +135,7 @@
             <table class="table table-bordered table-hover shadow">
                 <thead class="table-dark">
                     <tr>
+                        <th>Nama Proyek</th>
                         <th>Tanggal Dibuat</th>
                         <th>Tanggal Update</th>
                         <th>Action</th>
@@ -134,11 +144,15 @@
                 <tbody>
                     {% for item in bmc_list_json %}
                     <tr>
-                        <td>{{ item.created_at if item.created_at else '-' }}</td>
-                        <td>{{ item.updated_at if item.updated_at else '-' }}</td>
+                        <td>{{ item.project_name or '-' }}</td>
+                        <td>{{ item.created_at or '-' }}</td>
+                        <td>{{ item.updated_at or '-' }}</td>
                         <td>
-                            <a href="{{ url_for('routes.bmc') }}?edit={{ item.id }}" class="btn btn-sm btn-warning">
+                            <button onclick="editBMC('{{ item.id }}')" class="btn btn-sm btn-warning">
                                 <i class="fas fa-edit"></i> Edit
+                            </button>
+                            <a href="{{ url_for('routes.delete_bmc', bmc_id=item.id) }}" class="btn btn-sm btn-danger" onclick="return confirm('Yakin ingin menghapus data ini?')">
+                                <i class="fas fa-trash"></i> Hapus
                             </a>
                         </td>
                     </tr>
@@ -150,36 +164,44 @@
 </div>
 {% endif %}
 
-<script id="bmc-data" type="application/json">
-{{ bmc_list_json|tojson }}
-</script>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const editId = urlParams.get('edit');
-    if (editId) {
-        let bmcData = [];
-        const bmcElem = document.getElementById('bmc-data');
-        if (bmcElem) {
-            try {
-                bmcData = JSON.parse(bmcElem.textContent || '[]') || [];
-            } catch (e) {
-                bmcData = [];
-            }
-        }
-        const found = bmcData.find(b => String(b.id) === String(editId));
-        if (found) {
-            document.querySelector('textarea[name="key_partners"]').value = found.key_partners || '';
-            document.querySelector('textarea[name="key_activities"]').value = found.key_activities || '';
-            document.querySelector('textarea[name="key_resources"]').value = found.key_resources || '';
-            document.querySelector('textarea[name="value_proposition"]').value = found.value_proposition || '';
-            document.querySelector('textarea[name="customer_relationships"]').value = found.customer_relationships || '';
-            document.querySelector('textarea[name="channels"]').value = found.channels || '';
-            document.querySelector('textarea[name="customer_segments"]').value = found.customer_segments || '';
-            document.querySelector('textarea[name="cost_structure"]').value = found.cost_structure || '';
-            document.querySelector('textarea[name="revenue_streams"]').value = found.revenue_streams || '';
-        }
+function editBMC(id) {
+    const bmcData = {{ bmc_list_json|tojson }};
+    const found = bmcData.find(b => String(b.id) === String(id));
+    if (found) {
+        document.getElementById('edit_id').value = found.id;
+        document.getElementById('project_name').value = found.project_name || '';
+        document.getElementById('key_partners').value = found.key_partners || '';
+        document.getElementById('key_activities').value = found.key_activities || '';
+        document.getElementById('key_resources').value = found.key_resources || '';
+        document.getElementById('value_proposition').value = found.value_proposition || '';
+        document.getElementById('customer_relationships').value = found.customer_relationships || '';
+        document.getElementById('channels').value = found.channels || '';
+        document.getElementById('customer_segments').value = found.customer_segments || '';
+        document.getElementById('cost_structure').value = found.cost_structure || '';
+        document.getElementById('revenue_streams').value = found.revenue_streams || '';
+        document.getElementById('submitBtn').innerHTML = '<i class="fas fa-edit"></i> Update Business Model Canvas';
+        document.getElementById('submitBtn').classList.remove('btn-primary');
+        document.getElementById('submitBtn').classList.add('btn-warning');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-});
+}
+
+function resetForm() {
+    document.getElementById('edit_id').value = '';
+    document.getElementById('project_name').value = '';
+    document.getElementById('key_partners').value = '';
+    document.getElementById('key_activities').value = '';
+    document.getElementById('key_resources').value = '';
+    document.getElementById('value_proposition').value = '';
+    document.getElementById('customer_relationships').value = '';
+    document.getElementById('channels').value = '';
+    document.getElementById('customer_segments').value = '';
+    document.getElementById('cost_structure').value = '';
+    document.getElementById('revenue_streams').value = '';
+    document.getElementById('submitBtn').innerHTML = '<i class="fas fa-save"></i> Simpan Business Model Canvas';
+    document.getElementById('submitBtn').classList.remove('btn-warning');
+    document.getElementById('submitBtn').classList.add('btn-primary');
+}
 </script>
 {% endblock %}
