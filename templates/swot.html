@@ -68,7 +68,7 @@
     </div>
 </form>
 
-{% if swot_list %}
+{% if swot_list_json %}
 <div class="row mt-5">
     <div class="col-12">
         <h5><i class="fas fa-list"></i> Data SWOT Tersimpan</h5>
@@ -82,10 +82,10 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for item in swot_list %}
+                    {% for item in swot_list_json %}
                     <tr>
-                        <td>{{ item.created_at.strftime('%d-%m-%Y %H:%M') }}</td>
-                        <td>{{ item.updated_at.strftime('%d-%m-%Y %H:%M') }}</td>
+                        <td>{{ item.created_at if item.created_at else '-' }}</td>
+                        <td>{{ item.updated_at if item.updated_at else '-' }}</td>
                         <td>
                             <a href="{{ url_for('routes.swot') }}?edit={{ item.id }}" class="btn btn-sm btn-warning">
                                 <i class="fas fa-edit"></i> Edit
@@ -101,7 +101,7 @@
 {% endif %}
 
 <script id="swot-data" type="application/json">
-{{ swot_list|tojson }}
+{{ swot_list_json|tojson }}
 </script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {

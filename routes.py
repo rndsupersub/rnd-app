@@ -153,6 +153,7 @@ def download_file(project_id):
         return redirect(url_for('routes.view_project', project_id=project.id))
     return send_file(project.file_path, as_attachment=True)
 
+# ==================== CRUD SWOT (DIPERBAIKI) ====================
 @routes_bp.route('/swot', methods=['GET', 'POST'])
 @login_required
 def swot():
@@ -191,8 +192,23 @@ def swot():
     
     swot_data = SWOT.query.filter_by(user_id=current_user.id).first()
     swot_list = SWOT.query.filter_by(user_id=current_user.id).all()
-    return render_template('swot.html', swot=swot_data, swot_list=swot_list)
+    
+    # Ubah ke dictionary agar bisa di-json
+    swot_list_json = []
+    for item in swot_list:
+        swot_list_json.append({
+            'id': item.id,
+            'strengths': item.strengths,
+            'weaknesses': item.weaknesses,
+            'opportunities': item.opportunities,
+            'threats': item.threats,
+            'created_at': item.created_at.isoformat() if item.created_at else None,
+            'updated_at': item.updated_at.isoformat() if item.updated_at else None
+        })
+    
+    return render_template('swot.html', swot=swot_data, swot_list_json=swot_list_json)
 
+# ==================== CRUD PESTLE (DIPERBAIKI) ====================
 @routes_bp.route('/pestle', methods=['GET', 'POST'])
 @login_required
 def pestle():
@@ -237,8 +253,25 @@ def pestle():
     
     pestle_data = PESTLE.query.filter_by(user_id=current_user.id).first()
     pestle_list = PESTLE.query.filter_by(user_id=current_user.id).all()
-    return render_template('pestle.html', pestle=pestle_data, pestle_list=pestle_list)
+    
+    # Ubah ke dictionary agar bisa di-json
+    pestle_list_json = []
+    for item in pestle_list:
+        pestle_list_json.append({
+            'id': item.id,
+            'political': item.political,
+            'economic': item.economic,
+            'social': item.social,
+            'technological': item.technological,
+            'legal': item.legal,
+            'environmental': item.environmental,
+            'created_at': item.created_at.isoformat() if item.created_at else None,
+            'updated_at': item.updated_at.isoformat() if item.updated_at else None
+        })
+    
+    return render_template('pestle.html', pestle=pestle_data, pestle_list_json=pestle_list_json)
 
+# ==================== CRUD BMC (DIPERBAIKI) ====================
 @routes_bp.route('/bmc', methods=['GET', 'POST'])
 @login_required
 def bmc():
@@ -292,4 +325,23 @@ def bmc():
     
     bmc_data = BMC.query.filter_by(user_id=current_user.id).first()
     bmc_list = BMC.query.filter_by(user_id=current_user.id).all()
-    return render_template('bmc.html', bmc=bmc_data, bmc_list=bmc_list)
+    
+    # Ubah ke dictionary agar bisa di-json
+    bmc_list_json = []
+    for item in bmc_list:
+        bmc_list_json.append({
+            'id': item.id,
+            'key_partners': item.key_partners,
+            'key_activities': item.key_activities,
+            'key_resources': item.key_resources,
+            'value_proposition': item.value_proposition,
+            'customer_relationships': item.customer_relationships,
+            'channels': item.channels,
+            'customer_segments': item.customer_segments,
+            'cost_structure': item.cost_structure,
+            'revenue_streams': item.revenue_streams,
+            'created_at': item.created_at.isoformat() if item.created_at else None,
+            'updated_at': item.updated_at.isoformat() if item.updated_at else None
+        })
+    
+    return render_template('bmc.html', bmc=bmc_data, bmc_list_json=bmc_list_json)
