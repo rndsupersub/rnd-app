@@ -153,6 +153,21 @@ def download_file(project_id):
         return redirect(url_for('routes.view_project', project_id=project.id))
     return send_file(project.file_path, as_attachment=True)
 
+# ==================== DELETE PROYEK ====================
+@routes_bp.route('/project/<int:project_id>/delete')
+@login_required
+@roles_required('admin', 'rnd_staff')
+def delete_project(project_id):
+    project = Project.query.get_or_404(project_id)
+    if project.user_id != current_user.id and current_user.role != 'admin':
+        flash('Anda tidak memiliki akses.', 'danger')
+        return redirect(url_for('routes.projects'))
+    
+    db.session.delete(project)
+    db.session.commit()
+    flash('Proyek berhasil dihapus!', 'success')
+    return redirect(url_for('routes.projects'))
+
 # ==================== CRUD SWOT (DENGAN EDIT, HAPUS, NAMA PROYEK) ====================
 @routes_bp.route('/swot', methods=['GET', 'POST'])
 @login_required
