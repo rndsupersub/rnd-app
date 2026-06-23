@@ -7,17 +7,14 @@ from werkzeug.utils import secure_filename
 from app import db
 from models import User, Project, SWOT, PESTLE, BMC
 
-# ==================== KONFIGURASI UPLOAD ====================
 UPLOAD_FOLDER = '/tmp'
 ALLOWED_EXTENSIONS = {'pdf', 'docx', 'xlsx', 'xls', 'doc'}
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# ==================== BUAT BLUEPRINT ====================
 routes_bp = Blueprint('routes', __name__)
 
-# ==================== DECORATOR RBAC ====================
 def roles_required(*roles):
     def decorator(f):
         @wraps(f)
@@ -32,14 +29,12 @@ def roles_required(*roles):
         return decorated_function
     return decorator
 
-# ==================== HALAMAN DASHBOARD ====================
 @routes_bp.route('/')
 @routes_bp.route('/dashboard')
 @login_required
 def dashboard():
     return render_template('dashboard.html', title='Dashboard')
 
-# ==================== FITUR PROYEK ====================
 @routes_bp.route('/projects')
 @login_required
 def projects():
@@ -164,7 +159,6 @@ def download_file(project_id):
     
     return send_file(project.file_path, as_attachment=True)
 
-# ==================== CRUD SWOT (TANPA PROYEK) ====================
 @routes_bp.route('/swot', methods=['GET', 'POST'])
 @login_required
 def swot():
@@ -205,7 +199,6 @@ def swot():
     swot_list = SWOT.query.filter_by(user_id=current_user.id).all()
     return render_template('swot.html', swot=swot_data, swot_list=swot_list)
 
-# ==================== CRUD PESTLE (TANPA PROYEK) ====================
 @routes_bp.route('/pestle', methods=['GET', 'POST'])
 @login_required
 def pestle():
@@ -252,7 +245,6 @@ def pestle():
     pestle_list = PESTLE.query.filter_by(user_id=current_user.id).all()
     return render_template('pestle.html', pestle=pestle_data, pestle_list=pestle_list)
 
-# ==================== CRUD BMC (TANPA PROYEK) ====================
 @routes_bp.route('/bmc', methods=['GET', 'POST'])
 @login_required
 def bmc():

@@ -13,11 +13,9 @@
     <h2><i class="fas fa-globe"></i> Analisis PESTLE</h2>
 </div>
 
-<!-- ============ FORM ISI PESTLE (TANPA PILIH PROYEK) ============ -->
 <form method="POST" action="{{ url_for('routes.pestle') }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     
-    <!-- ============ LAYOUT PESTLE 6 KOLOM ============ -->
     <div class="table-responsive">
         <table class="table table-bordered table-hover shadow">
             <thead>
@@ -43,7 +41,6 @@
         </table>
     </div>
     
-    <!-- ============ TOMBOL SIMPAN ============ -->
     <div class="row mt-4">
         <div class="col-12 text-center">
             <button type="submit" class="btn btn-primary btn-lg">
@@ -53,7 +50,6 @@
     </div>
 </form>
 
-<!-- ============ DAFTAR DATA PESTLE TERSIMPAN ============ -->
 {% if pestle_list %}
 <div class="row mt-5">
     <div class="col-12">
