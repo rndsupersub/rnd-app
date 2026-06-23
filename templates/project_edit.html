@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Proyek - R&D System{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="{{ url_for('routes.projects') }}" class="btn btn-secondary btn-sm">
+        <i class="fas fa-arrow-left"></i> Kembali ke Daftar Proyek
+    </a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card shadow">
+            <div class="card-header bg-warning text-dark">
+                <h4 class="mb-0"><i class="fas fa-edit"></i> Edit Proyek: {{ project.name }}</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('routes.edit_project', project_id=project.id) }}" enctype="multipart/form-data">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="name" class="form-label">Nama Proyek <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="name" name="name" value="{{ project.name }}" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="project_type" class="form-label">Tipe Proyek</label>
+                                <select class="form-select" id="project_type" name="project_type">
+                                    <option value="Main" {% if project.project_type == 'Main' %}selected{% endif %}>Proyek Utama (Main)</option>
+                                    <option value="Improvement" {% if project.project_type == 'Improvement' %}selected{% endif %}>Proyek Perbaikan (Improvement)</option>
+                                    <option value="Side" {% if project.project_type == 'Side' %}selected{% endif %}>Proyek Sampingan (Side)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Deskripsi</label>
+                        <textarea class="form-control" id="description" name="description" rows="3">{{ project.description or '' }}</textarea>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="start_date" class="form-label">Tanggal Mulai</label>
+                                <input type="date" class="form-control" id="start_date" name="start_date" value="{{ project.start_date.strftime('%Y-%m-%d') if project.start_date else '' }}">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="end_date" class="form-label">Tanggal Selesai</label>
+                                <input type="date" class="form-control" id="end_date" name="end_date" value="{{ project.end_date.strftime('%Y-%m-%d') if project.end_date else '' }}">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="status" class="form-label">Status</label>
+                                <select class="form-select" id="status" name="status">
+                                    <option value="On Track" {% if project.status == 'On Track' %}selected{% endif %}>On Track</option>
+                                    <option value="Delayed" {% if project.status == 'Delayed' %}selected{% endif %}>Delayed</option>
+                                    <option value="Completed" {% if project.status == 'Completed' %}selected{% endif %}>Completed</option>
+                                    <option value="Canceled" {% if project.status == 'Canceled' %}selected{% endif %}>Canceled</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="google_drive_link" class="form-label">Link Google Drive</label>
+                        <input type="url" class="form-control" id="google_drive_link" name="google_drive_link" placeholder="https://drive.google.com/..." value="{{ project.google_drive_link or '' }}">
+                        <small class="text-muted">Masukkan link folder/file Google Drive.</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="file" class="form-label">Upload File (PDF, Word, Excel)</label>
+                        <input type="file" class="form-control" id="file" name="file">
+                        <small class="text-muted">Maksimal 10MB. Ekstensi yang diizinkan: .pdf, .docx, .xlsx, .doc, .xls</small>
+                        {% if project.file_path %}
+                        <p class="mt-2"><strong>File saat ini:</strong> <a href="{{ url_for('routes.download_file', project_id=project.id) }}" class="btn btn-sm btn-outline-success"><i class="fas fa-download"></i> Download</a></p>
+                        {% endif %}
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Update Proyek
+                    </button>
+                    <a href="{{ url_for('routes.projects') }}" class="btn btn-secondary">Batal</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

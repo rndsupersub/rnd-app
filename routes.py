@@ -1,8 +1,18 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, abort
+from flask import Blueprint, render_template, redirect, url_for, flash, request, abort, send_file
 from flask_login import login_required, current_user
 from functools import wraps
+from datetime import datetime
+import os
+from werkzeug.utils import secure_filename
 from app import db
 from models import User, Project, SWOT, PESTLE, BMC
+
+# ==================== KONFIGURASI UPLOAD ====================
+UPLOAD_FOLDER = '/tmp'
+ALLOWED_EXTENSIONS = {'pdf', 'docx', 'xlsx', 'xls', 'doc'}
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 routes_bp = Blueprint('routes', __name__)
 
@@ -43,6 +53,8 @@ def new_project():
         name = request.form.get('name')
         description = request.form.get('description')
         project_type = request.form.get('project_type', 'Main')
+        status = request.form.get('status', 'On Track')
+        google_drive_link = request.form.get('google_drive_link')
         
         if not name:
             flash('Nama proyek harus diisi.', 'danger')
@@ -52,8 +64,29 @@ def new_project():
             name=name,
             description=description,
             project_type=project_type,
+            status=status,
+            google_drive_link=google_drive_link,
             user_id=current_user.id
         )
+        
+        # Tanggal
+        start_date = request.form.get('start_date')
+        end_date = request.form.get('end_date')
+        if start_date:
+            new_project.start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+        if end_date:
+            new_project.end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
+        
+        # Upload file
+        if 'file' in request.files:
+            file = request.files['file']
+            if file and file.filename and allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+                unique_filename = f"{datetime.utcnow().timestamp()}_{filename}"
+                file_path = os.path.join(UPLOAD_FOLDER, unique_filename)
+                file.save(file_path)
+                new_project.file_path = file_path
+        
         db.session.add(new_project)
         db.session.commit()
         flash('Proyek berhasil dibuat!', 'success')
@@ -61,7 +94,79 @@ def new_project():
     
     return render_template('project_form.html')
 
-# ==================== CRUD SWOT (DENGAN POST & GET) ====================
+@routes_bp.route('/project/<int:project_id>/edit', methods=['GET', 'POST'])
+@login_required
+@roles_required('admin', 'rnd_staff')
+def edit_project(project_id):
+    project = Project.query.get_or_404(project_id)
+    
+    if project.user_id != current_user.id and current_user.role != 'admin':
+        flash('Anda tidak memiliki akses ke proyek ini.', 'danger')
+        return redirect(url_for('routes.projects'))
+    
+    if request.method == 'POST':
+        project.name = request.form.get('name')
+        project.description = request.form.get('description')
+        project.project_type = request.form.get('project_type', 'Main')
+        project.status = request.form.get('status', 'On Track')
+        project.google_drive_link = request.form.get('google_drive_link')
+        
+        start_date = request.form.get('start_date')
+        end_date = request.form.get('end_date')
+        if start_date:
+            project.start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+        else:
+            project.start_date = None
+        if end_date:
+            project.end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
+        else:
+            project.end_date = None
+        
+        if 'file' in request.files:
+            file = request.files['file']
+            if file and file.filename and allowed_file(file.filename):
+                # Hapus file lama kalau ada
+                if project.file_path and os.path.exists(project.file_path):
+                    os.remove(project.file_path)
+                filename = secure_filename(file.filename)
+                unique_filename = f"{datetime.utcnow().timestamp()}_{filename}"
+                file_path = os.path.join(UPLOAD_FOLDER, unique_filename)
+                file.save(file_path)
+                project.file_path = file_path
+        
+        db.session.commit()
+        flash('Proyek berhasil diperbarui!', 'success')
+        return redirect(url_for('routes.view_project', project_id=project.id))
+    
+    return render_template('project_edit.html', project=project)
+
+@routes_bp.route('/project/<int:project_id>')
+@login_required
+def view_project(project_id):
+    project = Project.query.get_or_404(project_id)
+    
+    if project.user_id != current_user.id and current_user.role != 'admin':
+        flash('Anda tidak memiliki akses ke proyek ini.', 'danger')
+        return redirect(url_for('routes.projects'))
+    
+    return render_template('project_detail.html', project=project)
+
+@routes_bp.route('/project/<int:project_id>/download')
+@login_required
+def download_file(project_id):
+    project = Project.query.get_or_404(project_id)
+    
+    if project.user_id != current_user.id and current_user.role != 'admin':
+        flash('Anda tidak memiliki akses.', 'danger')
+        return redirect(url_for('routes.projects'))
+    
+    if not project.file_path or not os.path.exists(project.file_path):
+        flash('File tidak ditemukan.', 'danger')
+        return redirect(url_for('routes.view_project', project_id=project.id))
+    
+    return send_file(project.file_path, as_attachment=True)
+
+# ==================== CRUD SWOT ====================
 @routes_bp.route('/swot', methods=['GET', 'POST'])
 @login_required
 def swot():
@@ -95,7 +200,7 @@ def swot():
     swot_data = SWOT.query.filter_by(user_id=current_user.id).first()
     return render_template('swot.html', swot=swot_data)
 
-# ==================== CRUD PESTLE (DENGAN POST & GET) ====================
+# ==================== CRUD PESTLE ====================
 @routes_bp.route('/pestle', methods=['GET', 'POST'])
 @login_required
 def pestle():
@@ -135,7 +240,7 @@ def pestle():
     pestle_data = PESTLE.query.filter_by(user_id=current_user.id).first()
     return render_template('pestle.html', pestle=pestle_data)
 
-# ==================== CRUD BMC (DENGAN POST & GET) ====================
+# ==================== CRUD BMC ====================
 @routes_bp.route('/bmc', methods=['GET', 'POST'])
 @login_required
 def bmc():

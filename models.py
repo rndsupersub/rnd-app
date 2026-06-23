@@ -12,6 +12,7 @@ class User(UserMixin, db.Model):
     role = db.Column(db.String(50), nullable=False, default='viewer')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+    # Relasi
     projects = db.relationship('Project', backref='user', lazy=True)
     swots = db.relationship('SWOT', backref='user', lazy=True)
     pestles = db.relationship('PESTLE', backref='user', lazy=True)
@@ -27,6 +28,14 @@ class Project(db.Model):
     name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text)
     project_type = db.Column(db.String(50), default='Main')
+    
+    # ========== KOLOM BARU ==========
+    start_date = db.Column(db.Date, nullable=True)
+    end_date = db.Column(db.Date, nullable=True)
+    status = db.Column(db.String(50), default='On Track')
+    google_drive_link = db.Column(db.String(500), nullable=True)
+    file_path = db.Column(db.String(500), nullable=True)
+    
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
