@@ -2,6 +2,7 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_wtf.csrf import CSRFProtect
+import os
 
 # ==================== INISIALISASI APLIKASI ====================
 app = Flask(__name__)
@@ -9,8 +10,8 @@ app = Flask(__name__)
 # Konfigurasi keamanan
 app.config['SECRET_KEY'] = 'Fathan12345*****'
 
-# Konfigurasi database (SQLite di memori untuk Vercel)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
+# Konfigurasi database (SQLite file-based di /tmp untuk Vercel)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join('/tmp', 'database.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # ==================== INISIALISASI EXTENSION ====================
