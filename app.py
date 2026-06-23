@@ -7,7 +7,7 @@ import os
 app = Flask(__name__)
 
 app.config['SECRET_KEY'] = 'Fathan12345*****'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/rnd_app_fix.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/rnd_app_final.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
