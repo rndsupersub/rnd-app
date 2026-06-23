@@ -85,13 +85,24 @@
 {% endif %}
 
 <!-- ============ JAVASCRIPT UNTUK FITUR EDIT ============ -->
+<script id="pestle-data" type="application/json">
+{{ pestle_list|tojson }}
+</script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const urlParams = new URLSearchParams(window.location.search);
     const editId = urlParams.get('edit');
     if (editId) {
-        const pestleData = {{ pestle_list|tojson }};
-        const found = pestleData.find(p => p.id == editId);
+        let pestleData = [];
+        const pestleElem = document.getElementById('pestle-data');
+        if (pestleElem) {
+            try {
+                pestleData = JSON.parse(pestleElem.textContent || '[]') || [];
+            } catch (e) {
+                pestleData = [];
+            }
+        }
+        const found = pestleData.find(p => String(p.id) === String(editId));
         if (found) {
             document.querySelector('textarea[name="political"]').value = found.political || '';
             document.querySelector('textarea[name="economic"]').value = found.economic || '';

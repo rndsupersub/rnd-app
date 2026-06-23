@@ -153,13 +153,24 @@
 {% endif %}
 
 <!-- ============ JAVASCRIPT UNTUK FITUR EDIT ============ -->
+<script id="bmc-data" type="application/json">
+{{ bmc_list|tojson }}
+</script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const urlParams = new URLSearchParams(window.location.search);
     const editId = urlParams.get('edit');
     if (editId) {
-        const bmcData = {{ bmc_list|tojson }};
-        const found = bmcData.find(b => b.id == editId);
+        let bmcData = [];
+        const bmcElem = document.getElementById('bmc-data');
+        if (bmcElem) {
+            try {
+                bmcData = JSON.parse(bmcElem.textContent || '[]') || [];
+            } catch (e) {
+                bmcData = [];
+            }
+        }
+        const found = bmcData.find(b => String(b.id) === String(editId));
         if (found) {
             document.querySelector('textarea[name="key_partners"]').value = found.key_partners || '';
             document.querySelector('textarea[name="key_activities"]').value = found.key_activities || '';

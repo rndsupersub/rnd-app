@@ -103,13 +103,25 @@
 {% endif %}
 
 <!-- ============ JAVASCRIPT UNTUK FITUR EDIT ============ -->
+<!-- Embed data as JSON to avoid JS/Jinja parsing issues -->
+<script id="swot-data" type="application/json">
+{{ swot_list|tojson }}
+</script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const urlParams = new URLSearchParams(window.location.search);
     const editId = urlParams.get('edit');
     if (editId) {
-        const swotData = {{ swot_list|tojson }};
-        const found = swotData.find(s => s.id == editId);
+        let swotData = [];
+        const swotElem = document.getElementById('swot-data');
+        if (swotElem) {
+            try {
+                swotData = JSON.parse(swotElem.textContent || '[]') || [];
+            } catch (e) {
+                swotData = [];
+            }
+        }
+        const found = swotData.find(s => String(s.id) === String(editId));
         if (found) {
             document.querySelector('textarea[name="strengths"]').value = found.strengths || '';
             document.querySelector('textarea[name="weaknesses"]').value = found.weaknesses || '';
