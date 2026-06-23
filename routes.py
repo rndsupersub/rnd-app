@@ -163,18 +163,16 @@ def download_file(project_id):
     
     return send_file(project.file_path, as_attachment=True)
 
-# ==================== CRUD SWOT ====================
+# ==================== CRUD SWOT (LAYOUT TETAP) ====================
 @routes_bp.route('/swot', methods=['GET', 'POST'])
 @login_required
 def swot():
-    user_projects = Project.query.filter_by(user_id=current_user.id).all()
-    
     if request.method == 'POST':
-        project_id = request.form.get('project_id')
         strengths = request.form.get('strengths')
         weaknesses = request.form.get('weaknesses')
         opportunities = request.form.get('opportunities')
         threats = request.form.get('threats')
+        project_id = request.form.get('project_id')
         
         swot_data = SWOT.query.filter_by(user_id=current_user.id, project_id=project_id).first()
         
@@ -199,23 +197,27 @@ def swot():
         db.session.commit()
         return redirect(url_for('routes.swot'))
     
+    user_projects = Project.query.filter_by(user_id=current_user.id).all()
     swot_data = SWOT.query.filter_by(user_id=current_user.id).all()
-    return render_template('swot.html', projects=user_projects, swot_list=swot_data)
+    
+    swot_dict = {}
+    for swot in swot_data:
+        swot_dict[swot.project_id] = swot
+    
+    return render_template('swot.html', projects=user_projects, swot_dict=swot_dict, swot_list=swot_data)
 
-# ==================== CRUD PESTLE ====================
+# ==================== CRUD PESTLE (LAYOUT TETAP) ====================
 @routes_bp.route('/pestle', methods=['GET', 'POST'])
 @login_required
 def pestle():
-    user_projects = Project.query.filter_by(user_id=current_user.id).all()
-    
     if request.method == 'POST':
-        project_id = request.form.get('project_id')
         political = request.form.get('political')
         economic = request.form.get('economic')
         social = request.form.get('social')
         technological = request.form.get('technological')
         legal = request.form.get('legal')
         environmental = request.form.get('environmental')
+        project_id = request.form.get('project_id')
         
         pestle_data = PESTLE.query.filter_by(user_id=current_user.id, project_id=project_id).first()
         
@@ -244,17 +246,20 @@ def pestle():
         db.session.commit()
         return redirect(url_for('routes.pestle'))
     
+    user_projects = Project.query.filter_by(user_id=current_user.id).all()
     pestle_data = PESTLE.query.filter_by(user_id=current_user.id).all()
-    return render_template('pestle.html', projects=user_projects, pestle_list=pestle_data)
+    
+    pestle_dict = {}
+    for pestle in pestle_data:
+        pestle_dict[pestle.project_id] = pestle
+    
+    return render_template('pestle.html', projects=user_projects, pestle_dict=pestle_dict, pestle_list=pestle_data)
 
-# ==================== CRUD BMC ====================
+# ==================== CRUD BMC (LAYOUT TETAP) ====================
 @routes_bp.route('/bmc', methods=['GET', 'POST'])
 @login_required
 def bmc():
-    user_projects = Project.query.filter_by(user_id=current_user.id).all()
-    
     if request.method == 'POST':
-        project_id = request.form.get('project_id')
         key_partners = request.form.get('key_partners')
         key_activities = request.form.get('key_activities')
         key_resources = request.form.get('key_resources')
@@ -264,6 +269,7 @@ def bmc():
         customer_segments = request.form.get('customer_segments')
         cost_structure = request.form.get('cost_structure')
         revenue_streams = request.form.get('revenue_streams')
+        project_id = request.form.get('project_id')
         
         bmc_data = BMC.query.filter_by(user_id=current_user.id, project_id=project_id).first()
         
@@ -298,5 +304,11 @@ def bmc():
         db.session.commit()
         return redirect(url_for('routes.bmc'))
     
+    user_projects = Project.query.filter_by(user_id=current_user.id).all()
     bmc_data = BMC.query.filter_by(user_id=current_user.id).all()
-    return render_template('bmc.html', projects=user_projects, bmc_list=bmc_data)
+    
+    bmc_dict = {}
+    for bmc in bmc_data:
+        bmc_dict[bmc.project_id] = bmc
+    
+    return render_template('bmc.html', projects=user_projects, bmc_dict=bmc_dict, bmc_list=bmc_data)

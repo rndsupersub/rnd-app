@@ -13,23 +13,27 @@
     <h2><i class="fas fa-globe"></i> Analisis PESTLE</h2>
 </div>
 
-<form method="POST" action="{{ url_for('routes.pestle') }}" class="mb-4">
+<!-- ============ FORM PILIH PROYEK & ISI PESTLE ============ -->
+<form method="POST" action="{{ url_for('routes.pestle') }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     
-    <div class="row g-3">
+    <!-- Pilih Proyek -->
+    <div class="row mb-4">
         <div class="col-md-6">
             <div class="card border-primary shadow">
                 <div class="card-header bg-primary text-white">
                     <h5 class="mb-0"><i class="fas fa-project-diagram"></i> Pilih Proyek</h5>
                 </div>
                 <div class="card-body">
-                    <select class="form-select" name="project_id" required>
+                    <select class="form-select" name="project_id" id="projectSelect" required onchange="this.form.submit()">
                         <option value="">-- Pilih Proyek --</option>
                         {% for project in projects %}
-                        <option value="{{ project.id }}">{{ project.name }}</option>
+                        <option value="{{ project.id }}" {% if request.form.get('project_id')|string == project.id|string %}selected{% endif %}>
+                            {{ project.name }}
+                        </option>
                         {% endfor %}
                     </select>
-                    <small class="text-muted">Pilih proyek yang akan dianalisis.</small>
+                    <small class="text-muted">Pilih proyek yang akan dianalisis. Jika sudah ada data, akan otomatis ditampilkan.</small>
                 </div>
             </div>
         </div>
@@ -39,121 +43,104 @@
                     <h5 class="mb-0"><i class="fas fa-info-circle"></i> Informasi</h5>
                 </div>
                 <div class="card-body">
-                    <p class="text-muted mb-0">Isi data PESTLE untuk proyek yang dipilih. Data akan tersimpan dan bisa diedit kapan saja.</p>
+                    <p class="text-muted mb-0">Isi data PESTLE untuk proyek yang dipilih. Klik "Simpan" untuk menyimpan data.</p>
+                    <p class="text-muted small mt-2">
+                        {% if pestle_list %}
+                        <i class="fas fa-check-circle text-success"></i> {{ pestle_list|length }} data PESTLE tersimpan.
+                        {% else %}
+                        <i class="fas fa-info-circle text-warning"></i> Belum ada data PESTLE.
+                        {% endif %}
+                    </p>
                 </div>
             </div>
         </div>
     </div>
-</form>
-
-{% if pestle_list %}
+    
+    <!-- ============ LAYOUT PESTLE 6 KOLOM ============ -->
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover shadow">
+            <thead>
+                <tr class="text-center">
+                    <th class="bg-primary text-white" style="width: 16.66%;">POLITICAL</th>
+                    <th class="bg-success text-white" style="width: 16.66%;">ECONOMIC</th>
+                    <th class="bg-warning text-dark" style="width: 16.66%;">SOCIAL</th>
+                    <th class="bg-info text-white" style="width: 16.66%;">TECHNOLOGICAL</th>
+                    <th class="bg-danger text-white" style="width: 16.66%;">LEGAL</th>
+                    <th class="bg-secondary text-white" style="width: 16.66%;">ENVIRONMENTAL</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    {% set selected_project_id = request.form.get('project_id')|int %}
+                    {% set pestle_data = pestle_dict.get(selected_project_id) if selected_project_id else None %}
+                    <td><textarea class="form-control" name="political" rows="4" placeholder="Faktor politik...">{{ pestle_data.political if pestle_data else '' }}</textarea></td>
+                    <td><textarea class="form-control" name="economic" rows="4" placeholder="Faktor ekonomi...">{{ pestle_data.economic if pestle_data else '' }}</textarea></td>
+                    <td><textarea class="form-control" name="social" rows="4" placeholder="Faktor sosial...">{{ pestle_data.social if pestle_data else '' }}</textarea></td>
+                    <td><textarea class="form-control" name="technological" rows="4" placeholder="Faktor teknologi...">{{ pestle_data.technological if pestle_data else '' }}</textarea></td>
+                    <td><textarea class="form-control" name="legal" rows="4" placeholder="Faktor hukum...">{{ pestle_data.legal if pestle_data else '' }}</textarea></td>
+                    <td><textarea class="form-control" name="environmental" rows="4" placeholder="Faktor lingkungan...">{{ pestle_data.environmental if pestle_data else '' }}</textarea></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- ============ TOMBOL SIMPAN ============ -->
     <div class="row mt-4">
-        <div class="col-12">
-            <h5><i class="fas fa-list"></i> Data PESTLE Tersimpan</h5>
-            <div class="table-responsive">
-                <table class="table table-bordered table-hover shadow">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>Proyek</th>
-                            <th>Tanggal Dibuat</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for pestle in pestle_list %}
-                        <tr>
-                            <td>{{ pestle.project.name if pestle.project else 'Tidak ada proyek' }}</td>
-                            <td>{{ pestle.created_at.strftime('%d-%m-%Y %H:%M') }}</td>
-                            <td>
-                                <button class="btn btn-sm btn-warning" onclick="editPESTLE('{{ pestle.id }}')">
-                                    <i class="fas fa-edit"></i> Edit
-                                </button>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+        <div class="col-12 text-center">
+            <button type="submit" class="btn btn-primary btn-lg">
+                <i class="fas fa-save"></i> Simpan Analisis PESTLE
+            </button>
         </div>
     </div>
-{% endif %}
+</form>
 
-<div id="pestleFormContainer" style="display:none;" class="mt-4">
-    <form method="POST" action="{{ url_for('routes.pestle') }}" id="pestleForm">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <input type="hidden" name="project_id" id="pestleProjectId">
-        
+<!-- ============ DAFTAR DATA PESTLE TERSIMPAN ============ -->
+{% if pestle_list %}
+<div class="row mt-5">
+    <div class="col-12">
+        <h5><i class="fas fa-list"></i> Data PESTLE Tersimpan</h5>
         <div class="table-responsive">
             <table class="table table-bordered table-hover shadow">
-                <thead>
-                    <tr class="text-center">
-                        <th class="bg-primary text-white">POLITICAL</th>
-                        <th class="bg-success text-white">ECONOMIC</th>
-                        <th class="bg-warning text-dark">SOCIAL</th>
-                        <th class="bg-info text-white">TECHNOLOGICAL</th>
-                        <th class="bg-danger text-white">LEGAL</th>
-                        <th class="bg-secondary text-white">ENVIRONMENTAL</th>
+                <thead class="table-dark">
+                    <tr>
+                        <th>Proyek</th>
+                        <th>Tanggal Dibuat</th>
+                        <th>Tanggal Update</th>
+                        <th>Action</th>
                     </tr>
                 </thead>
                 <tbody>
+                    {% for pestle in pestle_list %}
                     <tr>
-                        <td><textarea class="form-control" name="political" id="pestlePolitical" rows="4"></textarea></td>
-                        <td><textarea class="form-control" name="economic" id="pestleEconomic" rows="4"></textarea></td>
-                        <td><textarea class="form-control" name="social" id="pestleSocial" rows="4"></textarea></td>
-                        <td><textarea class="form-control" name="technological" id="pestleTechnological" rows="4"></textarea></td>
-                        <td><textarea class="form-control" name="legal" id="pestleLegal" rows="4"></textarea></td>
-                        <td><textarea class="form-control" name="environmental" id="pestleEnvironmental" rows="4"></textarea></td>
+                        <td>{{ pestle.project.name if pestle.project else 'Tidak ada proyek' }}</td>
+                        <td>{{ pestle.created_at.strftime('%d-%m-%Y %H:%M') }}</td>
+                        <td>{{ pestle.updated_at.strftime('%d-%m-%Y %H:%M') }}</td>
+                        <td>
+                            <a href="{{ url_for('routes.pestle') }}?edit={{ pestle.id }}" class="btn btn-sm btn-warning">
+                                <i class="fas fa-edit"></i> Edit
+                            </a>
+                        </td>
                     </tr>
+                    {% endfor %}
                 </tbody>
             </table>
         </div>
-        
-        <div class="row mt-4">
-            <div class="col-12 text-center">
-                <button type="submit" class="btn btn-primary btn-lg">
-                    <i class="fas fa-save"></i> Simpan Analisis PESTLE
-                </button>
-                <button type="button" class="btn btn-secondary btn-lg" onclick="closePESTLE()">
-                    <i class="fas fa-times"></i> Batal
-                </button>
-            </div>
-        </div>
-    </form>
+    </div>
 </div>
+{% endif %}
 
 <script>
-const pestleData = {
-    {% for pestle in pestle_list %}
-    "{{ pestle.id }}": {
-        project_id: "{{ pestle.project_id }}",
-        political: {{ pestle.political|tojson }},
-        economic: {{ pestle.economic|tojson }},
-        social: {{ pestle.social|tojson }},
-        technological: {{ pestle.technological|tojson }},
-        legal: {{ pestle.legal|tojson }},
-        environmental: {{ pestle.environmental|tojson }}
-    },
-    {% endfor %}
-};
-
-function editPESTLE(id) {
-    const data = pestleData[id];
-    if (!data) return;
-    
-    document.getElementById('pestleProjectId').value = data.project_id;
-    document.getElementById('pestlePolitical').value = data.political || '';
-    document.getElementById('pestleEconomic').value = data.economic || '';
-    document.getElementById('pestleSocial').value = data.social || '';
-    document.getElementById('pestleTechnological').value = data.technological || '';
-    document.getElementById('pestleLegal').value = data.legal || '';
-    document.getElementById('pestleEnvironmental').value = data.environmental || '';
-    
-    document.getElementById('pestleFormContainer').style.display = 'block';
-    document.getElementById('pestleFormContainer').scrollIntoView({ behavior: 'smooth' });
-}
-
-function closePESTLE() {
-    document.getElementById('pestleFormContainer').style.display = 'none';
-}
+document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const editId = urlParams.get('edit');
+    if (editId) {
+        const pestleData = {{ pestle_list|tojson }};
+        const found = pestleData.find(p => p.id == editId);
+        if (found) {
+            document.querySelector('select[name="project_id"]').value = found.project_id;
+            document.querySelector('select[name="project_id"]').dispatchEvent(new Event('change'));
+        }
+    }
+});
 </script>
 {% endblock %}

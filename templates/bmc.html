@@ -13,23 +13,27 @@
     <h2><i class="fas fa-chart-pie"></i> Business Model Canvas</h2>
 </div>
 
-<form method="POST" action="{{ url_for('routes.bmc') }}" class="mb-4">
+<!-- ============ FORM PILIH PROYEK & ISI BMC ============ -->
+<form method="POST" action="{{ url_for('routes.bmc') }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     
-    <div class="row g-3">
+    <!-- Pilih Proyek -->
+    <div class="row mb-4">
         <div class="col-md-6">
             <div class="card border-primary shadow">
                 <div class="card-header bg-primary text-white">
                     <h5 class="mb-0"><i class="fas fa-project-diagram"></i> Pilih Proyek</h5>
                 </div>
                 <div class="card-body">
-                    <select class="form-select" name="project_id" required>
+                    <select class="form-select" name="project_id" id="projectSelect" required onchange="this.form.submit()">
                         <option value="">-- Pilih Proyek --</option>
                         {% for project in projects %}
-                        <option value="{{ project.id }}">{{ project.name }}</option>
+                        <option value="{{ project.id }}" {% if request.form.get('project_id')|string == project.id|string %}selected{% endif %}>
+                            {{ project.name }}
+                        </option>
                         {% endfor %}
                     </select>
-                    <small class="text-muted">Pilih proyek yang akan dianalisis.</small>
+                    <small class="text-muted">Pilih proyek yang akan dianalisis. Jika sudah ada data, akan otomatis ditampilkan.</small>
                 </div>
             </div>
         </div>
@@ -39,195 +43,173 @@
                     <h5 class="mb-0"><i class="fas fa-info-circle"></i> Informasi</h5>
                 </div>
                 <div class="card-body">
-                    <p class="text-muted mb-0">Isi data Business Model Canvas untuk proyek yang dipilih. Data akan tersimpan dan bisa diedit kapan saja.</p>
+                    <p class="text-muted mb-0">Isi data Business Model Canvas untuk proyek yang dipilih. Klik "Simpan" untuk menyimpan data.</p>
+                    <p class="text-muted small mt-2">
+                        {% if bmc_list %}
+                        <i class="fas fa-check-circle text-success"></i> {{ bmc_list|length }} data BMC tersimpan.
+                        {% else %}
+                        <i class="fas fa-info-circle text-warning"></i> Belum ada data BMC.
+                        {% endif %}
+                    </p>
                 </div>
             </div>
+        </div>
+    </div>
+    
+    <!-- ============ LAYOUT BMC 9 BLOK ============ -->
+    <div class="row g-2">
+        {% set selected_project_id = request.form.get('project_id')|int %}
+        {% set bmc_data = bmc_dict.get(selected_project_id) if selected_project_id else None %}
+        
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header bg-primary text-white text-center">
+                    <h6>Key Partners</h6>
+                </div>
+                <div class="card-body">
+                    <textarea class="form-control" name="key_partners" rows="4" placeholder="Mitra kunci...">{{ bmc_data.key_partners if bmc_data else '' }}</textarea>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header bg-info text-white text-center">
+                    <h6>Key Activities</h6>
+                </div>
+                <div class="card-body">
+                    <textarea class="form-control" name="key_activities" rows="4" placeholder="Aktivitas utama...">{{ bmc_data.key_activities if bmc_data else '' }}</textarea>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header bg-warning text-dark text-center">
+                    <h6>Key Resources</h6>
+                </div>
+                <div class="card-body">
+                    <textarea class="form-control" name="key_resources" rows="4" placeholder="Sumber daya...">{{ bmc_data.key_resources if bmc_data else '' }}</textarea>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header bg-success text-white text-center">
+                    <h6>Value Proposition</h6>
+                </div>
+                <div class="card-body">
+                    <textarea class="form-control" name="value_proposition" rows="4" placeholder="Nilai yang ditawarkan...">{{ bmc_data.value_proposition if bmc_data else '' }}</textarea>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header bg-danger text-white text-center">
+                    <h6>Customer Relationships</h6>
+                </div>
+                <div class="card-body">
+                    <textarea class="form-control" name="customer_relationships" rows="4" placeholder="Hubungan pelanggan...">{{ bmc_data.customer_relationships if bmc_data else '' }}</textarea>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header bg-secondary text-white text-center">
+                    <h6>Channels</h6>
+                </div>
+                <div class="card-body">
+                    <textarea class="form-control" name="channels" rows="4" placeholder="Saluran distribusi...">{{ bmc_data.channels if bmc_data else '' }}</textarea>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header bg-dark text-white text-center">
+                    <h6>Customer Segments</h6>
+                </div>
+                <div class="card-body">
+                    <textarea class="form-control" name="customer_segments" rows="4" placeholder="Segmen pelanggan...">{{ bmc_data.customer_segments if bmc_data else '' }}</textarea>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header bg-light text-dark text-center">
+                    <h6>Cost Structure</h6>
+                </div>
+                <div class="card-body">
+                    <textarea class="form-control" name="cost_structure" rows="4" placeholder="Struktur biaya...">{{ bmc_data.cost_structure if bmc_data else '' }}</textarea>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header bg-warning text-dark text-center">
+                    <h6>Revenue Streams</h6>
+                </div>
+                <div class="card-body">
+                    <textarea class="form-control" name="revenue_streams" rows="4" placeholder="Aliran pendapatan...">{{ bmc_data.revenue_streams if bmc_data else '' }}</textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ============ TOMBOL SIMPAN ============ -->
+    <div class="row mt-4">
+        <div class="col-12 text-center">
+            <button type="submit" class="btn btn-primary btn-lg">
+                <i class="fas fa-save"></i> Simpan Business Model Canvas
+            </button>
         </div>
     </div>
 </form>
 
+<!-- ============ DAFTAR DATA BMC TERSIMPAN ============ -->
 {% if bmc_list %}
-    <div class="row mt-4">
-        <div class="col-12">
-            <h5><i class="fas fa-list"></i> Data BMC Tersimpan</h5>
-            <div class="table-responsive">
-                <table class="table table-bordered table-hover shadow">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>Proyek</th>
-                            <th>Tanggal Dibuat</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for bmc in bmc_list %}
-                        <tr>
-                            <td>{{ bmc.project.name if bmc.project else 'Tidak ada proyek' }}</td>
-                            <td>{{ bmc.created_at.strftime('%d-%m-%Y %H:%M') }}</td>
-                            <td>
-                                <button class="btn btn-sm btn-warning" onclick="editBMC('{{ bmc.id }}')">
-                                    <i class="fas fa-edit"></i> Edit
-                                </button>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+<div class="row mt-5">
+    <div class="col-12">
+        <h5><i class="fas fa-list"></i> Data BMC Tersimpan</h5>
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover shadow">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Proyek</th>
+                        <th>Tanggal Dibuat</th>
+                        <th>Tanggal Update</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for bmc in bmc_list %}
+                    <tr>
+                        <td>{{ bmc.project.name if bmc.project else 'Tidak ada proyek' }}</td>
+                        <td>{{ bmc.created_at.strftime('%d-%m-%Y %H:%M') }}</td>
+                        <td>{{ bmc.updated_at.strftime('%d-%m-%Y %H:%M') }}</td>
+                        <td>
+                            <a href="{{ url_for('routes.bmc') }}?edit={{ bmc.id }}" class="btn btn-sm btn-warning">
+                                <i class="fas fa-edit"></i> Edit
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
+</div>
 {% endif %}
 
-<div id="bmcFormContainer" style="display:none;" class="mt-4">
-    <form method="POST" action="{{ url_for('routes.bmc') }}" id="bmcForm">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <input type="hidden" name="project_id" id="bmcProjectId">
-        
-        <div class="row g-2">
-            <div class="col-md-4">
-                <div class="card h-100 shadow-sm">
-                    <div class="card-header bg-primary text-white text-center">
-                        <h6>Key Partners</h6>
-                    </div>
-                    <div class="card-body">
-                        <textarea class="form-control" name="key_partners" id="bmcKeyPartners" rows="4"></textarea>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card h-100 shadow-sm">
-                    <div class="card-header bg-info text-white text-center">
-                        <h6>Key Activities</h6>
-                    </div>
-                    <div class="card-body">
-                        <textarea class="form-control" name="key_activities" id="bmcKeyActivities" rows="4"></textarea>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card h-100 shadow-sm">
-                    <div class="card-header bg-warning text-dark text-center">
-                        <h6>Key Resources</h6>
-                    </div>
-                    <div class="card-body">
-                        <textarea class="form-control" name="key_resources" id="bmcKeyResources" rows="4"></textarea>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card h-100 shadow-sm">
-                    <div class="card-header bg-success text-white text-center">
-                        <h6>Value Proposition</h6>
-                    </div>
-                    <div class="card-body">
-                        <textarea class="form-control" name="value_proposition" id="bmcValueProposition" rows="4"></textarea>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card h-100 shadow-sm">
-                    <div class="card-header bg-danger text-white text-center">
-                        <h6>Customer Relationships</h6>
-                    </div>
-                    <div class="card-body">
-                        <textarea class="form-control" name="customer_relationships" id="bmcCustomerRelationships" rows="4"></textarea>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card h-100 shadow-sm">
-                    <div class="card-header bg-secondary text-white text-center">
-                        <h6>Channels</h6>
-                    </div>
-                    <div class="card-body">
-                        <textarea class="form-control" name="channels" id="bmcChannels" rows="4"></textarea>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card h-100 shadow-sm">
-                    <div class="card-header bg-dark text-white text-center">
-                        <h6>Customer Segments</h6>
-                    </div>
-                    <div class="card-body">
-                        <textarea class="form-control" name="customer_segments" id="bmcCustomerSegments" rows="4"></textarea>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card h-100 shadow-sm">
-                    <div class="card-header bg-light text-dark text-center">
-                        <h6>Cost Structure</h6>
-                    </div>
-                    <div class="card-body">
-                        <textarea class="form-control" name="cost_structure" id="bmcCostStructure" rows="4"></textarea>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card h-100 shadow-sm">
-                    <div class="card-header bg-warning text-dark text-center">
-                        <h6>Revenue Streams</h6>
-                    </div>
-                    <div class="card-body">
-                        <textarea class="form-control" name="revenue_streams" id="bmcRevenueStreams" rows="4"></textarea>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="row mt-4">
-            <div class="col-12 text-center">
-                <button type="submit" class="btn btn-primary btn-lg">
-                    <i class="fas fa-save"></i> Simpan Business Model Canvas
-                </button>
-                <button type="button" class="btn btn-secondary btn-lg" onclick="closeBMC()">
-                    <i class="fas fa-times"></i> Batal
-                </button>
-            </div>
-        </div>
-    </form>
-</div>
-
 <script>
-const bmcData = {
-    {% for bmc in bmc_list %}
-    "{{ bmc.id }}": {
-        project_id: "{{ bmc.project_id }}",
-        key_partners: {{ bmc.key_partners|tojson }},
-        key_activities: {{ bmc.key_activities|tojson }},
-        key_resources: {{ bmc.key_resources|tojson }},
-        value_proposition: {{ bmc.value_proposition|tojson }},
-        customer_relationships: {{ bmc.customer_relationships|tojson }},
-        channels: {{ bmc.channels|tojson }},
-        customer_segments: {{ bmc.customer_segments|tojson }},
-        cost_structure: {{ bmc.cost_structure|tojson }},
-        revenue_streams: {{ bmc.revenue_streams|tojson }}
-    },
-    {% endfor %}
-};
-
-function editBMC(id) {
-    const data = bmcData[id];
-    if (!data) return;
-    
-    document.getElementById('bmcProjectId').value = data.project_id;
-    document.getElementById('bmcKeyPartners').value = data.key_partners || '';
-    document.getElementById('bmcKeyActivities').value = data.key_activities || '';
-    document.getElementById('bmcKeyResources').value = data.key_resources || '';
-    document.getElementById('bmcValueProposition').value = data.value_proposition || '';
-    document.getElementById('bmcCustomerRelationships').value = data.customer_relationships || '';
-    document.getElementById('bmcChannels').value = data.channels || '';
-    document.getElementById('bmcCustomerSegments').value = data.customer_segments || '';
-    document.getElementById('bmcCostStructure').value = data.cost_structure || '';
-    document.getElementById('bmcRevenueStreams').value = data.revenue_streams || '';
-    
-    document.getElementById('bmcFormContainer').style.display = 'block';
-    document.getElementById('bmcFormContainer').scrollIntoView({ behavior: 'smooth' });
-}
-
-function closeBMC() {
-    document.getElementById('bmcFormContainer').style.display = 'none';
-}
+document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const editId = urlParams.get('edit');
+    if (editId) {
+        const bmcData = {{ bmc_list|tojson }};
+        const found = bmcData.find(b => b.id == editId);
+        if (found) {
+            document.querySelector('select[name="project_id"]').value = found.project_id;
+            document.querySelector('select[name="project_id"]').dispatchEvent(new Event('change'));
+        }
+    }
+});
 </script>
 {% endblock %}
