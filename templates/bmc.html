@@ -13,6 +13,7 @@
     <h2><i class="fas fa-chart-pie"></i> Business Model Canvas</h2>
 </div>
 
+<!-- ============ FORM BMC ============ -->
 <form method="POST" action="{{ url_for('routes.bmc') }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     
@@ -118,6 +119,7 @@
     </div>
 </form>
 
+<!-- ============ DAFTAR DATA TERSIMPAN ============ -->
 {% if bmc_list %}
 <div class="row mt-5">
     <div class="col-12">
@@ -150,6 +152,7 @@
 </div>
 {% endif %}
 
+<!-- ============ JAVASCRIPT UNTUK FITUR EDIT ============ -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const urlParams = new URLSearchParams(window.location.search);

@@ -13,6 +13,7 @@
     <h2><i class="fas fa-chess-board"></i> Analisis SWOT</h2>
 </div>
 
+<!-- ============ FORM SWOT ============ -->
 <form method="POST" action="{{ url_for('routes.swot') }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     
@@ -68,6 +69,7 @@
     </div>
 </form>
 
+<!-- ============ DAFTAR DATA TERSIMPAN ============ -->
 {% if swot_list %}
 <div class="row mt-5">
     <div class="col-12">
@@ -100,6 +102,7 @@
 </div>
 {% endif %}
 
+<!-- ============ JAVASCRIPT UNTUK FITUR EDIT ============ -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const urlParams = new URLSearchParams(window.location.search);

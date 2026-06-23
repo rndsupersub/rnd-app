@@ -2,6 +2,7 @@ from app import db
 from flask_login import UserMixin
 from datetime import datetime
 
+# ==================== TABEL USER ====================
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
@@ -16,9 +17,7 @@ class User(UserMixin, db.Model):
     pestles = db.relationship('PESTLE', backref='user', lazy=True)
     bmcs = db.relationship('BMC', backref='user', lazy=True)
 
-    def __repr__(self):
-        return f'<User {self.username}>'
-
+# ==================== TABEL PROYEK ====================
 class Project(db.Model):
     __tablename__ = 'projects'
     id = db.Column(db.Integer, primary_key=True)
@@ -34,9 +33,7 @@ class Project(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
 
-    def __repr__(self):
-        return f'<Project {self.name}>'
-
+# ==================== TABEL SWOT ====================
 class SWOT(db.Model):
     __tablename__ = 'swot'
     id = db.Column(db.Integer, primary_key=True)
@@ -47,13 +44,10 @@ class SWOT(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    project_id = db.Column(db.Integer, db.ForeignKey('projects.id'), nullable=True)
-
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id'), nullable=True)  # <- NULLABLE!
     project = db.relationship('Project', backref='swots')
 
-    def __repr__(self):
-        return f'<SWOT for user {self.user_id}>'
-
+# ==================== TABEL PESTLE ====================
 class PESTLE(db.Model):
     __tablename__ = 'pestle'
     id = db.Column(db.Integer, primary_key=True)
@@ -66,13 +60,10 @@ class PESTLE(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    project_id = db.Column(db.Integer, db.ForeignKey('projects.id'), nullable=True)
-
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id'), nullable=True)  # <- NULLABLE!
     project = db.relationship('Project', backref='pestles')
 
-    def __repr__(self):
-        return f'<PESTLE for user {self.user_id}>'
-
+# ==================== TABEL BMC ====================
 class BMC(db.Model):
     __tablename__ = 'bmc'
     id = db.Column(db.Integer, primary_key=True)
@@ -88,9 +79,5 @@ class BMC(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    project_id = db.Column(db.Integer, db.ForeignKey('projects.id'), nullable=True)
-
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id'), nullable=True)  # <- NULLABLE!
     project = db.relationship('Project', backref='bmcs')
-
-    def __repr__(self):
-        return f'<BMC for user {self.user_id}>'

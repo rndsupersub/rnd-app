@@ -7,6 +7,7 @@ from werkzeug.utils import secure_filename
 from app import db
 from models import User, Project, SWOT, PESTLE, BMC
 
+# ==================== KONFIGURASI UPLOAD ====================
 UPLOAD_FOLDER = '/tmp'
 ALLOWED_EXTENSIONS = {'pdf', 'docx', 'xlsx', 'xls', 'doc'}
 
@@ -15,6 +16,7 @@ def allowed_file(filename):
 
 routes_bp = Blueprint('routes', __name__)
 
+# ==================== DECORATOR RBAC ====================
 def roles_required(*roles):
     def decorator(f):
         @wraps(f)
@@ -29,6 +31,7 @@ def roles_required(*roles):
         return decorated_function
     return decorator
 
+# ==================== HALAMAN DASHBOARD & PROYEK ====================
 @routes_bp.route('/')
 @routes_bp.route('/dashboard')
 @login_required
@@ -93,7 +96,6 @@ def new_project():
 @roles_required('admin', 'rnd_staff')
 def edit_project(project_id):
     project = Project.query.get_or_404(project_id)
-    
     if project.user_id != current_user.id and current_user.role != 'admin':
         flash('Anda tidak memiliki akses ke proyek ini.', 'danger')
         return redirect(url_for('routes.projects'))
@@ -137,28 +139,24 @@ def edit_project(project_id):
 @login_required
 def view_project(project_id):
     project = Project.query.get_or_404(project_id)
-    
     if project.user_id != current_user.id and current_user.role != 'admin':
         flash('Anda tidak memiliki akses ke proyek ini.', 'danger')
         return redirect(url_for('routes.projects'))
-    
     return render_template('project_detail.html', project=project)
 
 @routes_bp.route('/project/<int:project_id>/download')
 @login_required
 def download_file(project_id):
     project = Project.query.get_or_404(project_id)
-    
     if project.user_id != current_user.id and current_user.role != 'admin':
         flash('Anda tidak memiliki akses.', 'danger')
         return redirect(url_for('routes.projects'))
-    
     if not project.file_path or not os.path.exists(project.file_path):
         flash('File tidak ditemukan.', 'danger')
         return redirect(url_for('routes.view_project', project_id=project.id))
-    
     return send_file(project.file_path, as_attachment=True)
 
+# ==================== CRUD SWOT ====================
 @routes_bp.route('/swot', methods=['GET', 'POST'])
 @login_required
 def swot():
@@ -199,6 +197,7 @@ def swot():
     swot_list = SWOT.query.filter_by(user_id=current_user.id).all()
     return render_template('swot.html', swot=swot_data, swot_list=swot_list)
 
+# ==================== CRUD PESTLE ====================
 @routes_bp.route('/pestle', methods=['GET', 'POST'])
 @login_required
 def pestle():
@@ -245,6 +244,7 @@ def pestle():
     pestle_list = PESTLE.query.filter_by(user_id=current_user.id).all()
     return render_template('pestle.html', pestle=pestle_data, pestle_list=pestle_list)
 
+# ==================== CRUD BMC ====================
 @routes_bp.route('/bmc', methods=['GET', 'POST'])
 @login_required
 def bmc():
