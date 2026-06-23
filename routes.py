@@ -15,7 +15,7 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 # ==================== BUAT BLUEPRINT ====================
-routes_bp = Blueprint('routes', __name__)  # ← INI HARUS DI ATAS SEMUA ROUTE!
+routes_bp = Blueprint('routes', __name__)
 
 # ==================== DECORATOR RBAC ====================
 def roles_required(*roles):
@@ -196,6 +196,7 @@ def swot():
             
             db.session.commit()
         except Exception as e:
+            print(f"ERROR SWOT: {e}")
             flash(f'Terjadi kesalahan: {e}', 'danger')
         
         return redirect(url_for('routes.swot'))
@@ -242,6 +243,7 @@ def pestle():
             
             db.session.commit()
         except Exception as e:
+            print(f"ERROR PESTLE: {e}")
             flash(f'Terjadi kesalahan: {e}', 'danger')
         
         return redirect(url_for('routes.pestle'))
@@ -297,6 +299,7 @@ def bmc():
             
             db.session.commit()
         except Exception as e:
+            print(f"ERROR BMC: {e}")
             flash(f'Terjadi kesalahan: {e}', 'danger')
         
         return redirect(url_for('routes.bmc'))
