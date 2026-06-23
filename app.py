@@ -10,8 +10,8 @@ app = Flask(__name__)
 # Konfigurasi keamanan
 app.config['SECRET_KEY'] = 'Fathan12345*****'
 
-# Konfigurasi database (SQLite file-based di /tmp untuk Vercel)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join('/tmp', 'database.db')
+# Konfigurasi database (SQLite file-based di /tmp)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/rnd_app.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # ==================== INISIALISASI EXTENSION ====================
@@ -35,12 +35,10 @@ from routes import routes_bp
 app.register_blueprint(auth_bp)
 app.register_blueprint(routes_bp)
 
-# ==================== RESET & BUAT TABEL DATABASE ====================
+# ==================== BUAT TABEL DATABASE ====================
 with app.app_context():
-    # Hapus semua tabel dulu (biar struktur project_id nullable terpakai)
-    db.drop_all()
     db.create_all()
-    print("Database tables re-created with nullable project_id!")
+    print("Database tables created!")
 
 # ==================== MENJALANKAN APLIKASI (LOKAL) ====================
 if __name__ == '__main__':
