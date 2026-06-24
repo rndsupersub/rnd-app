@@ -50,7 +50,9 @@ def scrape_with_brightdata(url):
         "zone": "mcp_unlocker",
         "url": url,
         "format": "raw",
-        "country": "id"
+        "country": "id",
+        "render_js": True,
+        "wait_for_selector": "h1"
     }
     response = requests.post(BRIGHT_DATA_URL, json=payload, headers=headers, timeout=60)
     return response
