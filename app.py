@@ -7,7 +7,10 @@ import os
 app = Flask(__name__)
 
 app.config['SECRET_KEY'] = 'Fathan12345*****'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/rnd_app_final.db'
+
+# ==================== KONFIGURASI DATABASE SUPABASE ====================
+DATABASE_URL = 'postgresql://postgres.hwiagbnigrngjjcvmjvx:Fathan12345*****@aws-1-ap-southeast-2.pooler.supabase.com:6543/postgres?pgbouncer=true'
+app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
