@@ -389,7 +389,7 @@ def delete_bmc(bmc_id):
     flash('Data BMC berhasil dihapus!', 'success')
     return redirect(url_for('routes.bmc'))
 
-# ==================== ANALISIS PRODUK (SHOPGRAPH BASIC - GRATIS) ====================
+# ==================== ANALISIS PRODUK (SELENIUM + CHROMIUM) ====================
 @routes_bp.route('/product-analysis', methods=['GET', 'POST'])
 @login_required
 def product_analysis():
@@ -406,40 +406,79 @@ def product_analysis():
                 # ========== BERSIHKAN URL ==========
                 clean_url = url.split('?')[0]
                 
-                # ========== SHOPGRAPH BASIC (GRATIS) ==========
-                shopgraph_url = "https://shopgraph.dev/api/enrich/basic"
-                payload = {"url": clean_url}
+                # ========== PAKAI SELENIUM + CHROMIUM ==========
+                from selenium import webdriver
+                from selenium.webdriver.chrome.options import Options
+                from selenium.webdriver.common.by import By
+                from selenium.webdriver.support.ui import WebDriverWait
+                from selenium.webdriver.support import expected_conditions as EC
+                import time
                 
-                response = requests.post(
-                    shopgraph_url,
-                    json=payload,
-                    timeout=30
-                )
+                # Setup Chrome options
+                chrome_options = Options()
+                chrome_options.add_argument('--headless')
+                chrome_options.add_argument('--no-sandbox')
+                chrome_options.add_argument('--disable-dev-shm-usage')
+                chrome_options.add_argument('--disable-gpu')
+                chrome_options.add_argument('--window-size=1920,1080')
                 
-                if response.status_code == 200:
-                    result = response.json()
-                    product_info = result.get("product", {})
-                    
-                    price_data = product_info.get("price", {})
-                    if price_data.get("amount") and price_data.get("currency"):
-                        price = f"Rp {price_data['amount']:,.0f}".replace(",", ".")
-                    else:
-                        price = "Tidak ditemukan"
-                    
-                    product_data = {
-                        'name': product_info.get('product_name', 'Tidak ditemukan'),
-                        'price': price,
-                        'sold': 'Tidak ditemukan',
-                        'rating': 'Tidak ditemukan',
-                        'url': clean_url,
-                        'platform': 'Shopee' if 'shopee' in url.lower() else 'Tokopedia' if 'tokopedia' in url.lower() else 'Lainnya',
-                        'image': '',
-                        'description': '',
-                        'specs': {}
-                    }
-                else:
-                    error = f"Gagal memproses data: {response.status_code} - {response.text}"
-                    
+                # Setup driver
+                driver = webdriver.Chrome(options=chrome_options)
+                driver.get(clean_url)
+                
+                # Tunggu halaman load
+                time.sleep(5)
+                
+                # ========== EKSTRAK DATA ==========
+                product_name = "Tidak ditemukan"
+                price = "Tidak ditemukan"
+                sold = "Tidak ditemukan"
+                rating = "Tidak ditemukan"
+                
+                try:
+                    # Cari nama produk
+                    name_elem = WebDriverWait(driver, 10).until(
+                        EC.presence_of_element_located((By.CSS_SELECTOR, '.product-name, .shopee-product-name, h1, .product-title'))
+                    )
+                    product_name = name_elem.text.strip() if name_elem else "Tidak ditemukan"
+                except:
+                    pass
+                
+                try:
+                    # Cari harga
+                    price_elem = driver.find_element(By.CSS_SELECTOR, '.product-price, .shopee-product-price, .price')
+                    price = price_elem.text.strip() if price_elem else "Tidak ditemukan"
+                except:
+                    pass
+                
+                try:
+                    # Cari terjual
+                    sold_elem = driver.find_element(By.CSS_SELECTOR, '.product-sold, .shopee-product-sold, .sold')
+                    sold = sold_elem.text.strip() if sold_elem else "Tidak ditemukan"
+                except:
+                    pass
+                
+                try:
+                    # Cari rating
+                    rating_elem = driver.find_element(By.CSS_SELECTOR, '.product-rating, .shopee-product-rating, .rating')
+                    rating = rating_elem.text.strip() if rating_elem else "Tidak ditemukan"
+                except:
+                    pass
+                
+                driver.quit()
+                
+                product_data = {
+                    'name': product_name,
+                    'price': price,
+                    'sold': sold,
+                    'rating': rating,
+                    'url': clean_url,
+                    'platform': 'Shopee' if 'shopee' in url.lower() else 'Tokopedia' if 'tokopedia' in url.lower() else 'Lainnya',
+                    'image': '',
+                    'description': '',
+                    'specs': {}
+                }
+                
             except Exception as e:
                 error = f"Gagal memproses data: {str(e)}"
                 print(f"Error: {e}")
