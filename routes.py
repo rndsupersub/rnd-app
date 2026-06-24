@@ -389,7 +389,7 @@ def delete_bmc(bmc_id):
     flash('Data BMC berhasil dihapus!', 'success')
     return redirect(url_for('routes.bmc'))
 
-# ==================== ANALISIS PRODUK (SHOPGRAPH FULL) ====================
+# ==================== ANALISIS PRODUK (SHOPGRAPH BASIC + CLEAN URL) ====================
 @routes_bp.route('/product-analysis', methods=['GET', 'POST'])
 @login_required
 def product_analysis():
@@ -403,17 +403,18 @@ def product_analysis():
             error = "Silakan masukkan link produk."
         else:
             try:
-                # Bersihkan URL dari parameter tracking
+                # ========== BERSIHKAN URL DARI PARAMETER TRACKING ==========
+                # Ambil cuma sampai tanda ? atau & 
                 clean_url = url.split('?')[0]
                 
-                # ========== PAKAI SHOPGRAPH FULL (browser + LLM) ==========
-                shopgraph_url = "https://shopgraph.dev/api/enrich"
+                # ========== PAKAI SHOPGRAPH BASIC (GRATIS) ==========
+                shopgraph_url = "https://shopgraph.dev/api/enrich/basic"
                 payload = {"url": clean_url}
                 
                 response = requests.post(
                     shopgraph_url,
                     json=payload,
-                    timeout=60  # Lebih lama karena pake browser + LLM
+                    timeout=30
                 )
                 
                 if response.status_code == 200:
@@ -427,13 +428,6 @@ def product_analysis():
                     else:
                         price = "Tidak ditemukan"
                     
-                    # Ambil spesifikasi
-                    specs = {}
-                    specs_data = product_info.get("specifications", {})
-                    if specs_data:
-                        for key, value in specs_data.items():
-                            specs[key] = value
-                    
                     product_data = {
                         'name': product_info.get('product_name', 'Tidak ditemukan'),
                         'price': price,
@@ -443,7 +437,7 @@ def product_analysis():
                         'platform': 'Shopee' if 'shopee' in url.lower() else 'Tokopedia' if 'tokopedia' in url.lower() else 'Lainnya',
                         'image': product_info.get('primary_image_url', ''),
                         'description': product_info.get('description', ''),
-                        'specs': specs
+                        'specs': {}
                     }
                 else:
                     error = f"Gagal memproses data: {response.status_code} - {response.text}"
