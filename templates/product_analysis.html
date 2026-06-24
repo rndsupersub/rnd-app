@@ -13,175 +13,9 @@
     <h2><i class="fas fa-shopping-cart"></i> Analisis Produk E-commerce</h2>
 </div>
 
-<!-- ============ FORM INPUT ============ -->
-<div class="card shadow mb-4">
-    <div class="card-header bg-primary text-white">
-        <h5 class="mb-0"><i class="fas fa-link"></i> Analisis Produk</h5>
-    </div>
-    <div class="card-body">
-        <form method="POST" action="{{ url_for('routes.product_analysis') }}">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <input type="hidden" name="edit_id" id="edit_id" value="">
-            
-            <ul class="nav nav-tabs mb-3" id="modeTab" role="tablist">
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="scan-tab" data-bs-toggle="tab" data-bs-target="#scan" type="button" role="tab">
-                        <i class="fas fa-search"></i> Scan Link
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="manual-tab" data-bs-toggle="tab" data-bs-target="#manual" type="button" role="tab">
-                        <i class="fas fa-edit"></i> Manual
-                    </button>
-                </li>
-            </ul>
-            
-            <div class="tab-content">
-                <!-- Tab Scan Link -->
-                <div class="tab-pane fade show active" id="scan" role="tabpanel">
-                    <div class="input-group">
-                        <input type="url" class="form-control" name="product_url" placeholder="https://shopee.co.id/... atau https://www.tokopedia.com/..." id="scan_url">
-                        <button type="submit" class="btn btn-primary" name="action" value="analyze">
-                            <i class="fas fa-search"></i> Analisis
-                        </button>
-                    </div>
-                    <small class="text-muted">Support Shopee, Tokopedia, dan marketplace lainnya. (Gratis)</small>
-                </div>
-                
-                <!-- Tab Manual -->
-                <div class="tab-pane fade" id="manual" role="tabpanel">
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="product_name" class="form-label">Nama Produk <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="product_name" name="product_name" placeholder="Nama produk...">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="price" class="form-label">Harga</label>
-                            <input type="text" class="form-control" id="price" name="price" placeholder="Rp 100.000">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="sold" class="form-label">Terjual</label>
-                            <input type="text" class="form-control" id="sold" name="sold" placeholder="500">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="rating" class="form-label">Rating</label>
-                            <input type="text" class="form-control" id="rating" name="rating" placeholder="4.5 ⭐">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="platform" class="form-label">Platform</label>
-                            <select class="form-select" id="platform" name="platform">
-                                <option value="Shopee">Shopee</option>
-                                <option value="Tokopedia">Tokopedia</option>
-                                <option value="Lainnya">Lainnya</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="url" class="form-label">Link Produk</label>
-                            <input type="url" class="form-control" id="url" name="url" placeholder="https://...">
-                        </div>
-                        <div class="col-12 mb-3">
-                            <label for="description" class="form-label">Deskripsi</label>
-                            <textarea class="form-control" id="description" name="description" rows="2" placeholder="Deskripsi produk..."></textarea>
-                        </div>
-                        <div class="col-12 mb-3">
-                            <label for="specs" class="form-label">Spesifikasi (JSON)</label>
-                            <textarea class="form-control" id="specs" name="specs" rows="3" placeholder='{"Warna": "Merah", "Ukuran": "M"}'></textarea>
-                            <small class="text-muted">Format JSON: {"key": "value", "key2": "value2"}</small>
-                        </div>
-                        <div class="col-12">
-                            <button type="submit" class="btn btn-success" name="action" value="save" id="submitBtn">
-                                <i class="fas fa-save"></i> Simpan ke Database
-                            </button>
-                            <button type="button" class="btn btn-secondary" onclick="resetForm()">
-                                <i class="fas fa-times"></i> Batal
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- ============ HASIL SCAN ============ -->
-{% if error %}
-<div class="alert alert-danger">
-    <i class="fas fa-exclamation-circle"></i> {{ error }}
-</div>
-{% endif %}
-
-{% if product %}
-<div class="card shadow mb-4">
-    <div class="card-header bg-success text-white">
-        <h5 class="mb-0"><i class="fas fa-check-circle"></i> Hasil Analisis Produk</h5>
-    </div>
-    <div class="card-body">
-        <div class="row">
-            <div class="col-md-4 text-center">
-                {% if product.image %}
-                <img src="{{ product.image }}" alt="{{ product.product_name }}" class="img-fluid rounded" style="max-height: 200px;">
-                {% else %}
-                <i class="fas fa-image fa-5x text-muted"></i>
-                {% endif %}
-            </div>
-            <div class="col-md-8">
-                <h4>{{ product.product_name }}</h4>
-                <p><strong>Platform:</strong> {{ product.platform }}</p>
-                <p><strong>Harga:</strong> <span class="badge bg-success fs-5">{{ product.price }}</span></p>
-                <p><strong>Terjual:</strong> {{ product.sold }}</p>
-                <p><strong>Rating:</strong> {{ product.rating }}</p>
-                <p><strong>Link:</strong> <a href="{{ product.url }}" target="_blank" class="text-break">{{ product.url[:60] }}...</a></p>
-            </div>
-        </div>
-        
-        {% if product.specs %}
-        <hr>
-        <h6>Spesifikasi:</h6>
-        <div class="table-responsive">
-            <table class="table table-sm table-bordered">
-                <tbody>
-                    {% for key, value in product.specs.items() %}
-                    <tr>
-                        <th class="bg-light" style="width: 30%;">{{ key }}</th>
-                        <td>{{ value }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        {% endif %}
-        
-        <div class="mt-3 text-center">
-            <button class="btn btn-success" onclick="saveScanResult()">
-                <i class="fas fa-save"></i> Simpan ke Database
-            </button>
-        </div>
-    </div>
-</div>
-
-<script>
-function saveScanResult() {
-    document.getElementById('product_name').value = "{{ product.product_name }}";
-    document.getElementById('price').value = "{{ product.price }}";
-    document.getElementById('sold').value = "{{ product.sold }}";
-    document.getElementById('rating').value = "{{ product.rating }}";
-    document.getElementById('platform').value = "{{ product.platform }}";
-    document.getElementById('url').value = "{{ product.url }}";
-    document.getElementById('description').value = "{{ product.description }}";
-    document.getElementById('specs').value = {{ product.specs|tojson|safe }};
-    
-    document.getElementById('manual-tab').click();
-    document.getElementById('submitBtn').innerHTML = '<i class="fas fa-save"></i> Simpan ke Database';
-    document.getElementById('submitBtn').classList.remove('btn-warning');
-    document.getElementById('submitBtn').classList.add('btn-success');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-</script>
-{% endif %}
-
-<!-- ============ DATA TERSIMPAN ============ -->
+<!-- ============ TABEL DATA TERSIMPAN (DI ATAS) ============ -->
 {% if saved_items %}
-<div class="card shadow">
+<div class="card shadow mb-4">
     <div class="card-header bg-secondary text-white">
         <h5 class="mb-0"><i class="fas fa-list"></i> Data Analisis Produk Tersimpan</h5>
     </div>
@@ -221,6 +55,103 @@ function saveScanResult() {
 </div>
 {% endif %}
 
+<!-- ============ FORM INPUT ============ -->
+<div class="card shadow mb-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="fas fa-edit"></i> Input Data Produk</h5>
+    </div>
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('routes.product_analysis') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="edit_id" id="edit_id" value="">
+            
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="product_name" class="form-label">Nama Produk <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="product_name" name="product_name" placeholder="Nama produk..." required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="price" class="form-label">Harga</label>
+                    <input type="text" class="form-control" id="price" name="price" placeholder="Rp 100.000">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="sold" class="form-label">Terjual</label>
+                    <input type="text" class="form-control" id="sold" name="sold" placeholder="500">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="rating" class="form-label">Rating</label>
+                    <input type="text" class="form-control" id="rating" name="rating" placeholder="4.5 ⭐">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="platform" class="form-label">Platform</label>
+                    <select class="form-select" id="platform" name="platform">
+                        <option value="Shopee">Shopee</option>
+                        <option value="Tokopedia">Tokopedia</option>
+                        <option value="Lainnya">Lainnya</option>
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="url" class="form-label">Link Produk</label>
+                    <input type="url" class="form-control" id="url" name="url" placeholder="https://...">
+                </div>
+                <div class="col-12 mb-3">
+                    <label for="description" class="form-label">Deskripsi</label>
+                    <textarea class="form-control" id="description" name="description" rows="2" placeholder="Deskripsi produk..."></textarea>
+                </div>
+                <div class="col-12 mb-3">
+                    <label for="specs" class="form-label">Spesifikasi (JSON)</label>
+                    <textarea class="form-control" id="specs" name="specs" rows="3" placeholder='{"Warna": "Merah", "Ukuran": "M"}'></textarea>
+                    <small class="text-muted">Format JSON: {"key": "value", "key2": "value2"}</small>
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-success" name="action" value="save" id="submitBtn">
+                        <i class="fas fa-save"></i> Simpan ke Database
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="resetForm()">
+                        <i class="fas fa-times"></i> Batal
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ============ FORM SCAN LINK ============ -->
+<div class="card shadow mb-4">
+    <div class="card-header bg-info text-white">
+        <h5 class="mb-0"><i class="fas fa-search"></i> Scan Link Produk (Otomatis)</h5>
+    </div>
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('routes.product_analysis') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="action" value="analyze">
+            <div class="input-group">
+                <input type="url" class="form-control" name="product_url" placeholder="https://shopee.co.id/... atau https://www.tokopedia.com/..." required>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search"></i> Analisis
+                </button>
+            </div>
+            <small class="text-muted">Support Shopee, Tokopedia, dan marketplace lainnya. (Gratis)</small>
+        </form>
+        
+        {% if error %}
+        <div class="alert alert-danger mt-3">
+            <i class="fas fa-exclamation-circle"></i> {{ error }}
+        </div>
+        {% endif %}
+        
+        {% if product %}
+        <div class="alert alert-success mt-3">
+            <i class="fas fa-check-circle"></i> <strong>Hasil Scan:</strong> {{ product.product_name }} - {{ product.price }}
+            <button class="btn btn-sm btn-success float-end" onclick="applyScanResult()">
+                <i class="fas fa-arrow-right"></i> Gunakan Data Ini
+            </button>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- ============ SCRIPT ============ -->
 <script>
 function resetForm() {
     document.getElementById('edit_id').value = '';
@@ -236,6 +167,25 @@ function resetForm() {
     document.getElementById('submitBtn').innerHTML = '<i class="fas fa-save"></i> Simpan ke Database';
     document.getElementById('submitBtn').classList.remove('btn-warning');
     document.getElementById('submitBtn').classList.add('btn-success');
+}
+
+function applyScanResult() {
+    {% if product %}
+    document.getElementById('product_name').value = "{{ product.product_name }}";
+    document.getElementById('price').value = "{{ product.price }}";
+    document.getElementById('sold').value = "{{ product.sold }}";
+    document.getElementById('rating').value = "{{ product.rating }}";
+    document.getElementById('platform').value = "{{ product.platform }}";
+    document.getElementById('url').value = "{{ product.url }}";
+    document.getElementById('description').value = "{{ product.description }}";
+    document.getElementById('specs').value = {{ product.specs|tojson|safe }};
+    
+    document.getElementById('submitBtn').innerHTML = '<i class="fas fa-save"></i> Simpan ke Database';
+    document.getElementById('submitBtn').classList.remove('btn-warning');
+    document.getElementById('submitBtn').classList.add('btn-success');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    alert('Data hasil scan sudah diisi ke form! Klik "Simpan ke Database" untuk menyimpan.');
+    {% endif %}
 }
 
 // Load data untuk edit
@@ -254,8 +204,6 @@ window.addEventListener('DOMContentLoaded', function() {
     document.getElementById('submitBtn').innerHTML = '<i class="fas fa-edit"></i> Update Data';
     document.getElementById('submitBtn').classList.remove('btn-success');
     document.getElementById('submitBtn').classList.add('btn-warning');
-    
-    document.getElementById('manual-tab').click();
 });
 {% endif %}
 </script>
