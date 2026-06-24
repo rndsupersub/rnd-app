@@ -6,6 +6,10 @@ import os
 from werkzeug.utils import secure_filename
 from app import db
 from models import User, Project, SWOT, PESTLE, BMC
+import requests
+from bs4 import BeautifulSoup
+import re
+import json
 
 UPLOAD_FOLDER = '/tmp'
 ALLOWED_EXTENSIONS = {'pdf', 'docx', 'xlsx', 'xls', 'doc'}
@@ -13,7 +17,6 @@ ALLOWED_EXTENSIONS = {'pdf', 'docx', 'xlsx', 'xls', 'doc'}
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# ==================== BUAT BLUEPRINT (HARUS DI ATAS SEMUA ROUTE!) ====================
 routes_bp = Blueprint('routes', __name__)
 
 def roles_required(*roles):
@@ -299,11 +302,6 @@ def bmc():
     return render_template('bmc.html', bmc=bmc_data, bmc_list=bmc_list)
 
 # ==================== ANALISIS PRODUK E-COMMERCE ====================
-import requests
-from bs4 import BeautifulSoup
-import re
-import json
-
 @routes_bp.route('/product-analysis', methods=['GET', 'POST'])
 @login_required
 def product_analysis():
@@ -330,7 +328,6 @@ def product_analysis():
                 sold = "Tidak ditemukan"
                 rating = "Tidak ditemukan"
                 
-                # Coba cari di JSON-LD
                 scripts = soup.find_all('script', type='application/ld+json')
                 for script in scripts:
                     try:
@@ -341,7 +338,6 @@ def product_analysis():
                     except:
                         pass
                 
-                # Fallback: meta tags
                 if product_name == "Tidak ditemukan":
                     og_title = soup.find('meta', property='og:title')
                     if og_title:
