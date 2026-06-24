@@ -8,7 +8,7 @@ import requests
 import time
 from werkzeug.utils import secure_filename
 from app import db
-from models import User, Project, SWOT, PESTLE, BMC
+from models import User, Project, SWOT, PESTLE, BMC, ProductAnalysis
 
 # ==================== KONFIGURASI AWAL ====================
 UPLOAD_FOLDER = '/tmp'
@@ -24,7 +24,7 @@ APIFY_API_KEY = os.getenv('APIFY_API_KEY')
 APIFY_ACTOR_ID = os.getenv('APIFY_ACTOR_ID')
 
 if not APIFY_ACTOR_ID:
-    APIFY_ACTOR_ID = 'xtracto~shopee-scraper'  # fallback
+    APIFY_ACTOR_ID = 'xtracto~shopee-scraper'
 
 if not APIFY_API_KEY:
     print("⚠️ PERINGATAN: APIFY_API_KEY tidak ditemukan di environment!")
@@ -402,157 +402,240 @@ def delete_bmc(bmc_id):
     flash('Data BMC berhasil dihapus!', 'success')
     return redirect(url_for('routes.bmc'))
 
-# ==================== ANALISIS PRODUK (APIFY API) ====================
+# ==================== ANALISIS PRODUK (APIFY API + CRUD) ====================
 @routes_bp.route('/product-analysis', methods=['GET', 'POST'])
 @login_required
 def product_analysis():
     product_data = None
     error = None
+    edit_id = request.args.get('edit_id')
 
-    if not APIFY_API_KEY:
-        error = "API Key Apify tidak ditemukan. Silakan set APIFY_API_KEY di environment."
-        return render_template('product_analysis.html', product=product_data, error=error)
+    # Ambil data yang akan diedit
+    edit_data = None
+    if edit_id:
+        edit_data = ProductAnalysis.query.filter_by(id=edit_id, user_id=current_user.id).first()
 
     if request.method == 'POST':
-        url = request.form.get('product_url')
+        action = request.form.get('action')
         
-        if not url:
-            error = "Silakan masukkan link produk."
-        else:
+        if action == 'save':
             try:
-                clean_url = url.split('?')[0]
-                
-                # ========== 1. JALANKAN ACTOR APIFY ==========
-                run_payload = {
-                    "country": "id",
-                    "mode": "url",
-                    "url": clean_url
-                }
-                
-                print(f"🚀 Menjalankan Actor: {APIFY_ACTOR_ID}")
-                print(f"📦 Payload: {run_payload}")
-                
-                run_response = requests.post(
-                    f"https://api.apify.com/v2/acts/{APIFY_ACTOR_ID}/runs",
-                    params={"token": APIFY_API_KEY},
-                    json=run_payload,
-                    timeout=60
-                )
-                
-                print(f"📡 Response Status: {run_response.status_code}")
-                print(f"📄 Response Text: {run_response.text[:200]}")
-                
-                if run_response.status_code == 201:
-                    run_data = run_response.json()
-                    run_id = run_data.get("data", {}).get("id")
-                    
-                    if run_id:
-                        # ========== 2. TUNGGU HASIL ==========
-                        max_wait = 60
-                        wait_time = 0
-                        result_data = None
-                        
-                        while wait_time < max_wait:
-                            time.sleep(3)
-                            wait_time += 3
-                            
-                            status_response = requests.get(
-                                f"https://api.apify.com/v2/actor-runs/{run_id}",
-                                params={"token": APIFY_API_KEY},
-                                timeout=30
-                            )
-                            
-                            if status_response.status_code == 200:
-                                status_data = status_response.json()
-                                run_status = status_data.get("data", {}).get("status")
-                                
-                                if run_status == "SUCCEEDED":
-                                    result_response = requests.get(
-                                        f"https://api.apify.com/v2/actor-runs/{run_id}/dataset/items",
-                                        params={"token": APIFY_API_KEY},
-                                        timeout=30
-                                    )
-                                    
-                                    if result_response.status_code == 200:
-                                        result_data = result_response.json()
-                                        break
-                                elif run_status in ["FAILED", "TIMED-OUT", "ABORTED"]:
-                                    error = f"Run gagal: {run_status}"
-                                    break
-                        
-                        if result_data and len(result_data) > 0:
-                            product_info = result_data[0]
-                            
-                            product_name = (
-                                product_info.get('name') or 
-                                product_info.get('title') or 
-                                product_info.get('description') or 
-                                'Tidak ditemukan'
-                            )
-                            
-                            price = product_info.get('price')
-                            if not price:
-                                price = product_info.get('price_min')
-                            if price:
-                                price = f"Rp {price:,.0f}".replace(",", ".")
-                            else:
-                                price = "Tidak ditemukan"
-                            
-                            sold = product_info.get('historical_sold')
-                            if sold:
-                                sold = f"{sold:,}".replace(",", ".")
-                            else:
-                                sold = "Tidak ditemukan"
-                            
-                            rating = product_info.get('rating_star')
-                            if rating:
-                                rating = f"{rating} ⭐"
-                            else:
-                                rating = "Tidak ditemukan"
-                            
-                            specs = {}
-                            attributes = product_info.get('attributes', [])
-                            if attributes:
-                                for attr in attributes:
-                                    if isinstance(attr, dict):
-                                        key = attr.get('name', '')
-                                        value = attr.get('value', '')
-                                        if key and value:
-                                            specs[key] = value
-                            
-                            variants = []
-                            tier_variations = product_info.get('tier_variations', [])
-                            if tier_variations:
-                                for tier in tier_variations:
-                                    if isinstance(tier, dict):
-                                        var_name = tier.get('name', '')
-                                        var_options = tier.get('options', [])
-                                        if var_name and var_options:
-                                            variants.append(f"{var_name}: {', '.join(var_options)}")
-                            
-                            if variants:
-                                specs['Varian'] = '; '.join(variants)
-                            
-                            product_data = {
-                                'name': product_name,
-                                'price': price,
-                                'sold': sold,
-                                'rating': rating,
-                                'url': clean_url,
-                                'platform': 'Shopee' if 'shopee' in url.lower() else 'Tokopedia' if 'tokopedia' in url.lower() else 'Lainnya',
-                                'image': product_info.get('image', ''),
-                                'description': product_info.get('description', ''),
-                                'specs': specs
-                            }
-                        elif not error:
-                            error = "Tidak ada data produk yang ditemukan."
-                    else:
-                        error = "Gagal mendapatkan run ID dari Apify."
-                else:
-                    error = f"Gagal menjalankan Actor: {run_response.status_code} - {run_response.text}"
-                    
-            except Exception as e:
-                error = f"Gagal memproses data: {str(e)}"
-                print(f"Error: {e}")
+                project_name = request.form.get('project_name')
+                product_name = request.form.get('product_name')
+                price = request.form.get('price')
+                sold = request.form.get('sold')
+                rating = request.form.get('rating')
+                platform = request.form.get('platform')
+                url = request.form.get('url')
+                image = request.form.get('image')
+                description = request.form.get('description')
+                specs_json = request.form.get('specs_json')
+                edit_id = request.form.get('edit_id')
 
-    return render_template('product_analysis.html', product=product_data, error=error)
+                if edit_id:
+                    # UPDATE
+                    item = ProductAnalysis.query.get(edit_id)
+                    if item and item.user_id == current_user.id:
+                        item.project_name = project_name
+                        item.product_name = product_name
+                        item.price = price
+                        item.sold = sold
+                        item.rating = rating
+                        item.platform = platform
+                        item.url = url
+                        item.image = image
+                        item.description = description
+                        item.specs = specs_json
+                        flash('Data analisis produk berhasil diupdate!', 'success')
+                else:
+                    # CREATE
+                    new_item = ProductAnalysis(
+                        project_name=project_name,
+                        product_name=product_name,
+                        price=price,
+                        sold=sold,
+                        rating=rating,
+                        platform=platform,
+                        url=url,
+                        image=image,
+                        description=description,
+                        specs=specs_json,
+                        user_id=current_user.id
+                    )
+                    db.session.add(new_item)
+                    flash('Data analisis produk berhasil disimpan!', 'success')
+                db.session.commit()
+                return redirect(url_for('routes.product_analysis'))
+            except Exception as e:
+                flash(f'Terjadi kesalahan: {e}', 'danger')
+                db.session.rollback()
+
+        elif action == 'analyze':
+            url = request.form.get('product_url')
+            
+            if not url:
+                error = "Silakan masukkan link produk."
+            else:
+                try:
+                    clean_url = url.split('?')[0]
+                    
+                    run_payload = {
+                        "country": "id",
+                        "mode": "url",
+                        "url": clean_url
+                    }
+                    
+                    run_response = requests.post(
+                        f"https://api.apify.com/v2/acts/{APIFY_ACTOR_ID}/runs",
+                        params={"token": APIFY_API_KEY},
+                        json=run_payload,
+                        timeout=60
+                    )
+                    
+                    if run_response.status_code == 201:
+                        run_data = run_response.json()
+                        run_id = run_data.get("data", {}).get("id")
+                        
+                        if run_id:
+                            max_wait = 60
+                            wait_time = 0
+                            result_data = None
+                            
+                            while wait_time < max_wait:
+                                time.sleep(3)
+                                wait_time += 3
+                                
+                                status_response = requests.get(
+                                    f"https://api.apify.com/v2/actor-runs/{run_id}",
+                                    params={"token": APIFY_API_KEY},
+                                    timeout=30
+                                )
+                                
+                                if status_response.status_code == 200:
+                                    status_data = status_response.json()
+                                    run_status = status_data.get("data", {}).get("status")
+                                    
+                                    if run_status == "SUCCEEDED":
+                                        result_response = requests.get(
+                                            f"https://api.apify.com/v2/actor-runs/{run_id}/dataset/items",
+                                            params={"token": APIFY_API_KEY},
+                                            timeout=30
+                                        )
+                                        
+                                        if result_response.status_code == 200:
+                                            result_data = result_response.json()
+                                            break
+                                    elif run_status in ["FAILED", "TIMED-OUT", "ABORTED"]:
+                                        error = f"Run gagal: {run_status}"
+                                        break
+                            
+                            if result_data and len(result_data) > 0:
+                                product_info = result_data[0]
+                                
+                                product_name = (
+                                    product_info.get('name') or 
+                                    product_info.get('title') or 
+                                    product_info.get('description') or 
+                                    'Tidak ditemukan'
+                                )
+                                
+                                price = product_info.get('price_min')
+                                if not price:
+                                    price = product_info.get('price')
+                                if price:
+                                    price = f"Rp {price:,.0f}".replace(",", ".")
+                                else:
+                                    price = "Tidak ditemukan"
+                                
+                                sold = product_info.get('historical_sold')
+                                if sold:
+                                    sold = f"{sold:,}".replace(",", ".")
+                                else:
+                                    sold = "Tidak ditemukan"
+                                
+                                rating = product_info.get('rating_star')
+                                if rating:
+                                    rating = f"{rating} ⭐"
+                                else:
+                                    rating = "Tidak ditemukan"
+                                
+                                specs = {}
+                                attributes = product_info.get('attributes', [])
+                                if attributes:
+                                    for attr in attributes:
+                                        if isinstance(attr, dict):
+                                            key = attr.get('name', '')
+                                            value = attr.get('value', '')
+                                            if key and value:
+                                                specs[key] = value
+                                
+                                variants = []
+                                tier_variations = product_info.get('tier_variations', [])
+                                if tier_variations:
+                                    for tier in tier_variations:
+                                        if isinstance(tier, dict):
+                                            var_name = tier.get('name', '')
+                                            var_options = tier.get('options', [])
+                                            if var_name and var_options:
+                                                variants.append(f"{var_name}: {', '.join(var_options)}")
+                                
+                                if variants:
+                                    specs['Varian'] = '; '.join(variants)
+                                
+                                product_data = {
+                                    'product_name': product_name,
+                                    'price': price,
+                                    'sold': sold,
+                                    'rating': rating,
+                                    'platform': 'Shopee' if 'shopee' in url.lower() else 'Tokopedia' if 'tokopedia' in url.lower() else 'Lainnya',
+                                    'url': clean_url,
+                                    'image': product_info.get('image', ''),
+                                    'description': product_info.get('description', ''),
+                                    'specs': specs
+                                }
+                            elif not error:
+                                error = "Tidak ada data produk yang ditemukan."
+                        else:
+                            error = "Gagal mendapatkan run ID dari Apify."
+                    else:
+                        error = f"Gagal menjalankan Actor: {run_response.status_code} - {run_response.text}"
+                        
+                except Exception as e:
+                    error = f"Gagal memproses data: {str(e)}"
+                    print(f"Error: {e}")
+
+    # Ambil semua data user
+    saved_items = ProductAnalysis.query.filter_by(user_id=current_user.id).all()
+    saved_items_json = [{
+        'id': item.id,
+        'project_name': item.project_name,
+        'product_name': item.product_name,
+        'price': item.price,
+        'sold': item.sold,
+        'rating': item.rating,
+        'platform': item.platform,
+        'url': item.url,
+        'image': item.image,
+        'description': item.description,
+        'specs': json.loads(item.specs) if item.specs else {},
+        'created_at': item.created_at.isoformat() if item.created_at else None,
+        'updated_at': item.updated_at.isoformat() if item.updated_at else None
+    } for item in saved_items]
+
+    return render_template('product_analysis.html', 
+                          product=product_data, 
+                          error=error, 
+                          saved_items=saved_items_json,
+                          edit_data=edit_data)
+
+@routes_bp.route('/product-analysis/<int:item_id>/delete')
+@login_required
+def delete_product_analysis(item_id):
+    item = ProductAnalysis.query.get_or_404(item_id)
+    if item.user_id != current_user.id:
+        flash('Anda tidak memiliki akses.', 'danger')
+        return redirect(url_for('routes.product_analysis'))
+    db.session.delete(item)
+    db.session.commit()
+    flash('Data analisis produk berhasil dihapus!', 'success')
+    return redirect(url_for('routes.product_analysis'))

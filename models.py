@@ -15,6 +15,7 @@ class User(UserMixin, db.Model):
     swots = db.relationship('SWOT', backref='user', lazy=True)
     pestles = db.relationship('PESTLE', backref='user', lazy=True)
     bmcs = db.relationship('BMC', backref='user', lazy=True)
+    product_analyses = db.relationship('ProductAnalysis', backref='user', lazy=True)
 
     def __repr__(self):
         return f'<User {self.username}>'
@@ -94,3 +95,24 @@ class BMC(db.Model):
 
     def __repr__(self):
         return f'<BMC for user {self.user_id}>'
+
+# ==================== TABEL PRODUCT ANALYSIS ====================
+class ProductAnalysis(db.Model):
+    __tablename__ = 'product_analysis'
+    id = db.Column(db.Integer, primary_key=True)
+    project_name = db.Column(db.String(200), nullable=True)
+    product_name = db.Column(db.String(500), nullable=False)
+    price = db.Column(db.String(100))
+    sold = db.Column(db.String(100))
+    rating = db.Column(db.String(50))
+    platform = db.Column(db.String(50))
+    url = db.Column(db.String(500))
+    image = db.Column(db.String(500))
+    description = db.Column(db.Text)
+    specs = db.Column(db.Text)  # JSON string
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+
+    def __repr__(self):
+        return f'<ProductAnalysis {self.product_name}>'

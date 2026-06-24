@@ -13,7 +13,7 @@
     <h2><i class="fas fa-shopping-cart"></i> Analisis Produk E-commerce</h2>
 </div>
 
-<!-- ============ FORM INPUT LINK ============ -->
+<!-- ============ FORM ANALISIS ============ -->
 <div class="card shadow mb-4">
     <div class="card-header bg-primary text-white">
         <h5 class="mb-0"><i class="fas fa-link"></i> Masukkan Link Produk</h5>
@@ -21,6 +21,7 @@
     <div class="card-body">
         <form method="POST" action="{{ url_for('routes.product_analysis') }}">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="action" value="analyze">
             <div class="input-group">
                 <input type="url" class="form-control" name="product_url" placeholder="https://shopee.co.id/... atau https://www.tokopedia.com/..." required>
                 <button type="submit" class="btn btn-primary">
@@ -40,52 +41,31 @@
 {% endif %}
 
 {% if product %}
-<div class="card shadow">
+<div class="card shadow mb-4">
     <div class="card-header bg-success text-white">
         <h5 class="mb-0"><i class="fas fa-check-circle"></i> Hasil Analisis Produk</h5>
     </div>
     <div class="card-body">
-        <div class="row">
-            <div class="col-md-4 text-center">
-                {% if product.image %}
-                <img src="{{ product.image }}" alt="{{ product.name }}" class="img-fluid rounded" style="max-height: 200px;">
-                {% else %}
-                <i class="fas fa-image fa-5x text-muted"></i>
-                {% endif %}
+        <form method="POST" action="{{ url_for('routes.product_analysis') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="action" value="save">
+            {% if edit_data %}
+            <input type="hidden" name="edit_id" value="{{ edit_data.id }}">
+            {% endif %}
+            
+            <div class="mb-3">
+                <label class="form-label">Nama Proyek (opsional)</label>
+                <input type="text" class="form-control" name="project_name" placeholder="Masukkan nama proyek..." value="{{ edit_data.project_name if edit_data else '' }}">
             </div>
-            <div class="col-md-8">
-                <h4>{{ product.name }}</h4>
-                <p><strong>Platform:</strong> {{ product.platform }}</p>
-                <p><strong>Harga:</strong> <span class="badge bg-success fs-5">{{ product.price }}</span></p>
-                <p><strong>Terjual:</strong> {{ product.sold }}</p>
-                <p><strong>Rating:</strong> {{ product.rating }}</p>
-                <p><strong>Link:</strong> <a href="{{ product.url }}" target="_blank" class="text-break">{{ product.url[:60] }}...</a></p>
-            </div>
-        </div>
-        
-        {% if product.specs %}
-        <hr>
-        <h6>Spesifikasi:</h6>
-        <div class="table-responsive">
-            <table class="table table-sm table-bordered">
-                <tbody>
-                    {% for key, value in product.specs.items() %}
-                    <tr>
-                        <th class="bg-light" style="width: 30%;">{{ key }}</th>
-                        <td>{{ value }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        {% endif %}
-        
-        <div class="mt-3 text-center">
-            <button class="btn btn-success" onclick="alert('✅ Data berhasil disimpan! (Fitur simpan akan segera aktif)')">
-                <i class="fas fa-save"></i> Simpan ke Database
-            </button>
-        </div>
-    </div>
-</div>
-{% endif %}
-{% endblock %}
+            
+            <input type="hidden" name="product_name" value="{{ product.product_name }}">
+            <input type="hidden" name="price" value="{{ product.price }}">
+            <input type="hidden" name="sold" value="{{ product.sold }}">
+            <input type="hidden" name="rating" value="{{ product.rating }}">
+            <input type="hidden" name="platform" value="{{ product.platform }}">
+            <input type="hidden" name="url" value="{{ product.url }}">
+            <input type="hidden" name="image" value="{{ product.image }}">
+            <input type="hidden" name="description" value="{{ product.description }}">
+            <input type="hidden" name="specs_json" value="{{ product.specs|tojson }}">
+            
+            <div class="row">
