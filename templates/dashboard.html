@@ -12,6 +12,7 @@
 </div>
 
 <div class="row g-4">
+    <!-- Manajemen Proyek -->
     <div class="col-md-6 col-lg-4">
         <div class="card shadow h-100">
             <div class="card-header bg-primary text-white">
@@ -23,6 +24,8 @@
             </div>
         </div>
     </div>
+
+    <!-- Analisis SWOT -->
     <div class="col-md-6 col-lg-4">
         <div class="card shadow h-100">
             <div class="card-header bg-warning text-dark">
@@ -34,6 +37,8 @@
             </div>
         </div>
     </div>
+
+    <!-- Analisis PESTLE -->
     <div class="col-md-6 col-lg-4">
         <div class="card shadow h-100">
             <div class="card-header bg-info text-white">
@@ -45,6 +50,8 @@
             </div>
         </div>
     </div>
+
+    <!-- Business Model Canvas -->
     <div class="col-md-6 col-lg-4">
         <div class="card shadow h-100">
             <div class="card-header bg-success text-white">
@@ -56,12 +63,27 @@
             </div>
         </div>
     </div>
+
+    <!-- Tambah Proyek Cepat -->
     <div class="col-md-6 col-lg-4">
         <div class="card shadow h-100 border-dashed">
             <div class="card-body d-flex flex-column align-items-center justify-content-center">
                 <i class="fas fa-plus-circle fa-3x text-primary mb-3"></i>
                 <h5>Buat Proyek Baru</h5>
                 <a href="{{ url_for('routes.new_project') }}" class="btn btn-outline-primary mt-auto">+ Tambah Proyek</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ MENU ANALISIS PRODUK (BARU) ============ -->
+    <div class="col-md-6 col-lg-4">
+        <div class="card shadow h-100">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-shopping-cart"></i> Analisis Produk</h5>
+            </div>
+            <div class="card-body d-flex flex-column">
+                <p>Analisis produk dari link Shopee, Tokopedia, dll. (Gratis)</p>
+                <a href="{{ url_for('routes.product_analysis') }}" class="btn btn-info mt-auto">Buka Analisis</a>
             </div>
         </div>
     </div>

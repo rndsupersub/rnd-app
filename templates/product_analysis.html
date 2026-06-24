@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}Analisis Produk - R&D System{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="{{ url_for('routes.dashboard') }}" class="btn btn-secondary btn-sm">
+        <i class="fas fa-arrow-left"></i> Kembali ke Dashboard
+    </a>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-shopping-cart"></i> Analisis Produk E-commerce</h2>
+</div>
+
+<!-- ============ FORM INPUT LINK ============ -->
+<div class="card shadow mb-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="fas fa-link"></i> Masukkan Link Produk</h5>
+    </div>
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('routes.product_analysis') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="input-group">
+                <input type="url" class="form-control" name="product_url" placeholder="https://shopee.co.id/... atau https://www.tokopedia.com/..." required>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search"></i> Analisis
+                </button>
+            </div>
+            <small class="text-muted">Support Shopee, Tokopedia, dan marketplace lainnya. (Gratis)</small>
+        </form>
+    </div>
+</div>
+
+<!-- ============ HASIL ANALISIS ============ -->
+{% if error %}
+<div class="alert alert-danger">
+    <i class="fas fa-exclamation-circle"></i> {{ error }}
+</div>
+{% endif %}
+
+{% if product %}
+<div class="card shadow">
+    <div class="card-header bg-success text-white">
+        <h5 class="mb-0"><i class="fas fa-check-circle"></i> Hasil Analisis Produk</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4 text-center">
+                {% if product.image %}
+                <img src="{{ product.image }}" alt="{{ product.name }}" class="img-fluid rounded" style="max-height: 200px;">
+                {% else %}
+                <i class="fas fa-image fa-5x text-muted"></i>
+                {% endif %}
+            </div>
+            <div class="col-md-8">
+                <h4>{{ product.name }}</h4>
+                <p><strong>Platform:</strong> {{ product.platform }}</p>
+                <p><strong>Harga:</strong> <span class="badge bg-success fs-5">{{ product.price }}</span></p>
+                <p><strong>Terjual:</strong> {{ product.sold }}</p>
+                <p><strong>Rating:</strong> {{ product.rating }}</p>
+                <p><strong>Link:</strong> <a href="{{ product.url }}" target="_blank" class="text-break">{{ product.url[:60] }}...</a></p>
+            </div>
+        </div>
+        
+        {% if product.description and product.description != "Tidak ditemukan" %}
+        <hr>
+        <h6>Deskripsi:</h6>
+        <p>{{ product.description[:300] }}{% if product.description|length > 300 %}...{% endif %}</p>
+        {% endif %}
+        
+        {% if product.specs %}
+        <hr>
+        <h6>Spesifikasi:</h6>
+        <div class="table-responsive">
+            <table class="table table-sm table-bordered">
+                <tbody>
+                    {% for key, value in product.specs.items() %}
+                    <tr>
+                        <th class="bg-light" style="width: 30%;">{{ key }}</th>
+                        <td>{{ value }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+        
+        <div class="mt-3 text-center">
+            <button class="btn btn-success" onclick="alert('✅ Data berhasil disimpan! (Fitur simpan akan segera aktif)')">
+                <i class="fas fa-save"></i> Simpan ke Database
+            </button>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
