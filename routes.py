@@ -389,7 +389,7 @@ def delete_bmc(bmc_id):
     flash('Data BMC berhasil dihapus!', 'success')
     return redirect(url_for('routes.bmc'))
 
-# ==================== ANALISIS PRODUK (SHOPGRAPH BASIC + CLEAN URL) ====================
+# ==================== ANALISIS PRODUK (SHOPGRAPH BASIC - GRATIS) ====================
 @routes_bp.route('/product-analysis', methods=['GET', 'POST'])
 @login_required
 def product_analysis():
@@ -403,11 +403,10 @@ def product_analysis():
             error = "Silakan masukkan link produk."
         else:
             try:
-                # ========== BERSIHKAN URL DARI PARAMETER TRACKING ==========
-                # Ambil cuma sampai tanda ? atau & 
+                # ========== BERSIHKAN URL ==========
                 clean_url = url.split('?')[0]
                 
-                # ========== PAKAI SHOPGRAPH BASIC (GRATIS) ==========
+                # ========== SHOPGRAPH BASIC (GRATIS) ==========
                 shopgraph_url = "https://shopgraph.dev/api/enrich/basic"
                 payload = {"url": clean_url}
                 
@@ -421,7 +420,6 @@ def product_analysis():
                     result = response.json()
                     product_info = result.get("product", {})
                     
-                    # Format harga
                     price_data = product_info.get("price", {})
                     if price_data.get("amount") and price_data.get("currency"):
                         price = f"Rp {price_data['amount']:,.0f}".replace(",", ".")
@@ -435,8 +433,8 @@ def product_analysis():
                         'rating': 'Tidak ditemukan',
                         'url': clean_url,
                         'platform': 'Shopee' if 'shopee' in url.lower() else 'Tokopedia' if 'tokopedia' in url.lower() else 'Lainnya',
-                        'image': product_info.get('primary_image_url', ''),
-                        'description': product_info.get('description', ''),
+                        'image': '',
+                        'description': '',
                         'specs': {}
                     }
                 else:
