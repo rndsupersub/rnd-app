@@ -1,12 +1,11 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, send_file
+from flask import Blueprint, render_template, redirect, url_for, flash, request, abort, send_file
 from flask_login import login_required, current_user
 from functools import wraps
 from datetime import datetime
 import os
-import re
 import json
 import requests
-from bs4 import BeautifulSoup
+import time
 from werkzeug.utils import secure_filename
 from app import db
 from models import User, Project, SWOT, PESTLE, BMC
@@ -20,9 +19,9 @@ def allowed_file(filename):
 
 routes_bp = Blueprint('routes', __name__)
 
-# ==================== KONFIGURASI BRIGHT DATA ====================
-BRIGHT_DATA_API_KEY = "a024e68a-3426-4fc2-8b57-2ad8eb1a61d3"
-BRIGHT_DATA_URL = "https://api.brightdata.com/request"
+# ==================== KONFIGURASI APIFY ====================
+APIFY_API_KEY = "apify_api_RgaT2nzcxfLOIPfpcGr9nP9LZcNDcR2giRyT"
+APIFY_ACTOR_ID = "xtracto/shopee-scraper"
 
 # ==================== DEKORATOR AKSES ====================
 def roles_required(*roles):
@@ -38,263 +37,6 @@ def roles_required(*roles):
             return f(*args, **kwargs)
         return decorated_function
     return decorator
-
-# ==================== HELPER: BRIGHT DATA SCRAPER ====================
-def scrape_with_brightdata(url):
-    """Scrape URL menggunakan Bright Data Web Unlocker"""
-    headers = {
-        "Authorization": f"Bearer {BRIGHT_DATA_API_KEY}",
-        "Content-Type": "application/json"
-    }
-    payload = {
-        "zone": "mcp_unlocker",
-        "url": url,
-        "format": "raw",
-        "country": "id",
-        "render_js": True,
-        "wait_for_selector": "h1"
-    }
-    response = requests.post(BRIGHT_DATA_URL, json=payload, headers=headers, timeout=60)
-    return response
-
-
-def parse_tokopedia(html, url):
-    """Parse HTML Tokopedia"""
-    soup = BeautifulSoup(html, 'html.parser')
-    product_data = {
-        'name': 'Tidak ditemukan',
-        'price': 'Tidak ditemukan',
-        'sold': 'Tidak ditemukan',
-        'sold_per_month': 'Tidak ditemukan',
-        'rating': 'Tidak ditemukan',
-        'url': url,
-        'platform': 'Tokopedia',
-        'image': '',
-        'description': '',
-        'specs': {},
-        'variants': {}
-    }
-
-    # === NAMA PRODUK ===
-    name_selectors = [
-        ('h1', {'data-testid': 'lblPDPDetailProductName'}),
-        ('h1', {'class': re.compile(r'css-\w+')}),
-        ('meta', {'property': 'og:title'}),
-    ]
-    for tag, attrs in name_selectors:
-        el = soup.find(tag, attrs)
-        if el:
-            product_data['name'] = el.get('content', el.get_text(strip=True))
-            break
-
-    # === HARGA ===
-    price_selectors = [
-        ('div', {'data-testid': 'lblPDPDetailProductPrice'}),
-        ('span', {'data-testid': 'lblPDPDetailProductPrice'}),
-        ('div', {'class': re.compile(r'price|harga', re.I)}),
-    ]
-    for tag, attrs in price_selectors:
-        el = soup.find(tag, attrs)
-        if el:
-            price_text = el.get_text(strip=True)
-            if 'Rp' in price_text or price_text.replace('.', '').isdigit():
-                product_data['price'] = price_text
-                break
-
-    if product_data['price'] == 'Tidak ditemukan':
-        meta_price = soup.find('meta', {'property': 'product:price:amount'})
-        if meta_price:
-            amount = meta_price.get('content', '')
-            try:
-                product_data['price'] = f"Rp {int(float(amount)):,}".replace(',', '.')
-            except:
-                pass
-
-    # === TERJUAL ===
-    sold_el = soup.find(string=re.compile(r'terjual|sold', re.I))
-    if sold_el:
-        parent = sold_el.parent
-        text = parent.get_text(strip=True)
-        product_data['sold'] = text
-        numbers = re.findall(r'\d+', text.replace('.', ''))
-        if numbers:
-            try:
-                total = int(numbers[0])
-                product_data['sold_per_month'] = f"~{total // 12:,} / bulan (estimasi)".replace(',', '.')
-            except:
-                pass
-
-    # === RATING ===
-    rating_selectors = [
-        ('span', {'data-testid': 'lblPDPDetailProductRatingNumber'}),
-        ('span', {'class': re.compile(r'rating|review', re.I)}),
-    ]
-    for tag, attrs in rating_selectors:
-        el = soup.find(tag, attrs)
-        if el:
-            product_data['rating'] = el.get_text(strip=True)
-            break
-
-    # === GAMBAR ===
-    img = soup.find('meta', {'property': 'og:image'})
-    if img:
-        product_data['image'] = img.get('content', '')
-
-    # === DESKRIPSI ===
-    desc_el = soup.find('div', {'data-testid': 'lblPDPDescriptionProduk'})
-    if desc_el:
-        product_data['description'] = desc_el.get_text(strip=True)[:500]
-
-    # === SPESIFIKASI ===
-    spec_table = soup.find('table', {'data-testid': re.compile(r'spec|spesifikasi', re.I)})
-    if spec_table:
-        rows = spec_table.find_all('tr')
-        for row in rows:
-            cols = row.find_all(['td', 'th'])
-            if len(cols) >= 2:
-                key = cols[0].get_text(strip=True)
-                val = cols[1].get_text(strip=True)
-                if key and val:
-                    product_data['specs'][key] = val
-
-    # === VARIAN (Ukuran, Warna) ===
-    variant_sections = soup.find_all('div', {'data-testid': re.compile(r'variant|varian', re.I)})
-    for section in variant_sections:
-        label = section.find('p') or section.find('span')
-        if label:
-            label_text = label.get_text(strip=True)
-            options = section.find_all('button')
-            if options:
-                product_data['variants'][label_text] = [o.get_text(strip=True) for o in options if o.get_text(strip=True)]
-
-    # === FALLBACK: JSON-LD ===
-    json_ld = soup.find('script', {'type': 'application/ld+json'})
-    if json_ld:
-        try:
-            data = json.loads(json_ld.string)
-            if isinstance(data, list):
-                data = data[0]
-            if product_data['name'] == 'Tidak ditemukan' and data.get('name'):
-                product_data['name'] = data['name']
-            if product_data['price'] == 'Tidak ditemukan' and data.get('offers'):
-                offers = data['offers']
-                if isinstance(offers, list):
-                    offers = offers[0]
-                price = offers.get('price', '')
-                if price:
-                    product_data['price'] = f"Rp {int(float(price)):,}".replace(',', '.')
-            if not product_data['description'] and data.get('description'):
-                product_data['description'] = data['description'][:500]
-            if not product_data['image'] and data.get('image'):
-                imgs = data['image']
-                product_data['image'] = imgs[0] if isinstance(imgs, list) else imgs
-            for prop in data.get('additionalProperty', []):
-                k = prop.get('name', '')
-                v = prop.get('value', '')
-                if k and v:
-                    product_data['specs'][k] = v
-        except:
-            pass
-
-    return product_data
-
-
-def parse_shopee(html, url):
-    """Parse HTML Shopee"""
-    soup = BeautifulSoup(html, 'html.parser')
-    product_data = {
-        'name': 'Tidak ditemukan',
-        'price': 'Tidak ditemukan',
-        'sold': 'Tidak ditemukan',
-        'sold_per_month': 'Tidak ditemukan',
-        'rating': 'Tidak ditemukan',
-        'url': url,
-        'platform': 'Shopee',
-        'image': '',
-        'description': '',
-        'specs': {},
-        'variants': {}
-    }
-
-    # === JSON-LD dulu (paling reliable) ===
-    json_ld = soup.find('script', {'type': 'application/ld+json'})
-    if json_ld:
-        try:
-            data = json.loads(json_ld.string)
-            if isinstance(data, list):
-                data = data[0]
-            if data.get('name'):
-                product_data['name'] = data['name']
-            if data.get('offers'):
-                offers = data['offers']
-                if isinstance(offers, list):
-                    offers = offers[0]
-                price = offers.get('price', '')
-                if price:
-                    product_data['price'] = f"Rp {int(float(price)):,}".replace(',', '.')
-            if data.get('description'):
-                product_data['description'] = data['description'][:500]
-            if data.get('image'):
-                imgs = data['image']
-                product_data['image'] = imgs[0] if isinstance(imgs, list) else imgs
-            if data.get('aggregateRating'):
-                product_data['rating'] = str(data['aggregateRating'].get('ratingValue', 'Tidak ditemukan'))
-            for prop in data.get('additionalProperty', []):
-                k = prop.get('name', '')
-                v = prop.get('value', '')
-                if k and v:
-                    product_data['specs'][k] = v
-        except:
-            pass
-
-    # === FALLBACK META ===
-    if product_data['name'] == 'Tidak ditemukan':
-        meta_title = soup.find('meta', {'property': 'og:title'})
-        if meta_title:
-            product_data['name'] = meta_title.get('content', '').split('|')[0].strip()
-
-    if product_data['price'] == 'Tidak ditemukan':
-        meta_price = soup.find('meta', {'property': 'product:price:amount'})
-        if meta_price:
-            try:
-                amount = float(meta_price.get('content', 0))
-                product_data['price'] = f"Rp {int(amount):,}".replace(',', '.')
-            except:
-                pass
-
-    if not product_data['image']:
-        img = soup.find('meta', {'property': 'og:image'})
-        if img:
-            product_data['image'] = img.get('content', '')
-
-    # === TERJUAL ===
-    page_text = soup.get_text()
-    sold_patterns = [
-        re.compile(r'(\d[\d\.]*)\s*(terjual|sold)', re.I),
-        re.compile(r'(terjual|sold)\s*(\d[\d\.]*)', re.I),
-    ]
-    for pattern in sold_patterns:
-        match = pattern.search(page_text)
-        if match:
-            sold_text = match.group(0)
-            product_data['sold'] = sold_text
-            numbers = re.findall(r'\d+', sold_text.replace('.', ''))
-            if numbers:
-                try:
-                    total = int(numbers[0])
-                    product_data['sold_per_month'] = f"~{total // 12:,} / bulan (estimasi)".replace(',', '.')
-                except:
-                    pass
-            break
-
-    # === RATING fallback ===
-    if product_data['rating'] == 'Tidak ditemukan':
-        rating_match = re.search(r'(\d+\.\d+)\s*(rating|bintang)', page_text, re.I)
-        if rating_match:
-            product_data['rating'] = rating_match.group(1)
-
-    return product_data
-
 
 # ==================== ROUTE DASHBOARD ====================
 @routes_bp.route('/')
@@ -325,7 +67,7 @@ def new_project():
             flash('Nama proyek harus diisi.', 'danger')
             return render_template('project_form.html')
 
-        new_proj = Project(
+        new_project = Project(
             name=name,
             description=description,
             project_type=project_type,
@@ -337,9 +79,9 @@ def new_project():
         start_date = request.form.get('start_date')
         end_date = request.form.get('end_date')
         if start_date:
-            new_proj.start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+            new_project.start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
         if end_date:
-            new_proj.end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
+            new_project.end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
 
         if 'file' in request.files:
             file = request.files['file']
@@ -348,9 +90,9 @@ def new_project():
                 unique_filename = f"{datetime.utcnow().timestamp()}_{filename}"
                 file_path = os.path.join(UPLOAD_FOLDER, unique_filename)
                 file.save(file_path)
-                new_proj.file_path = file_path
+                new_project.file_path = file_path
 
-        db.session.add(new_proj)
+        db.session.add(new_project)
         db.session.commit()
         flash('Proyek berhasil dibuat!', 'success')
         return redirect(url_for('routes.projects'))
@@ -375,8 +117,14 @@ def edit_project(project_id):
 
         start_date = request.form.get('start_date')
         end_date = request.form.get('end_date')
-        project.start_date = datetime.strptime(start_date, '%Y-%m-%d').date() if start_date else None
-        project.end_date = datetime.strptime(end_date, '%Y-%m-%d').date() if end_date else None
+        if start_date:
+            project.start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+        else:
+            project.start_date = None
+        if end_date:
+            project.end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
+        else:
+            project.end_date = None
 
         if 'file' in request.files:
             file = request.files['file']
@@ -646,7 +394,7 @@ def delete_bmc(bmc_id):
     flash('Data BMC berhasil dihapus!', 'success')
     return redirect(url_for('routes.bmc'))
 
-# ==================== ANALISIS PRODUK (BRIGHT DATA) ====================
+# ==================== ANALISIS PRODUK (APIFY API) ====================
 @routes_bp.route('/product-analysis', methods=['GET', 'POST'])
 @login_required
 def product_analysis():
@@ -654,36 +402,149 @@ def product_analysis():
     error = None
 
     if request.method == 'POST':
-        url = request.form.get('product_url', '').strip()
-
+        url = request.form.get('product_url')
+        
         if not url:
             error = "Silakan masukkan link produk."
         else:
             try:
+                # Bersihkan URL dari parameter tracking
                 clean_url = url.split('?')[0]
-
-                is_tokopedia = 'tokopedia.com' in url.lower()
-                is_shopee = 'shopee.co.id' in url.lower() or 'shopee.com' in url.lower()
-
-                if not is_tokopedia and not is_shopee:
-                    error = "Saat ini hanya support Shopee dan Tokopedia."
-                else:
-                    response = scrape_with_brightdata(clean_url)
-
-                    if response.status_code == 200:
-                        html = response.text
-                        if is_tokopedia:
-                            product_data = parse_tokopedia(html, clean_url)
-                        else:
-                            product_data = parse_shopee(html, clean_url)
-
-                        if product_data['name'] == 'Tidak ditemukan':
-                            error = f"Data produk tidak berhasil diekstrak. Response awal: {html[:300]}"
-                            product_data = None
+                
+                # ========== 1. JALANKAN ACTOR APIFY ==========
+                run_payload = {
+                    "country": "id",
+                    "mode": "url",
+                    "url": clean_url
+                }
+                
+                run_response = requests.post(
+                    f"https://api.apify.com/v2/acts/{APIFY_ACTOR_ID}/runs",
+                    params={"token": APIFY_API_KEY},
+                    json=run_payload,
+                    timeout=60
+                )
+                
+                if run_response.status_code == 201:
+                    run_data = run_response.json()
+                    run_id = run_data.get("data", {}).get("id")
+                    
+                    if run_id:
+                        # ========== 2. TUNGGU HASIL (POLLING) ==========
+                        max_wait = 60
+                        wait_time = 0
+                        result_data = None
+                        
+                        while wait_time < max_wait:
+                            time.sleep(3)
+                            wait_time += 3
+                            
+                            # Cek status run
+                            status_response = requests.get(
+                                f"https://api.apify.com/v2/actor-runs/{run_id}",
+                                params={"token": APIFY_API_KEY},
+                                timeout=30
+                            )
+                            
+                            if status_response.status_code == 200:
+                                status_data = status_response.json()
+                                run_status = status_data.get("data", {}).get("status")
+                                
+                                if run_status == "SUCCEEDED":
+                                    # Ambil hasil
+                                    result_response = requests.get(
+                                        f"https://api.apify.com/v2/actor-runs/{run_id}/dataset/items",
+                                        params={"token": APIFY_API_KEY},
+                                        timeout=30
+                                    )
+                                    
+                                    if result_response.status_code == 200:
+                                        result_data = result_response.json()
+                                        break
+                                elif run_status in ["FAILED", "TIMED-OUT", "ABORTED"]:
+                                    error = f"Run gagal: {run_status}"
+                                    break
+                        
+                        if result_data and len(result_data) > 0:
+                            product_info = result_data[0]
+                            
+                            # ========== EKSTRAK DATA ==========
+                            # Nama produk
+                            product_name = (
+                                product_info.get('name') or 
+                                product_info.get('title') or 
+                                product_info.get('description') or 
+                                'Tidak ditemukan'
+                            )
+                            
+                            # Harga
+                            price = product_info.get('price')
+                            if not price:
+                                price = product_info.get('price_min')
+                            if price:
+                                price = f"Rp {price:,.0f}".replace(",", ".")
+                            else:
+                                price = "Tidak ditemukan"
+                            
+                            # Terjual
+                            sold = product_info.get('historical_sold')
+                            if sold:
+                                sold = f"{sold:,}".replace(",", ".")
+                            else:
+                                sold = "Tidak ditemukan"
+                            
+                            # Rating
+                            rating = product_info.get('rating_star')
+                            if rating:
+                                rating = f"{rating} ⭐"
+                            else:
+                                rating = "Tidak ditemukan"
+                            
+                            # Spesifikasi / Atribut
+                            specs = {}
+                            attributes = product_info.get('attributes', [])
+                            if attributes:
+                                for attr in attributes:
+                                    if isinstance(attr, dict):
+                                        key = attr.get('name', '')
+                                        value = attr.get('value', '')
+                                        if key and value:
+                                            specs[key] = value
+                            
+                            # Varian (ukuran/warna)
+                            variants = []
+                            tier_variations = product_info.get('tier_variations', [])
+                            if tier_variations:
+                                for tier in tier_variations:
+                                    if isinstance(tier, dict):
+                                        var_name = tier.get('name', '')
+                                        var_options = tier.get('options', [])
+                                        if var_name and var_options:
+                                            variants.append(f"{var_name}: {', '.join(var_options)}")
+                            
+                            if variants:
+                                specs['Varian'] = '; '.join(variants)
+                            
+                            product_data = {
+                                'name': product_name,
+                                'price': price,
+                                'sold': sold,
+                                'rating': rating,
+                                'url': clean_url,
+                                'platform': 'Shopee' if 'shopee' in url.lower() else 'Tokopedia' if 'tokopedia' in url.lower() else 'Lainnya',
+                                'image': product_info.get('image', ''),
+                                'description': product_info.get('description', ''),
+                                'specs': specs
+                            }
+                        elif not error:
+                            error = "Tidak ada data produk yang ditemukan."
                     else:
-                        error = f"Bright Data error {response.status_code}: {response.text[:300]}"
-
+                        error = "Gagal mendapatkan run ID dari Apify."
+                else:
+                    error = f"Gagal menjalankan Actor: {run_response.status_code} - {run_response.text}"
+                    
             except Exception as e:
-                error = f"Error: {str(e)}"
+                error = f"Gagal memproses data: {str(e)}"
+                print(f"Error: {e}")
 
     return render_template('product_analysis.html', product=product_data, error=error)
