@@ -18,9 +18,6 @@ def allowed_file(filename):
 
 routes_bp = Blueprint('routes', __name__)
 
-# ==================== KONFIGURASI BRIGHT DATA ====================
-BRIGHTDATA_API_TOKEN = "a024e68a-3426-4fc2-8b57-2ad8eb1a61d3"
-
 # ==================== DEKORATOR AKSES ====================
 def roles_required(*roles):
     def decorator(f):
@@ -392,7 +389,7 @@ def delete_bmc(bmc_id):
     flash('Data BMC berhasil dihapus!', 'success')
     return redirect(url_for('routes.bmc'))
 
-# ==================== ANALISIS PRODUK (BRIGHT DATA API) ====================
+# ==================== ANALISIS PRODUK (SHOPGRAPH) ====================
 @routes_bp.route('/product-analysis', methods=['GET', 'POST'])
 @login_required
 def product_analysis():
@@ -406,69 +403,32 @@ def product_analysis():
             error = "Silakan masukkan link produk."
         else:
             try:
-                # ========== BRIGHT DATA WEB UNLOCKER API ==========
-                # Endpoint untuk Web Unlocker API
-                api_url = "https://api.brightdata.com/request"
-                
-                headers = {
-                    "Authorization": f"Bearer {BRIGHTDATA_API_TOKEN}",
-                    "Content-Type": "application/json"
-                }
-                
-                payload = {
-                    "url": url,
-                    "country": "id",  # Indonesia
-                    "zone": "mcp_unlocker"
-                }
+                # ========== PAKAI SHOPGRAPH ==========
+                shopgraph_url = "https://shopgraph.dev/api/enrich/basic"
+                payload = {"url": url}
                 
                 response = requests.post(
-                    api_url,
+                    shopgraph_url,
                     json=payload,
-                    headers=headers,
                     timeout=30
                 )
                 
                 if response.status_code == 200:
-                    # Response berupa HTML
-                    html_content = response.text
+                    result = response.json()
+                    product_info = result.get("product", {})
                     
-                    # ========== EKSTRAK DATA DARI HTML ==========
-                    from bs4 import BeautifulSoup
-                    soup = BeautifulSoup(html_content, 'html.parser')
-                    
-                    # Nama produk
-                    name_tag = soup.find('div', {'class': 'product-name'}) or soup.find('h1', {'class': 'product-title'}) or soup.find('meta', {'property': 'og:title'})
-                    if name_tag:
-                        if name_tag.name == 'meta':
-                            product_name = name_tag.get('content', 'Tidak ditemukan')
-                        else:
-                            product_name = name_tag.text.strip()
-                    else:
-                        product_name = "Tidak ditemukan"
-                    
-                    # Harga
-                    price_tag = soup.find('div', {'class': 'product-price'}) or soup.find('span', {'class': 'price'}) or soup.find('meta', {'property': 'product:price:amount'})
-                    if price_tag:
-                        if price_tag.name == 'meta':
-                            price = price_tag.get('content', 'Tidak ditemukan')
-                        else:
-                            price = price_tag.text.strip()
+                    # Format harga
+                    price_data = product_info.get("price", {})
+                    if price_data.get("amount") and price_data.get("currency"):
+                        price = f"Rp {price_data['amount']:,.0f}".replace(",", ".")
                     else:
                         price = "Tidak ditemukan"
                     
-                    # Terjual
-                    sold_tag = soup.find('div', {'class': 'product-sold'}) or soup.find('span', {'class': 'sold'})
-                    sold = sold_tag.text.strip() if sold_tag else "Tidak ditemukan"
-                    
-                    # Rating
-                    rating_tag = soup.find('div', {'class': 'product-rating'}) or soup.find('span', {'class': 'rating'})
-                    rating = rating_tag.text.strip() if rating_tag else "Tidak ditemukan"
-                    
                     product_data = {
-                        'name': product_name,
+                        'name': product_info.get('product_name', 'Tidak ditemukan'),
                         'price': price,
-                        'sold': sold,
-                        'rating': rating,
+                        'sold': 'Tidak ditemukan',
+                        'rating': 'Tidak ditemukan',
                         'url': url,
                         'platform': 'Shopee' if 'shopee' in url.lower() else 'Tokopedia' if 'tokopedia' in url.lower() else 'Lainnya',
                         'image': '',
