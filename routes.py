@@ -5,7 +5,6 @@ from datetime import datetime
 import os
 import json
 import requests
-import sseclient
 from werkzeug.utils import secure_filename
 from app import db
 from models import User, Project, SWOT, PESTLE, BMC
@@ -20,8 +19,7 @@ def allowed_file(filename):
 routes_bp = Blueprint('routes', __name__)
 
 # ==================== KONFIGURASI BRIGHT DATA ====================
-BRIGHTDATA_TOKEN = "a024e68a-3426-4fc2-8b57-2ad8eb1a61d3"
-BRIGHTDATA_SSE_URL = f"https://mcp.brightdata.com/sse?token={BRIGHTDATA_TOKEN}"
+BRIGHTDATA_API_TOKEN = "a024e68a-3426-4fc2-8b57-2ad8eb1a61d3"
 
 # ==================== DEKORATOR AKSES ====================
 def roles_required(*roles):
@@ -394,30 +392,7 @@ def delete_bmc(bmc_id):
     flash('Data BMC berhasil dihapus!', 'success')
     return redirect(url_for('routes.bmc'))
 
-# ==================== ANALISIS PRODUK (BRIGHT DATA MCP DENGAN SSE) ====================
-def get_session_id_from_sse():
-    """Membuat koneksi SSE ke Bright Data dan mendapatkan session ID"""
-    try:
-        # Buat koneksi SSE
-        response = requests.get(
-            BRIGHTDATA_SSE_URL,
-            stream=True,
-            headers={"Accept": "text/event-stream"}
-        )
-        
-        if response.status_code == 200:
-            client = sseclient.SSEClient(response)
-            for event in client.events():
-                if event.event == "endpoint":
-                    # Extract session ID dari data event
-                    # Format: /mcp?sessionId=xxx
-                    if event.data and "sessionId" in event.data:
-                        return event.data.split("sessionId=")[1]
-        return None
-    except Exception as e:
-        print(f"SSE Connection Error: {e}")
-        return None
-
+# ==================== ANALISIS PRODUK (BRIGHT DATA API) ====================
 @routes_bp.route('/product-analysis', methods=['GET', 'POST'])
 @login_required
 def product_analysis():
@@ -431,83 +406,78 @@ def product_analysis():
             error = "Silakan masukkan link produk."
         else:
             try:
-                # Langkah 1: Dapatkan session ID dari SSE
-                session_id = get_session_id_from_sse()
+                # ========== BRIGHT DATA WEB UNLOCKER API ==========
+                # Endpoint untuk Web Unlocker API
+                api_url = "https://api.brightdata.com/request"
                 
-                if not session_id:
-                    error = "Gagal mendapatkan session ID dari Bright Data MCP."
-                else:
-                    # Langkah 2: Kirim request dengan session ID
-                    mcp_url = f"https://mcp.brightdata.com/mcp?sessionId={session_id}"
+                headers = {
+                    "Authorization": f"Bearer {BRIGHTDATA_API_TOKEN}",
+                    "Content-Type": "application/json"
+                }
+                
+                payload = {
+                    "url": url,
+                    "country": "id",  # Indonesia
+                    "zone": "mcp_unlocker"
+                }
+                
+                response = requests.post(
+                    api_url,
+                    json=payload,
+                    headers=headers,
+                    timeout=30
+                )
+                
+                if response.status_code == 200:
+                    # Response berupa HTML
+                    html_content = response.text
                     
-                    payload = {
-                        "jsonrpc": "2.0",
-                        "id": 1,
-                        "method": "tools/call",
-                        "params": {
-                            "name": "scrape_as_markdown",
-                            "arguments": {
-                                "url": url
-                            }
-                        }
-                    }
+                    # ========== EKSTRAK DATA DARI HTML ==========
+                    from bs4 import BeautifulSoup
+                    soup = BeautifulSoup(html_content, 'html.parser')
                     
-                    headers = {
-                        "Content-Type": "application/json"
-                    }
-                    
-                    response = requests.post(
-                        mcp_url,
-                        json=payload,
-                        headers=headers,
-                        timeout=30
-                    )
-                    
-                    if response.status_code == 200:
-                        result = response.json()
-                        content = result.get("result", {}).get("content", [])
-                        
-                        if content:
-                            markdown_text = content[0].get("text", "")
-                            
-                            # ========== EKSTRAK DATA DARI MARKDOWN ==========
-                            product_name = "Tidak ditemukan"
-                            price = "Tidak ditemukan"
-                            sold = "Tidak ditemukan"
-                            rating = "Tidak ditemukan"
-                            
-                            lines = markdown_text.split('\n')
-                            for line in lines:
-                                line_lower = line.lower()
-                                if "nama" in line_lower or "product" in line_lower:
-                                    if ":" in line:
-                                        product_name = line.split(":", 1)[1].strip()
-                                if "rp" in line_lower or "harga" in line_lower:
-                                    if ":" in line:
-                                        price = line.split(":", 1)[1].strip()
-                                if "terjual" in line_lower or "sold" in line_lower:
-                                    if ":" in line:
-                                        sold = line.split(":", 1)[1].strip()
-                                if "rating" in line_lower or "bintang" in line_lower:
-                                    if ":" in line:
-                                        rating = line.split(":", 1)[1].strip()
-                            
-                            product_data = {
-                                'name': product_name,
-                                'price': price,
-                                'sold': sold,
-                                'rating': rating,
-                                'url': url,
-                                'platform': 'Shopee' if 'shopee' in url.lower() else 'Tokopedia' if 'tokopedia' in url.lower() else 'Lainnya',
-                                'image': '',
-                                'description': '',
-                                'specs': {}
-                            }
+                    # Nama produk
+                    name_tag = soup.find('div', {'class': 'product-name'}) or soup.find('h1', {'class': 'product-title'}) or soup.find('meta', {'property': 'og:title'})
+                    if name_tag:
+                        if name_tag.name == 'meta':
+                            product_name = name_tag.get('content', 'Tidak ditemukan')
                         else:
-                            error = "Tidak ada konten yang ditemukan."
+                            product_name = name_tag.text.strip()
                     else:
-                        error = f"Gagal memproses data: {response.status_code} - {response.text}"
-                        
+                        product_name = "Tidak ditemukan"
+                    
+                    # Harga
+                    price_tag = soup.find('div', {'class': 'product-price'}) or soup.find('span', {'class': 'price'}) or soup.find('meta', {'property': 'product:price:amount'})
+                    if price_tag:
+                        if price_tag.name == 'meta':
+                            price = price_tag.get('content', 'Tidak ditemukan')
+                        else:
+                            price = price_tag.text.strip()
+                    else:
+                        price = "Tidak ditemukan"
+                    
+                    # Terjual
+                    sold_tag = soup.find('div', {'class': 'product-sold'}) or soup.find('span', {'class': 'sold'})
+                    sold = sold_tag.text.strip() if sold_tag else "Tidak ditemukan"
+                    
+                    # Rating
+                    rating_tag = soup.find('div', {'class': 'product-rating'}) or soup.find('span', {'class': 'rating'})
+                    rating = rating_tag.text.strip() if rating_tag else "Tidak ditemukan"
+                    
+                    product_data = {
+                        'name': product_name,
+                        'price': price,
+                        'sold': sold,
+                        'rating': rating,
+                        'url': url,
+                        'platform': 'Shopee' if 'shopee' in url.lower() else 'Tokopedia' if 'tokopedia' in url.lower() else 'Lainnya',
+                        'image': '',
+                        'description': '',
+                        'specs': {}
+                    }
+                else:
+                    error = f"Gagal memproses data: {response.status_code} - {response.text}"
+                    
             except Exception as e:
                 error = f"Gagal memproses data: {str(e)}"
                 print(f"Error: {e}")
