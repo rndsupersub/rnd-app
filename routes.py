@@ -161,6 +161,19 @@ def download_file(project_id):
         return redirect(url_for('routes.view_project', project_id=project.id))
     return send_file(project.file_path, as_attachment=True)
 
+@routes_bp.route('/project/<int:project_id>/delete')
+@login_required
+@roles_required('admin', 'rnd_staff')
+def delete_project(project_id):
+    project = Project.query.get_or_404(project_id)
+    if project.user_id != current_user.id and current_user.role != 'admin':
+        flash('Anda tidak memiliki akses.', 'danger')
+        return redirect(url_for('routes.projects'))
+    db.session.delete(project)
+    db.session.commit()
+    flash('Proyek berhasil dihapus!', 'success')
+    return redirect(url_for('routes.projects'))
+
 # ==================== CRUD SWOT ====================
 @routes_bp.route('/swot', methods=['GET', 'POST'])
 @login_required
@@ -393,8 +406,8 @@ def product_analysis():
         else:
             try:
                 # ========== KONFIGURASI BRIGHT DATA MCP ==========
-                # Ganti dengan URL MCP - SSE dari dashboard Anda!
-                MCP_URL = "https://mcp.brightdata.com/mcp?token=a024e68a-3426-4fc2-8b57-2ad8eb1a61d3"
+                MCP_URL = "https://mcp.brightdata.com/mcp"
+                API_TOKEN = "a024e68a-3426-4fc2-8b57-2ad8eb1a61d3"
                 
                 # Siapkan payload untuk tool scrape_as_markdown
                 payload = {
@@ -409,11 +422,16 @@ def product_analysis():
                     }
                 }
                 
-                # Kirim request ke Bright Data MCP
+                # Kirim request ke Bright Data MCP dengan header yang benar
+                headers = {
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {API_TOKEN}"
+                }
+                
                 response = requests.post(
                     MCP_URL,
                     json=payload,
-                    headers={"Content-Type": "application/json"},
+                    headers=headers,
                     timeout=30
                 )
                 
