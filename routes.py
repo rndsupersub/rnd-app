@@ -10,6 +10,7 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
+from requests_html import HTMLSession
 
 UPLOAD_FOLDER = '/tmp'
 ALLOWED_EXTENSIONS = {'pdf', 'docx', 'xlsx', 'xls', 'doc'}
@@ -315,38 +316,29 @@ def product_analysis():
             error = "Silakan masukkan link produk."
         else:
             try:
-                headers = {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                    'Accept-Language': 'id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7',
-                }
-                response = requests.get(url, headers=headers, timeout=15)
-                response.raise_for_status()
-                soup = BeautifulSoup(response.text, 'html.parser')
+                session = HTMLSession()
+                response = session.get(url)
+                response.html.render(sleep=1, timeout=10)
                 
-                product_name = "Tidak ditemukan"
-                price = "Tidak ditemukan"
-                sold = "Tidak ditemukan"
-                rating = "Tidak ditemukan"
+                name_element = response.html.find('.product-name', first=True) or response.html.find('.shopee-product-name', first=True)
+                product_name = name_element.text if name_element else "Tidak ditemukan"
                 
-                scripts = soup.find_all('script', type='application/ld+json')
-                for script in scripts:
-                    try:
-                        data = json.loads(script.string)
-                        if data.get('@type') == 'Product':
-                            product_name = data.get('name', product_name)
-                            price = data.get('offers', {}).get('price', price)
-                    except:
-                        pass
+                price_element = response.html.find('.product-price', first=True) or response.html.find('.shopee-product-price', first=True)
+                price = price_element.text if price_element else "Tidak ditemukan"
                 
-                if product_name == "Tidak ditemukan":
-                    og_title = soup.find('meta', property='og:title')
-                    if og_title:
-                        product_name = og_title.get('content', product_name)
+                sold_element = response.html.find('.product-sold', first=True) or response.html.find('.shopee-product-sold', first=True)
+                sold = sold_element.text if sold_element else "Tidak ditemukan"
                 
-                if price == "Tidak ditemukan":
-                    price_meta = soup.find('meta', property='product:price:amount')
-                    if price_meta:
-                        price = price_meta.get('content', price)
+                rating_element = response.html.find('.product-rating', first=True) or response.html.find('.shopee-product-rating', first=True)
+                rating = rating_element.text if rating_element else "Tidak ditemukan"
+                
+                specs = {}
+                spec_elements = response.html.find('.product-specification-item')
+                for item in spec_elements:
+                    key = item.find('.spec-name', first=True)
+                    value = item.find('.spec-value', first=True)
+                    if key and value:
+                        specs[key.text] = value.text
                 
                 product_data = {
                     'name': product_name,
@@ -357,10 +349,11 @@ def product_analysis():
                     'platform': 'Shopee' if 'shopee' in url.lower() else 'Tokopedia' if 'tokopedia' in url.lower() else 'Lainnya',
                     'image': '',
                     'description': '',
-                    'specs': {}
+                    'specs': specs
                 }
                 
             except Exception as e:
                 error = f"Gagal memproses data: {str(e)}"
+                print(f"Scraping error: {e}")
     
     return render_template('product_analysis.html', product=product_data, error=error)

@@ -63,12 +63,6 @@
             </div>
         </div>
         
-        {% if product.description and product.description != "Tidak ditemukan" %}
-        <hr>
-        <h6>Deskripsi:</h6>
-        <p>{{ product.description[:300] }}{% if product.description|length > 300 %}...{% endif %}</p>
-        {% endif %}
-        
         {% if product.specs %}
         <hr>
         <h6>Spesifikasi:</h6>
