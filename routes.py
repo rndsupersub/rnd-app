@@ -3,13 +3,12 @@ from flask_login import login_required, current_user
 from functools import wraps
 from datetime import datetime
 import os
+import json
+import requests
+import sseclient
 from werkzeug.utils import secure_filename
 from app import db
 from models import User, Project, SWOT, PESTLE, BMC
-import requests
-from bs4 import BeautifulSoup
-import re
-import json
 
 # ==================== KONFIGURASI AWAL ====================
 UPLOAD_FOLDER = '/tmp'
@@ -19,6 +18,10 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 routes_bp = Blueprint('routes', __name__)
+
+# ==================== KONFIGURASI BRIGHT DATA ====================
+BRIGHTDATA_TOKEN = "a024e68a-3426-4fc2-8b57-2ad8eb1a61d3"
+BRIGHTDATA_SSE_URL = f"https://mcp.brightdata.com/sse?token={BRIGHTDATA_TOKEN}"
 
 # ==================== DEKORATOR AKSES ====================
 def roles_required(*roles):
@@ -391,7 +394,30 @@ def delete_bmc(bmc_id):
     flash('Data BMC berhasil dihapus!', 'success')
     return redirect(url_for('routes.bmc'))
 
-# ==================== ANALISIS PRODUK (BRIGHT DATA MCP) ====================
+# ==================== ANALISIS PRODUK (BRIGHT DATA MCP DENGAN SSE) ====================
+def get_session_id_from_sse():
+    """Membuat koneksi SSE ke Bright Data dan mendapatkan session ID"""
+    try:
+        # Buat koneksi SSE
+        response = requests.get(
+            BRIGHTDATA_SSE_URL,
+            stream=True,
+            headers={"Accept": "text/event-stream"}
+        )
+        
+        if response.status_code == 200:
+            client = sseclient.SSEClient(response)
+            for event in client.events():
+                if event.event == "endpoint":
+                    # Extract session ID dari data event
+                    # Format: /mcp?sessionId=xxx
+                    if event.data and "sessionId" in event.data:
+                        return event.data.split("sessionId=")[1]
+        return None
+    except Exception as e:
+        print(f"SSE Connection Error: {e}")
+        return None
+
 @routes_bp.route('/product-analysis', methods=['GET', 'POST'])
 @login_required
 def product_analysis():
@@ -405,82 +431,83 @@ def product_analysis():
             error = "Silakan masukkan link produk."
         else:
             try:
-                # ========== KONFIGURASI BRIGHT DATA MCP ==========
-                MCP_URL = "https://mcp.brightdata.com/mcp"
-                API_TOKEN = "a024e68a-3426-4fc2-8b57-2ad8eb1a61d3"
+                # Langkah 1: Dapatkan session ID dari SSE
+                session_id = get_session_id_from_sse()
                 
-                # Siapkan payload untuk tool scrape_as_markdown
-                payload = {
-                    "jsonrpc": "2.0",
-                    "id": 1,
-                    "method": "tools/call",
-                    "params": {
-                        "name": "scrape_as_markdown",
-                        "arguments": {
-                            "url": url
+                if not session_id:
+                    error = "Gagal mendapatkan session ID dari Bright Data MCP."
+                else:
+                    # Langkah 2: Kirim request dengan session ID
+                    mcp_url = f"https://mcp.brightdata.com/mcp?sessionId={session_id}"
+                    
+                    payload = {
+                        "jsonrpc": "2.0",
+                        "id": 1,
+                        "method": "tools/call",
+                        "params": {
+                            "name": "scrape_as_markdown",
+                            "arguments": {
+                                "url": url
+                            }
                         }
                     }
-                }
-                
-                # Kirim request ke Bright Data MCP dengan header yang benar
-                headers = {
-                    "Content-Type": "application/json",
-                    "Authorization": f"Bearer {API_TOKEN}"
-                }
-                
-                response = requests.post(
-                    MCP_URL,
-                    json=payload,
-                    headers=headers,
-                    timeout=30
-                )
-                
-                if response.status_code == 200:
-                    result = response.json()
-                    content = result.get("result", {}).get("content", [])
                     
-                    if content:
-                        markdown_text = content[0].get("text", "")
+                    headers = {
+                        "Content-Type": "application/json"
+                    }
+                    
+                    response = requests.post(
+                        mcp_url,
+                        json=payload,
+                        headers=headers,
+                        timeout=30
+                    )
+                    
+                    if response.status_code == 200:
+                        result = response.json()
+                        content = result.get("result", {}).get("content", [])
                         
-                        # ========== EKSTRAK DATA DARI MARKDOWN ==========
-                        product_name = "Tidak ditemukan"
-                        price = "Tidak ditemukan"
-                        sold = "Tidak ditemukan"
-                        rating = "Tidak ditemukan"
-                        
-                        # Parsing sederhana dari Markdown
-                        lines = markdown_text.split('\n')
-                        for line in lines:
-                            line_lower = line.lower()
-                            if "nama" in line_lower or "product" in line_lower:
-                                if ":" in line:
-                                    product_name = line.split(":", 1)[1].strip()
-                            if "rp" in line_lower or "harga" in line_lower:
-                                if ":" in line:
-                                    price = line.split(":", 1)[1].strip()
-                            if "terjual" in line_lower or "sold" in line_lower:
-                                if ":" in line:
-                                    sold = line.split(":", 1)[1].strip()
-                            if "rating" in line_lower or "bintang" in line_lower:
-                                if ":" in line:
-                                    rating = line.split(":", 1)[1].strip()
-                        
-                        product_data = {
-                            'name': product_name,
-                            'price': price,
-                            'sold': sold,
-                            'rating': rating,
-                            'url': url,
-                            'platform': 'Shopee' if 'shopee' in url.lower() else 'Tokopedia' if 'tokopedia' in url.lower() else 'Lainnya',
-                            'image': '',
-                            'description': '',
-                            'specs': {}
-                        }
+                        if content:
+                            markdown_text = content[0].get("text", "")
+                            
+                            # ========== EKSTRAK DATA DARI MARKDOWN ==========
+                            product_name = "Tidak ditemukan"
+                            price = "Tidak ditemukan"
+                            sold = "Tidak ditemukan"
+                            rating = "Tidak ditemukan"
+                            
+                            lines = markdown_text.split('\n')
+                            for line in lines:
+                                line_lower = line.lower()
+                                if "nama" in line_lower or "product" in line_lower:
+                                    if ":" in line:
+                                        product_name = line.split(":", 1)[1].strip()
+                                if "rp" in line_lower or "harga" in line_lower:
+                                    if ":" in line:
+                                        price = line.split(":", 1)[1].strip()
+                                if "terjual" in line_lower or "sold" in line_lower:
+                                    if ":" in line:
+                                        sold = line.split(":", 1)[1].strip()
+                                if "rating" in line_lower or "bintang" in line_lower:
+                                    if ":" in line:
+                                        rating = line.split(":", 1)[1].strip()
+                            
+                            product_data = {
+                                'name': product_name,
+                                'price': price,
+                                'sold': sold,
+                                'rating': rating,
+                                'url': url,
+                                'platform': 'Shopee' if 'shopee' in url.lower() else 'Tokopedia' if 'tokopedia' in url.lower() else 'Lainnya',
+                                'image': '',
+                                'description': '',
+                                'specs': {}
+                            }
+                        else:
+                            error = "Tidak ada konten yang ditemukan."
                     else:
-                        error = "Tidak ada konten yang ditemukan."
-                else:
-                    error = f"Gagal memproses data: {response.status_code} - {response.text}"
-                    
+                        error = f"Gagal memproses data: {response.status_code} - {response.text}"
+                        
             except Exception as e:
                 error = f"Gagal memproses data: {str(e)}"
                 print(f"Error: {e}")
