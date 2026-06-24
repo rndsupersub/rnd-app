@@ -389,7 +389,7 @@ def delete_bmc(bmc_id):
     flash('Data BMC berhasil dihapus!', 'success')
     return redirect(url_for('routes.bmc'))
 
-# ==================== ANALISIS PRODUK (SHOPGRAPH + FALLBACK) ====================
+# ==================== ANALISIS PRODUK (SHOPGRAPH FULL) ====================
 @routes_bp.route('/product-analysis', methods=['GET', 'POST'])
 @login_required
 def product_analysis():
@@ -406,25 +406,33 @@ def product_analysis():
                 # Bersihkan URL dari parameter tracking
                 clean_url = url.split('?')[0]
                 
-                # ========== PERCOBAAN 1: PAKAI SHOPGRAPH ==========
-                shopgraph_url = "https://shopgraph.dev/api/enrich/basic"
+                # ========== PAKAI SHOPGRAPH FULL (browser + LLM) ==========
+                shopgraph_url = "https://shopgraph.dev/api/enrich"
                 payload = {"url": clean_url}
                 
                 response = requests.post(
                     shopgraph_url,
                     json=payload,
-                    timeout=30
+                    timeout=60  # Lebih lama karena pake browser + LLM
                 )
                 
                 if response.status_code == 200:
                     result = response.json()
                     product_info = result.get("product", {})
                     
+                    # Format harga
                     price_data = product_info.get("price", {})
                     if price_data.get("amount") and price_data.get("currency"):
                         price = f"Rp {price_data['amount']:,.0f}".replace(",", ".")
                     else:
                         price = "Tidak ditemukan"
+                    
+                    # Ambil spesifikasi
+                    specs = {}
+                    specs_data = product_info.get("specifications", {})
+                    if specs_data:
+                        for key, value in specs_data.items():
+                            specs[key] = value
                     
                     product_data = {
                         'name': product_info.get('product_name', 'Tidak ditemukan'),
@@ -433,41 +441,12 @@ def product_analysis():
                         'rating': 'Tidak ditemukan',
                         'url': clean_url,
                         'platform': 'Shopee' if 'shopee' in url.lower() else 'Tokopedia' if 'tokopedia' in url.lower() else 'Lainnya',
-                        'image': '',
-                        'description': '',
-                        'specs': {}
+                        'image': product_info.get('primary_image_url', ''),
+                        'description': product_info.get('description', ''),
+                        'specs': specs
                     }
                 else:
-                    # ========== PERCOBAAN 2: FALLBACK REQUEST HTML LANGSUNG ==========
-                    headers = {
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-                    }
-                    direct_response = requests.get(clean_url, headers=headers, timeout=15)
-                    
-                    if direct_response.status_code == 200:
-                        from bs4 import BeautifulSoup
-                        soup = BeautifulSoup(direct_response.text, 'html.parser')
-                        
-                        # Coba ambil dari meta tags
-                        title_meta = soup.find('meta', {'property': 'og:title'})
-                        product_name = title_meta.get('content', 'Tidak ditemukan') if title_meta else 'Tidak ditemukan'
-                        
-                        price_meta = soup.find('meta', {'property': 'product:price:amount'})
-                        price = f"Rp {price_meta.get('content', 'Tidak ditemukan')}" if price_meta else 'Tidak ditemukan'
-                        
-                        product_data = {
-                            'name': product_name,
-                            'price': price,
-                            'sold': 'Tidak ditemukan',
-                            'rating': 'Tidak ditemukan',
-                            'url': clean_url,
-                            'platform': 'Shopee' if 'shopee' in url.lower() else 'Tokopedia' if 'tokopedia' in url.lower() else 'Lainnya',
-                            'image': '',
-                            'description': '',
-                            'specs': {}
-                        }
-                    else:
-                        error = f"Gagal mengambil data produk. Status: {response.status_code}"
+                    error = f"Gagal memproses data: {response.status_code} - {response.text}"
                     
             except Exception as e:
                 error = f"Gagal memproses data: {str(e)}"
