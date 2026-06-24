@@ -9,7 +9,8 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'Fathan12345*****'
 
 # ==================== KONFIGURASI DATABASE SUPABASE ====================
-DATABASE_URL = 'postgresql://postgres.hwiagbnigrngjjcvmjvx:Fathan12345*****@aws-1-ap-southeast-2.pooler.supabase.com:6543/postgres?pgbouncer=true'
+# Gunakan URL tanpa ?pgbouncer=true
+DATABASE_URL = 'postgresql://postgres.hwiagbnigrngjjcvmjvx:Fathan12345*****@aws-1-ap-southeast-2.pooler.supabase.com:6543/postgres'
 app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
