@@ -19,9 +19,12 @@ def allowed_file(filename):
 
 routes_bp = Blueprint('routes', __name__)
 
-# ==================== KONFIGURASI APIFY ====================
-APIFY_API_KEY = "apify_api_RgaT2nzcxfLOIPfpcGr9nP9LZcNDcR2giRyT"
-APIFY_ACTOR_ID = "xtracto/shopee-scraper"
+# ==================== KONFIGURASI APIFY (DARI ENV) ====================
+APIFY_API_KEY = os.getenv('APIFY_API_KEY')
+APIFY_ACTOR_ID = os.getenv('APIFY_ACTOR_ID', 'xtracto/shopee-scraper')
+
+if not APIFY_API_KEY:
+    print("⚠️ PERINGATAN: APIFY_API_KEY tidak ditemukan di environment!")
 
 # ==================== DEKORATOR AKSES ====================
 def roles_required(*roles):
@@ -401,6 +404,10 @@ def product_analysis():
     product_data = None
     error = None
 
+    if not APIFY_API_KEY:
+        error = "API Key Apify tidak ditemukan. Silakan set APIFY_API_KEY di environment."
+        return render_template('product_analysis.html', product=product_data, error=error)
+
     if request.method == 'POST':
         url = request.form.get('product_url')
         
@@ -408,7 +415,6 @@ def product_analysis():
             error = "Silakan masukkan link produk."
         else:
             try:
-                # Bersihkan URL dari parameter tracking
                 clean_url = url.split('?')[0]
                 
                 # ========== 1. JALANKAN ACTOR APIFY ==========
@@ -430,7 +436,7 @@ def product_analysis():
                     run_id = run_data.get("data", {}).get("id")
                     
                     if run_id:
-                        # ========== 2. TUNGGU HASIL (POLLING) ==========
+                        # ========== 2. TUNGGU HASIL ==========
                         max_wait = 60
                         wait_time = 0
                         result_data = None
@@ -439,7 +445,6 @@ def product_analysis():
                             time.sleep(3)
                             wait_time += 3
                             
-                            # Cek status run
                             status_response = requests.get(
                                 f"https://api.apify.com/v2/actor-runs/{run_id}",
                                 params={"token": APIFY_API_KEY},
@@ -451,7 +456,6 @@ def product_analysis():
                                 run_status = status_data.get("data", {}).get("status")
                                 
                                 if run_status == "SUCCEEDED":
-                                    # Ambil hasil
                                     result_response = requests.get(
                                         f"https://api.apify.com/v2/actor-runs/{run_id}/dataset/items",
                                         params={"token": APIFY_API_KEY},
@@ -468,8 +472,6 @@ def product_analysis():
                         if result_data and len(result_data) > 0:
                             product_info = result_data[0]
                             
-                            # ========== EKSTRAK DATA ==========
-                            # Nama produk
                             product_name = (
                                 product_info.get('name') or 
                                 product_info.get('title') or 
@@ -477,7 +479,6 @@ def product_analysis():
                                 'Tidak ditemukan'
                             )
                             
-                            # Harga
                             price = product_info.get('price')
                             if not price:
                                 price = product_info.get('price_min')
@@ -486,21 +487,18 @@ def product_analysis():
                             else:
                                 price = "Tidak ditemukan"
                             
-                            # Terjual
                             sold = product_info.get('historical_sold')
                             if sold:
                                 sold = f"{sold:,}".replace(",", ".")
                             else:
                                 sold = "Tidak ditemukan"
                             
-                            # Rating
                             rating = product_info.get('rating_star')
                             if rating:
                                 rating = f"{rating} ⭐"
                             else:
                                 rating = "Tidak ditemukan"
                             
-                            # Spesifikasi / Atribut
                             specs = {}
                             attributes = product_info.get('attributes', [])
                             if attributes:
@@ -511,7 +509,6 @@ def product_analysis():
                                         if key and value:
                                             specs[key] = value
                             
-                            # Varian (ukuran/warna)
                             variants = []
                             tier_variations = product_info.get('tier_variations', [])
                             if tier_variations:
