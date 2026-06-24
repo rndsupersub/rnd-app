@@ -162,7 +162,6 @@
 
 <script>
 function saveScanResult() {
-    // Isi form manual dengan hasil scan
     document.getElementById('product_name').value = "{{ product.product_name }}";
     document.getElementById('price').value = "{{ product.price }}";
     document.getElementById('sold').value = "{{ product.sold }}";
@@ -172,7 +171,6 @@ function saveScanResult() {
     document.getElementById('description').value = "{{ product.description }}";
     document.getElementById('specs').value = '{{ product.specs|tojson }}';
     
-    // Switch ke tab manual
     document.getElementById('manual-tab').click();
     document.getElementById('submitBtn').innerHTML = '<i class="fas fa-save"></i> Simpan ke Database';
     document.getElementById('submitBtn').classList.remove('btn-warning');
@@ -258,7 +256,6 @@ window.addEventListener('DOMContentLoaded', function() {
     document.getElementById('submitBtn').classList.remove('btn-success');
     document.getElementById('submitBtn').classList.add('btn-warning');
     
-    // Switch ke tab manual
     document.getElementById('manual-tab').click();
 });
 {% endif %}
