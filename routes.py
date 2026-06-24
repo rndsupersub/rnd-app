@@ -21,7 +21,7 @@ routes_bp = Blueprint('routes', __name__)
 
 # ==================== KONFIGURASI APIFY (DARI ENV) ====================
 APIFY_API_KEY = os.getenv('APIFY_API_KEY')
-APIFY_ACTOR_ID = os.getenv('APIFY_ACTOR_ID', 'xtracto/shopee-scraper')
+APIFY_ACTOR_ID = os.getenv('APIFY_ACTOR_ID', 'xtracto~shopee-scraper')
 
 if not APIFY_API_KEY:
     print("⚠️ PERINGATAN: APIFY_API_KEY tidak ditemukan di environment!")
