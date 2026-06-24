@@ -21,10 +21,15 @@ routes_bp = Blueprint('routes', __name__)
 
 # ==================== KONFIGURASI APIFY (DARI ENV) ====================
 APIFY_API_KEY = os.getenv('APIFY_API_KEY')
-APIFY_ACTOR_ID = os.getenv('APIFY_ACTOR_ID', 'xtracto~shopee-scraper')
+APIFY_ACTOR_ID = os.getenv('APIFY_ACTOR_ID')
+
+if not APIFY_ACTOR_ID:
+    APIFY_ACTOR_ID = 'xtracto~shopee-scraper'  # fallback
 
 if not APIFY_API_KEY:
     print("⚠️ PERINGATAN: APIFY_API_KEY tidak ditemukan di environment!")
+
+print(f"🔧 APIFY_ACTOR_ID: {APIFY_ACTOR_ID}")
 
 # ==================== DEKORATOR AKSES ====================
 def roles_required(*roles):
@@ -424,12 +429,18 @@ def product_analysis():
                     "url": clean_url
                 }
                 
+                print(f"🚀 Menjalankan Actor: {APIFY_ACTOR_ID}")
+                print(f"📦 Payload: {run_payload}")
+                
                 run_response = requests.post(
                     f"https://api.apify.com/v2/acts/{APIFY_ACTOR_ID}/runs",
                     params={"token": APIFY_API_KEY},
                     json=run_payload,
                     timeout=60
                 )
+                
+                print(f"📡 Response Status: {run_response.status_code}")
+                print(f"📄 Response Text: {run_response.text[:200]}")
                 
                 if run_response.status_code == 201:
                     run_data = run_response.json()
