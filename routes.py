@@ -11,12 +11,13 @@ from app import db
 from models import User, Project, SWOT, PESTLE, BMC, ProductAnalysis
 
 # ==================== KONFIGURASI G.A.S. ====================
-# URL Web App dari Google Apps Script (SUDAH DIUPDATE DENGAN URL BARU!)
+# URL Web App dari Google Apps Script
 GAS_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbzhNnjKGZxdNeHdyVsyzcatW-7Jj0HWJZfEnK9g3EQyuNi6REJK0XmL2J7W2ViYpcW8-g/exec"
 
 def kirim_ke_gsheet(sheet_name, data):
     """Kirim data ke Google Spreadsheet via G.A.S. Web App"""
     try:
+        print(f"📤 Mengirim data ke GSheet: {sheet_name} - {data}")
         payload = {
             "sheetName": sheet_name,
             "data": json.dumps(data)
