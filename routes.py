@@ -51,7 +51,6 @@ def roles_required(*roles):
 @routes_bp.route('/dashboard')
 @login_required
 def dashboard():
-    # Ambil data untuk kolom kanan
     projects = Project.query.filter_by(user_id=current_user.id).all()
     swot_list = SWOT.query.filter_by(user_id=current_user.id).all()
     pestle_list = PESTLE.query.filter_by(user_id=current_user.id).all()
@@ -648,3 +647,41 @@ def delete_product_analysis(item_id):
     db.session.commit()
     flash('Data analisis produk berhasil dihapus!', 'success')
     return redirect(url_for('routes.product_analysis'))
+
+# ==================== ROUTE DETAIL READ-ONLY ====================
+
+@routes_bp.route('/view_swot/<int:swot_id>')
+@login_required
+def view_swot(swot_id):
+    swot = SWOT.query.get_or_404(swot_id)
+    if swot.user_id != current_user.id:
+        flash('Anda tidak memiliki akses.', 'danger')
+        return redirect(url_for('routes.dashboard'))
+    return render_template('view_swot.html', swot=swot)
+
+@routes_bp.route('/view_pestle/<int:pestle_id>')
+@login_required
+def view_pestle(pestle_id):
+    pestle = PESTLE.query.get_or_404(pestle_id)
+    if pestle.user_id != current_user.id:
+        flash('Anda tidak memiliki akses.', 'danger')
+        return redirect(url_for('routes.dashboard'))
+    return render_template('view_pestle.html', pestle=pestle)
+
+@routes_bp.route('/view_bmc/<int:bmc_id>')
+@login_required
+def view_bmc(bmc_id):
+    bmc = BMC.query.get_or_404(bmc_id)
+    if bmc.user_id != current_user.id:
+        flash('Anda tidak memiliki akses.', 'danger')
+        return redirect(url_for('routes.dashboard'))
+    return render_template('view_bmc.html', bmc=bmc)
+
+@routes_bp.route('/view_product/<int:product_id>')
+@login_required
+def view_product(product_id):
+    product = ProductAnalysis.query.get_or_404(product_id)
+    if product.user_id != current_user.id:
+        flash('Anda tidak memiliki akses.', 'danger')
+        return redirect(url_for('routes.dashboard'))
+    return render_template('view_product.html', product=product)

@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block title %}Detail Business Model Canvas - R&D System{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="{{ url_for('routes.dashboard') }}" class="btn btn-secondary btn-sm">
+        <i class="fas fa-arrow-left"></i> Kembali ke Dashboard
+    </a>
+</div>
+
+<div class="card shadow">
+    <div class="card-header bg-success text-white">
+        <h4 class="mb-0"><i class="fas fa-chart-pie"></i> Detail Business Model Canvas</h4>
+    </div>
+    <div class="card-body">
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <strong>Nama Proyek:</strong>
+                <p>{{ bmc.project_name or '-' }}</p>
+            </div>
+            <div class="col-md-3">
+                <strong>Dibuat:</strong>
+                <p>{{ bmc.created_at.strftime('%d-%m-%Y %H:%M') if bmc.created_at else '-' }}</p>
+            </div>
+            <div class="col-md-3">
+                <strong>Diupdate:</strong>
+                <p>{{ bmc.updated_at.strftime('%d-%m-%Y %H:%M') if bmc.updated_at else '-' }}</p>
+            </div>
+        </div>
+
+        <hr>
+
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <div class="border p-3 rounded bg-light">
+                    <h5 class="text-primary">🤝 Key Partners</h5>
+                    <p class="text-muted">{{ bmc.key_partners or '-' }}</p>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="border p-3 rounded bg-light">
+                    <h5 class="text-info">⚡ Key Activities</h5>
+                    <p class="text-muted">{{ bmc.key_activities or '-' }}</p>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="border p-3 rounded bg-light">
+                    <h5 class="text-warning">📦 Key Resources</h5>
+                    <p class="text-muted">{{ bmc.key_resources or '-' }}</p>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="border p-3 rounded bg-light">
+                    <h5 class="text-success">💎 Value Proposition</h5>
+                    <p class="text-muted">{{ bmc.value_proposition or '-' }}</p>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="border p-3 rounded bg-light">
+                    <h5 class="text-danger">❤️ Customer Relationships</h5>
+                    <p class="text-muted">{{ bmc.customer_relationships or '-' }}</p>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="border p-3 rounded bg-light">
+                    <h5 class="text-secondary">📢 Channels</h5>
+                    <p class="text-muted">{{ bmc.channels or '-' }}</p>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="border p-3 rounded bg-light">
+                    <h5 class="text-dark">👥 Customer Segments</h5>
+                    <p class="text-muted">{{ bmc.customer_segments or '-' }}</p>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="border p-3 rounded bg-light">
+                    <h5 class="text-danger">💰 Cost Structure</h5>
+                    <p class="text-muted">{{ bmc.cost_structure or '-' }}</p>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="border p-3 rounded bg-light">
+                    <h5 class="text-success">📈 Revenue Streams</h5>
+                    <p class="text-muted">{{ bmc.revenue_streams or '-' }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-3 text-center">
+            <a href="{{ url_for('routes.dashboard') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Kembali ke Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
