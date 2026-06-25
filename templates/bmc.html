@@ -166,7 +166,7 @@
 
 <script>
 function editBMC(id) {
-    const bmcData = {{ bmc_list_json|tojson }};
+    const bmcData = {{ bmc_list_json|default([])|tojson }};
     const found = bmcData.find(b => String(b.id) === String(id));
     if (found) {
         document.getElementById('edit_id').value = found.id;
