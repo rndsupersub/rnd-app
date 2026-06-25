@@ -10,6 +10,22 @@ from werkzeug.utils import secure_filename
 from app import db
 from models import User, Project, SWOT, PESTLE, BMC, ProductAnalysis
 
+# ==================== KONFIGURASI G.A.S. ====================
+GAS_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbxx_gNO3mC6qQA8BV5DgWzvll6o0QsyWQqcuV5C3zTXhDK9yOPVhISt60__t0.../exec"  # ← GANTI DENGAN URL LO!
+
+def kirim_ke_gsheet(sheet_name, data):
+    """Kirim data ke Google Spreadsheet via G.A.S. Web App"""
+    try:
+        payload = {
+            "sheetName": sheet_name,
+            "data": json.dumps(data)
+        }
+        response = requests.post(GAS_WEBHOOK_URL, data=payload, timeout=5)
+        print(f"✅ GSheet: {response.text}")
+    except Exception as e:
+        print(f"❌ GSheet Error: {e}")
+
+# ==================== KONFIGURASI AWAL ====================
 UPLOAD_FOLDER = '/tmp'
 ALLOWED_EXTENSIONS = {'pdf', 'docx', 'xlsx', 'xls', 'doc'}
 
@@ -18,6 +34,7 @@ def allowed_file(filename):
 
 routes_bp = Blueprint('routes', __name__)
 
+# ==================== KONFIGURASI APIFY (DARI ENV) ====================
 APIFY_API_KEY = os.getenv('APIFY_API_KEY')
 APIFY_ACTOR_ID = os.getenv('APIFY_ACTOR_ID')
 
@@ -27,6 +44,9 @@ if not APIFY_ACTOR_ID:
 if not APIFY_API_KEY:
     print("⚠️ PERINGATAN: APIFY_API_KEY tidak ditemukan di environment!")
 
+print(f"🔧 APIFY_ACTOR_ID: {APIFY_ACTOR_ID}")
+
+# ==================== DEKORATOR AKSES ====================
 def roles_required(*roles):
     def decorator(f):
         @wraps(f)
@@ -41,6 +61,7 @@ def roles_required(*roles):
         return decorated_function
     return decorator
 
+# ==================== ROUTE DASHBOARD ====================
 @routes_bp.route('/')
 @routes_bp.route('/dashboard')
 @login_required
@@ -58,6 +79,7 @@ def dashboard():
                          bmc_list=bmc_list,
                          product_list=product_list)
 
+# ==================== ROUTE PROYEK ====================
 @routes_bp.route('/projects')
 @login_required
 def projects():
@@ -101,6 +123,18 @@ def new_project():
                 new_project.file_path = file_path
         db.session.add(new_project)
         db.session.commit()
+        
+        # ========== KIRIM KE G.SHEET ==========
+        kirim_ke_gsheet('proyek', {
+            'nama_proyek': name,
+            'deskripsi': description or '',
+            'tipe': project_type,
+            'status': status,
+            'tanggal_mulai': start_date or '',
+            'tanggal_selesai': end_date or '',
+            'dibuat_oleh': current_user.username
+        })
+        
         flash('Proyek berhasil dibuat!', 'success')
         return redirect(url_for('routes.projects'))
     return render_template('project_form.html')
@@ -178,6 +212,7 @@ def delete_project(project_id):
     flash('Proyek berhasil dihapus!', 'success')
     return redirect(url_for('routes.projects'))
 
+# ==================== CRUD SWOT ====================
 @routes_bp.route('/swot', methods=['GET', 'POST'])
 @login_required
 def swot():
@@ -210,6 +245,16 @@ def swot():
                 db.session.add(new_swot)
                 flash('Data SWOT berhasil disimpan!', 'success')
             db.session.commit()
+            
+            # ========== KIRIM KE G.SHEET ==========
+            kirim_ke_gsheet('swot', {
+                'nama_proyek': project_name,
+                'strengths': strengths,
+                'weaknesses': weaknesses,
+                'opportunities': opportunities,
+                'threats': threats,
+                'dibuat_oleh': current_user.username
+            })
         except Exception as e:
             flash(f'Terjadi kesalahan: {e}', 'danger')
         return redirect(url_for('routes.swot'))
@@ -238,6 +283,7 @@ def delete_swot(swot_id):
     flash('Data SWOT berhasil dihapus!', 'success')
     return redirect(url_for('routes.swot'))
 
+# ==================== CRUD PESTLE ====================
 @routes_bp.route('/pestle', methods=['GET', 'POST'])
 @login_required
 def pestle():
@@ -276,6 +322,18 @@ def pestle():
                 db.session.add(new_pestle)
                 flash('Data PESTLE berhasil disimpan!', 'success')
             db.session.commit()
+            
+            # ========== KIRIM KE G.SHEET ==========
+            kirim_ke_gsheet('pestle', {
+                'nama_proyek': project_name,
+                'political': political,
+                'economic': economic,
+                'social': social,
+                'technological': technological,
+                'legal': legal,
+                'environmental': environmental,
+                'dibuat_oleh': current_user.username
+            })
         except Exception as e:
             flash(f'Terjadi kesalahan: {e}', 'danger')
         return redirect(url_for('routes.pestle'))
@@ -306,6 +364,7 @@ def delete_pestle(pestle_id):
     flash('Data PESTLE berhasil dihapus!', 'success')
     return redirect(url_for('routes.pestle'))
 
+# ==================== CRUD BMC ====================
 @routes_bp.route('/bmc', methods=['GET', 'POST'])
 @login_required
 def bmc():
@@ -353,6 +412,21 @@ def bmc():
                 db.session.add(new_bmc)
                 flash('Data BMC berhasil disimpan!', 'success')
             db.session.commit()
+            
+            # ========== KIRIM KE G.SHEET ==========
+            kirim_ke_gsheet('bmc', {
+                'nama_proyek': project_name,
+                'key_partners': key_partners,
+                'key_activities': key_activities,
+                'key_resources': key_resources,
+                'value_proposition': value_proposition,
+                'customer_relationships': customer_relationships,
+                'channels': channels,
+                'customer_segments': customer_segments,
+                'cost_structure': cost_structure,
+                'revenue_streams': revenue_streams,
+                'dibuat_oleh': current_user.username
+            })
         except Exception as e:
             flash(f'Terjadi kesalahan: {e}', 'danger')
         return redirect(url_for('routes.bmc'))
@@ -386,6 +460,7 @@ def delete_bmc(bmc_id):
     flash('Data BMC berhasil dihapus!', 'success')
     return redirect(url_for('routes.bmc'))
 
+# ==================== ANALISIS PRODUK ====================
 @routes_bp.route('/product-analysis', methods=['GET', 'POST'])
 @login_required
 def product_analysis():
@@ -441,6 +516,20 @@ def product_analysis():
                     db.session.add(new_item)
                     flash('Data analisis produk berhasil disimpan!', 'success')
                 db.session.commit()
+                
+                # ========== KIRIM KE G.SHEET ==========
+                kirim_ke_gsheet('produk', {
+                    'nama_produk': product_name,
+                    'harga': price,
+                    'terjual': sold,
+                    'rating': rating,
+                    'platform': platform,
+                    'url': url,
+                    'deskripsi': description,
+                    'spesifikasi': specs_json,
+                    'dibuat_oleh': current_user.username
+                })
+                
                 return redirect(url_for('routes.product_analysis'))
             except Exception as e:
                 flash(f'Terjadi kesalahan: {e}', 'danger')
