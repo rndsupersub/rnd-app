@@ -12,7 +12,7 @@
 </div>
 
 <div class="row">
-    <!-- ============ KOLOM KIRI: MENU ============ -->
+    <!-- ============ KOLOM KIRI: MENU (TETAP) ============ -->
     <div class="col-md-4 d-flex flex-column">
         <div class="card shadow mb-3">
             <div class="card-header bg-primary text-white">
@@ -75,7 +75,7 @@
         </div>
     </div>
 
-    <!-- ============ KOLOM KANAN: DATA RINGKASAN ============ -->
+    <!-- ============ KOLOM KANAN: DATA RINGKASAN (PERSEGI PANJANG) ============ -->
     <div class="col-md-8 d-flex flex-column">
         <!-- PROYEK -->
         <div class="card shadow mb-3">
@@ -85,21 +85,17 @@
             </div>
             <div class="card-body">
                 {% if projects %}
-                <div class="row">
-                    {% for project in projects[:6] %}
-                    <div class="col-md-4 mb-2">
-                        <div class="card h-100 text-center">
-                            <div class="card-body">
-                                <h6 class="card-title">{{ project.name }}</h6>
-                                <span class="badge {% if project.status == 'Completed' %}bg-success{% elif project.status == 'Delayed' %}bg-danger{% elif project.status == 'On Track' %}bg-primary{% else %}bg-secondary{% endif %}">
-                                    {{ project.status }}
-                                </span>
-                                <br><br>
-                                <a href="{{ url_for('routes.view_project', project_id=project.id) }}" class="btn btn-sm btn-info">
-                                    <i class="fas fa-eye"></i>
-                                </a>
-                            </div>
-                        </div>
+                <div class="list-group">
+                    {% for project in projects[:10] %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <span><strong>{{ project.name }}</strong> 
+                            <span class="badge {% if project.status == 'Completed' %}bg-success{% elif project.status == 'Delayed' %}bg-danger{% elif project.status == 'On Track' %}bg-primary{% else %}bg-secondary{% endif %} ms-2">
+                                {{ project.status }}
+                            </span>
+                        </span>
+                        <a href="{{ url_for('routes.view_project', project_id=project.id) }}" class="btn btn-sm btn-info">
+                            <i class="fas fa-eye"></i>
+                        </a>
                     </div>
                     {% endfor %}
                 </div>
@@ -117,19 +113,15 @@
             </div>
             <div class="card-body">
                 {% if swot_list %}
-                <div class="row">
-                    {% for item in swot_list[:6] %}
-                    <div class="col-md-4 mb-2">
-                        <div class="card h-100 text-center">
-                            <div class="card-body">
-                                <h6 class="card-title">{{ item.project_name or 'SWOT' }}</h6>
-                                <small class="text-muted">{{ item.created_at.strftime('%d-%m-%Y') if item.created_at else '-' }}</small>
-                                <br><br>
-                                <a href="{{ url_for('routes.view_swot', swot_id=item.id) }}" class="btn btn-sm btn-info">
-                                    <i class="fas fa-eye"></i>
-                                </a>
-                            </div>
-                        </div>
+                <div class="list-group">
+                    {% for item in swot_list[:10] %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>{{ item.project_name or 'SWOT' }} 
+                            <small class="text-muted">({{ item.created_at.strftime('%d-%m-%Y') if item.created_at else '-' }})</small>
+                        </span>
+                        <a href="{{ url_for('routes.view_swot', swot_id=item.id) }}" class="btn btn-sm btn-info">
+                            <i class="fas fa-eye"></i>
+                        </a>
                     </div>
                     {% endfor %}
                 </div>
@@ -147,19 +139,15 @@
             </div>
             <div class="card-body">
                 {% if pestle_list %}
-                <div class="row">
-                    {% for item in pestle_list[:6] %}
-                    <div class="col-md-4 mb-2">
-                        <div class="card h-100 text-center">
-                            <div class="card-body">
-                                <h6 class="card-title">{{ item.project_name or 'PESTLE' }}</h6>
-                                <small class="text-muted">{{ item.created_at.strftime('%d-%m-%Y') if item.created_at else '-' }}</small>
-                                <br><br>
-                                <a href="{{ url_for('routes.view_pestle', pestle_id=item.id) }}" class="btn btn-sm btn-info">
-                                    <i class="fas fa-eye"></i>
-                                </a>
-                            </div>
-                        </div>
+                <div class="list-group">
+                    {% for item in pestle_list[:10] %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>{{ item.project_name or 'PESTLE' }} 
+                            <small class="text-muted">({{ item.created_at.strftime('%d-%m-%Y') if item.created_at else '-' }})</small>
+                        </span>
+                        <a href="{{ url_for('routes.view_pestle', pestle_id=item.id) }}" class="btn btn-sm btn-info">
+                            <i class="fas fa-eye"></i>
+                        </a>
                     </div>
                     {% endfor %}
                 </div>
@@ -177,19 +165,15 @@
             </div>
             <div class="card-body">
                 {% if bmc_list %}
-                <div class="row">
-                    {% for item in bmc_list[:6] %}
-                    <div class="col-md-4 mb-2">
-                        <div class="card h-100 text-center">
-                            <div class="card-body">
-                                <h6 class="card-title">{{ item.project_name or 'BMC' }}</h6>
-                                <small class="text-muted">{{ item.created_at.strftime('%d-%m-%Y') if item.created_at else '-' }}</small>
-                                <br><br>
-                                <a href="{{ url_for('routes.view_bmc', bmc_id=item.id) }}" class="btn btn-sm btn-info">
-                                    <i class="fas fa-eye"></i>
-                                </a>
-                            </div>
-                        </div>
+                <div class="list-group">
+                    {% for item in bmc_list[:10] %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>{{ item.project_name or 'BMC' }} 
+                            <small class="text-muted">({{ item.created_at.strftime('%d-%m-%Y') if item.created_at else '-' }})</small>
+                        </span>
+                        <a href="{{ url_for('routes.view_bmc', bmc_id=item.id) }}" class="btn btn-sm btn-info">
+                            <i class="fas fa-eye"></i>
+                        </a>
                     </div>
                     {% endfor %}
                 </div>
@@ -207,19 +191,15 @@
             </div>
             <div class="card-body">
                 {% if product_list %}
-                <div class="row">
-                    {% for item in product_list[:6] %}
-                    <div class="col-md-4 mb-2">
-                        <div class="card h-100 text-center">
-                            <div class="card-body">
-                                <h6 class="card-title">{{ item.product_name or 'Produk' }}</h6>
-                                <small class="text-muted">{{ item.platform or '-' }}</small>
-                                <br><br>
-                                <a href="{{ url_for('routes.view_product', product_id=item.id) }}" class="btn btn-sm btn-info">
-                                    <i class="fas fa-eye"></i>
-                                </a>
-                            </div>
-                        </div>
+                <div class="list-group">
+                    {% for item in product_list[:10] %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>{{ item.product_name or 'Produk' }} 
+                            <small class="text-muted">({{ item.platform or '-' }})</small>
+                        </span>
+                        <a href="{{ url_for('routes.view_product', product_id=item.id) }}" class="btn btn-sm btn-info">
+                            <i class="fas fa-eye"></i>
+                        </a>
                     </div>
                     {% endfor %}
                 </div>
