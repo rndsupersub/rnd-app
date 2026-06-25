@@ -3,6 +3,44 @@
 {% block title %}Dashboard - R&D System{% endblock %}
 
 {% block content %}
+<style>
+    /* PAKSA TAMPILAN JADI 1 BARIS */
+    .list-group-item {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        padding: 8px 12px !important;
+        border-radius: 4px !important;
+        margin-bottom: 4px !important;
+        background-color: #f8f9fa !important;
+    }
+    .list-group-item:hover {
+        background-color: #e9ecef !important;
+    }
+    .list-group-item .badge {
+        font-size: 11px !important;
+        padding: 3px 8px !important;
+    }
+    .list-group-item .btn-sm {
+        padding: 2px 8px !important;
+        font-size: 12px !important;
+    }
+    /* KOLOM KIRI TETAP */
+    .col-md-4 .card {
+        border-radius: 6px !important;
+    }
+    .col-md-4 .card-header {
+        padding: 8px 12px !important;
+    }
+    .col-md-4 .card-body {
+        padding: 10px 12px !important;
+    }
+    .col-md-4 .card-body p {
+        margin-bottom: 6px !important;
+        font-size: 13px !important;
+    }
+</style>
+
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2><i class="fas fa-chart-pie"></i> Dashboard R&D</h2>
     <div>
@@ -12,7 +50,7 @@
 </div>
 
 <div class="row">
-    <!-- KOLOM KIRI: MENU -->
+    <!-- ============ KOLOM KIRI: MENU ============ -->
     <div class="col-md-4 d-flex flex-column">
         <div class="card shadow mb-3">
             <div class="card-header bg-primary text-white">
@@ -75,7 +113,7 @@
         </div>
     </div>
 
-    <!-- KOLOM KANAN: DATA RINGKASAN (1 BARIS) -->
+    <!-- ============ KOLOM KANAN: DATA RINGKASAN (1 BARIS) ============ -->
     <div class="col-md-8 d-flex flex-column">
         <!-- PROYEK -->
         <div class="card shadow mb-3">
