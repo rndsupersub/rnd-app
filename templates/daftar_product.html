@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Semua Analisis Produk - R&D System{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="{{ url_for('routes.dashboard') }}" class="btn btn-secondary btn-sm">
+        <i class="fas fa-arrow-left"></i> Kembali ke Dashboard
+    </a>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-shopping-cart"></i> Semua Analisis Produk</h2>
+</div>
+
+{% if product_list %}
+<div class="row">
+    {% for item in product_list %}
+    <div class="col-md-3 mb-3">
+        <div class="card h-100 text-center">
+            <div class="card-body">
+                <h6 class="card-title">{{ item.product_name or 'Produk' }}</h6>
+                <small class="text-muted">{{ item.platform or '-' }}</small>
+                <br><br>
+                <a href="{{ url_for('routes.view_product', product_id=item.id) }}" class="btn btn-sm btn-info">
+                    <i class="fas fa-eye"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card shadow">
+    <div class="card-body text-center py-5">
+        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+        <p class="text-muted">Belum ada analisis produk.</p>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

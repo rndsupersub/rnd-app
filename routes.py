@@ -629,3 +629,29 @@ def view_product(product_id):
         flash('Anda tidak memiliki akses.', 'danger')
         return redirect(url_for('routes.dashboard'))
     return render_template('view_product.html', product=product)
+
+# ==================== ROUTE DAFTAR SEMUA DATA (READ-ONLY) ====================
+
+@routes_bp.route('/daftar_swot')
+@login_required
+def daftar_swot():
+    swot_list = SWOT.query.filter_by(user_id=current_user.id).all()
+    return render_template('daftar_swot.html', swot_list=swot_list)
+
+@routes_bp.route('/daftar_pestle')
+@login_required
+def daftar_pestle():
+    pestle_list = PESTLE.query.filter_by(user_id=current_user.id).all()
+    return render_template('daftar_pestle.html', pestle_list=pestle_list)
+
+@routes_bp.route('/daftar_bmc')
+@login_required
+def daftar_bmc():
+    bmc_list = BMC.query.filter_by(user_id=current_user.id).all()
+    return render_template('daftar_bmc.html', bmc_list=bmc_list)
+
+@routes_bp.route('/daftar_product')
+@login_required
+def daftar_product():
+    product_list = ProductAnalysis.query.filter_by(user_id=current_user.id).all()
+    return render_template('daftar_product.html', product_list=product_list)

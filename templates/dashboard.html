@@ -75,7 +75,7 @@
         </div>
     </div>
 
-    <!-- ============ KOLOM KANAN: DATA RINGKASAN (CUMA LIHAT) ============ -->
+    <!-- ============ KOLOM KANAN: DATA RINGKASAN ============ -->
     <div class="col-md-8 d-flex flex-column">
         <!-- PROYEK -->
         <div class="card shadow mb-3">
@@ -113,7 +113,7 @@
         <div class="card shadow mb-3">
             <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
                 <h5 class="mb-0"><i class="fas fa-chess-board"></i> Analisis SWOT</h5>
-                <a href="{{ url_for('routes.swot') }}" class="btn btn-sm btn-dark">Buka →</a>
+                <a href="{{ url_for('routes.daftar_swot') }}" class="btn btn-sm btn-dark">Buka →</a>
             </div>
             <div class="card-body">
                 {% if swot_list %}
@@ -143,7 +143,7 @@
         <div class="card shadow mb-3">
             <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
                 <h5 class="mb-0"><i class="fas fa-globe"></i> Analisis PESTLE</h5>
-                <a href="{{ url_for('routes.pestle') }}" class="btn btn-sm btn-light">Buka →</a>
+                <a href="{{ url_for('routes.daftar_pestle') }}" class="btn btn-sm btn-light">Buka →</a>
             </div>
             <div class="card-body">
                 {% if pestle_list %}
@@ -173,7 +173,7 @@
         <div class="card shadow mb-3">
             <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
                 <h5 class="mb-0"><i class="fas fa-chart-pie"></i> Business Model Canvas</h5>
-                <a href="{{ url_for('routes.bmc') }}" class="btn btn-sm btn-light">Buka →</a>
+                <a href="{{ url_for('routes.daftar_bmc') }}" class="btn btn-sm btn-light">Buka →</a>
             </div>
             <div class="card-body">
                 {% if bmc_list %}
@@ -203,7 +203,7 @@
         <div class="card shadow mb-3">
             <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                 <h5 class="mb-0"><i class="fas fa-shopping-cart"></i> Analisis Produk</h5>
-                <a href="{{ url_for('routes.product_analysis') }}" class="btn btn-sm btn-light">Buka →</a>
+                <a href="{{ url_for('routes.daftar_product') }}" class="btn btn-sm btn-light">Buka →</a>
             </div>
             <div class="card-body">
                 {% if product_list %}
