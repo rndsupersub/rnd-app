@@ -75,7 +75,7 @@
         </div>
     </div>
 
-    <!-- ============ KOLOM KANAN: DATA RINGKASAN (PERSEGI PANJANG) ============ -->
+    <!-- ============ KOLOM KANAN: DATA RINGKASAN (PERSEGI PANJANG - 1 BARIS) ============ -->
     <div class="col-md-8 d-flex flex-column">
         <!-- PROYEK -->
         <div class="card shadow mb-3">
@@ -88,7 +88,8 @@
                 <div class="list-group">
                     {% for project in projects[:10] %}
                     <div class="list-group-item d-flex justify-content-between align-items-center">
-                        <span><strong>{{ project.name }}</strong> 
+                        <span>
+                            <strong>{{ project.name }}</strong>
                             <span class="badge {% if project.status == 'Completed' %}bg-success{% elif project.status == 'Delayed' %}bg-danger{% elif project.status == 'On Track' %}bg-primary{% else %}bg-secondary{% endif %} ms-2">
                                 {{ project.status }}
                             </span>
@@ -116,7 +117,8 @@
                 <div class="list-group">
                     {% for item in swot_list[:10] %}
                     <div class="list-group-item d-flex justify-content-between align-items-center">
-                        <span>{{ item.project_name or 'SWOT' }} 
+                        <span>
+                            {{ item.project_name or 'SWOT' }}
                             <small class="text-muted">({{ item.created_at.strftime('%d-%m-%Y') if item.created_at else '-' }})</small>
                         </span>
                         <a href="{{ url_for('routes.view_swot', swot_id=item.id) }}" class="btn btn-sm btn-info">
@@ -142,7 +144,8 @@
                 <div class="list-group">
                     {% for item in pestle_list[:10] %}
                     <div class="list-group-item d-flex justify-content-between align-items-center">
-                        <span>{{ item.project_name or 'PESTLE' }} 
+                        <span>
+                            {{ item.project_name or 'PESTLE' }}
                             <small class="text-muted">({{ item.created_at.strftime('%d-%m-%Y') if item.created_at else '-' }})</small>
                         </span>
                         <a href="{{ url_for('routes.view_pestle', pestle_id=item.id) }}" class="btn btn-sm btn-info">
@@ -168,7 +171,8 @@
                 <div class="list-group">
                     {% for item in bmc_list[:10] %}
                     <div class="list-group-item d-flex justify-content-between align-items-center">
-                        <span>{{ item.project_name or 'BMC' }} 
+                        <span>
+                            {{ item.project_name or 'BMC' }}
                             <small class="text-muted">({{ item.created_at.strftime('%d-%m-%Y') if item.created_at else '-' }})</small>
                         </span>
                         <a href="{{ url_for('routes.view_bmc', bmc_id=item.id) }}" class="btn btn-sm btn-info">
@@ -194,7 +198,8 @@
                 <div class="list-group">
                     {% for item in product_list[:10] %}
                     <div class="list-group-item d-flex justify-content-between align-items-center">
-                        <span>{{ item.product_name or 'Produk' }} 
+                        <span>
+                            {{ item.product_name or 'Produk' }}
                             <small class="text-muted">({{ item.platform or '-' }})</small>
                         </span>
                         <a href="{{ url_for('routes.view_product', product_id=item.id) }}" class="btn btn-sm btn-info">
