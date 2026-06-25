@@ -51,7 +51,20 @@ def roles_required(*roles):
 @routes_bp.route('/dashboard')
 @login_required
 def dashboard():
-    return render_template('dashboard.html', title='Dashboard')
+    # Ambil data untuk kolom kanan
+    projects = Project.query.filter_by(user_id=current_user.id).all()
+    swot_list = SWOT.query.filter_by(user_id=current_user.id).all()
+    pestle_list = PESTLE.query.filter_by(user_id=current_user.id).all()
+    bmc_list = BMC.query.filter_by(user_id=current_user.id).all()
+    product_list = ProductAnalysis.query.filter_by(user_id=current_user.id).all()
+    
+    return render_template('dashboard.html', 
+                         title='Dashboard',
+                         projects=projects,
+                         swot_list=swot_list,
+                         pestle_list=pestle_list,
+                         bmc_list=bmc_list,
+                         product_list=product_list)
 
 # ==================== ROUTE PROYEK ====================
 @routes_bp.route('/projects')
@@ -410,7 +423,6 @@ def product_analysis():
     error = None
     edit_id = request.args.get('edit_id')
 
-    # Ambil data yang akan diedit
     edit_data = None
     if edit_id:
         edit_data = ProductAnalysis.query.filter_by(id=edit_id, user_id=current_user.id).first()
@@ -433,7 +445,6 @@ def product_analysis():
                 edit_id = request.form.get('edit_id')
 
                 if edit_id:
-                    # UPDATE
                     item = ProductAnalysis.query.get(edit_id)
                     if item and item.user_id == current_user.id:
                         item.project_name = project_name
@@ -448,7 +459,6 @@ def product_analysis():
                         item.specs = specs_json
                         flash('Data analisis produk berhasil diupdate!', 'success')
                 else:
-                    # CREATE
                     new_item = ProductAnalysis(
                         project_name=project_name,
                         product_name=product_name,
@@ -604,7 +614,6 @@ def product_analysis():
                     error = f"Gagal memproses data: {str(e)}"
                     print(f"Error: {e}")
 
-    # Ambil semua data user
     saved_items = ProductAnalysis.query.filter_by(user_id=current_user.id).all()
     saved_items_json = [{
         'id': item.id,
