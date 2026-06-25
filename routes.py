@@ -59,7 +59,6 @@ def roles_required(*roles):
 @routes_bp.route('/dashboard')
 @login_required
 def dashboard():
-    # SEMUA USER LIHAT SEMUA DATA
     projects = Project.query.all()
     swot_list = SWOT.query.all()
     pestle_list = PESTLE.query.all()
