@@ -11,60 +11,26 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2><i class="fas fa-shopping-cart"></i> Analisis Produk E-commerce</h2>
+    {% if current_user.role == 'admin' %}
+    <button class="btn btn-primary" onclick="resetForm()">
+        <i class="fas fa-plus"></i> Tambah Data
+    </button>
+    {% else %}
+    <span class="badge bg-secondary">Hanya Admin</span>
+    {% endif %}
 </div>
 
-<!-- ============ TABEL DATA TERSIMPAN (DI ATAS) ============ -->
-{% if saved_items %}
-<div class="card shadow mb-4">
-    <div class="card-header bg-secondary text-white">
-        <h5 class="mb-0"><i class="fas fa-list"></i> Data Analisis Produk Tersimpan</h5>
-    </div>
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-bordered table-hover">
-                <thead class="table-dark">
-                    <tr>
-                        <th>Nama Produk</th>
-                        <th>Harga</th>
-                        <th>Platform</th>
-                        <th>Tanggal Dibuat</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for item in saved_items %}
-                    <tr>
-                        <td>{{ item.product_name }}</td>
-                        <td>{{ item.price }}</td>
-                        <td>{{ item.platform }}</td>
-                        <td>{{ item.created_at[:10] if item.created_at else '-' }}</td>
-                        <td>
-                            <a href="{{ url_for('routes.product_analysis', edit_id=item.id) }}" class="btn btn-sm btn-warning">
-                                <i class="fas fa-edit"></i> Edit
-                            </a>
-                            <a href="{{ url_for('routes.delete_product_analysis', item_id=item.id) }}" class="btn btn-sm btn-danger" onclick="return confirm('Yakin ingin menghapus data ini?')">
-                                <i class="fas fa-trash"></i> Hapus
-                            </a>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-{% endif %}
-
-<!-- ============ FORM INPUT ============ -->
+<!-- FORM ANALISIS PRODUK (CUMA ADMIN) -->
+{% if current_user.role == 'admin' %}
 <div class="card shadow mb-4">
     <div class="card-header bg-primary text-white">
         <h5 class="mb-0"><i class="fas fa-edit"></i> Input Data Produk</h5>
     </div>
     <div class="card-body">
-        <form method="POST" action="{{ url_for('routes.product_analysis') }}">
+        <form method="POST" action="{{ url_for('routes.product_analysis') }}" id="productForm">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="hidden" name="edit_id" id="edit_id" value="">
-            
+            <input type="hidden" name="action" value="save">
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label for="product_name" class="form-label">Nama Produk <span class="text-danger">*</span></label>
@@ -104,7 +70,7 @@
                     <small class="text-muted">Format JSON: {"key": "value", "key2": "value2"}</small>
                 </div>
                 <div class="col-12">
-                    <button type="submit" class="btn btn-success" name="action" value="save" id="submitBtn">
+                    <button type="submit" class="btn btn-success" id="submitBtn">
                         <i class="fas fa-save"></i> Simpan ke Database
                     </button>
                     <button type="button" class="btn btn-secondary" onclick="resetForm()">
@@ -115,8 +81,10 @@
         </form>
     </div>
 </div>
+{% endif %}
 
-<!-- ============ FORM SCAN LINK ============ -->
+<!-- FORM SCAN LINK (CUMA ADMIN) -->
+{% if current_user.role == 'admin' %}
 <div class="card shadow mb-4">
     <div class="card-header bg-info text-white">
         <h5 class="mb-0"><i class="fas fa-search"></i> Scan Link Produk (Otomatis)</h5>
@@ -133,13 +101,11 @@
             </div>
             <small class="text-muted">Support Shopee, Tokopedia, dan marketplace lainnya. (Gratis)</small>
         </form>
-        
         {% if error %}
         <div class="alert alert-danger mt-3">
             <i class="fas fa-exclamation-circle"></i> {{ error }}
         </div>
         {% endif %}
-        
         {% if product %}
         <div class="alert alert-success mt-3">
             <i class="fas fa-check-circle"></i> <strong>Hasil Scan:</strong> {{ product.product_name }} - {{ product.price }}
@@ -150,8 +116,62 @@
         {% endif %}
     </div>
 </div>
+{% endif %}
 
-<!-- ============ SCRIPT ============ -->
+<!-- DATA PRODUK TERSIMPAN (SEMUA USER BISA LIHAT) -->
+{% if saved_items %}
+<div class="card shadow">
+    <div class="card-header bg-secondary text-white">
+        <h5 class="mb-0"><i class="fas fa-list"></i> Data Analisis Produk Tersimpan</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Nama Produk</th>
+                        <th>Harga</th>
+                        <th>Platform</th>
+                        <th>Tanggal Dibuat</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in saved_items %}
+                    <tr>
+                        <td>{{ item.product_name }}</td>
+                        <td>{{ item.price }}</td>
+                        <td>{{ item.platform }}</td>
+                        <td>{{ item.created_at[:10] if item.created_at else '-' }}</td>
+                        <td>
+                            <a href="{{ url_for('routes.view_product', product_id=item.id) }}" class="btn btn-sm btn-info">
+                                <i class="fas fa-eye"></i> Detail
+                            </a>
+                            {% if current_user.role == 'admin' %}
+                            <a href="{{ url_for('routes.product_analysis', edit_id=item.id) }}" class="btn btn-sm btn-warning">
+                                <i class="fas fa-edit"></i> Edit
+                            </a>
+                            <a href="{{ url_for('routes.delete_product_analysis', item_id=item.id) }}" class="btn btn-sm btn-danger" onclick="return confirm('Yakin ingin menghapus data ini?')">
+                                <i class="fas fa-trash"></i> Hapus
+                            </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="card shadow">
+    <div class="card-body text-center py-5">
+        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+        <p class="text-muted">Belum ada analisis produk.</p>
+    </div>
+</div>
+{% endif %}
+
 <script>
 function resetForm() {
     document.getElementById('edit_id').value = '';
@@ -163,7 +183,6 @@ function resetForm() {
     document.getElementById('url').value = '';
     document.getElementById('description').value = '';
     document.getElementById('specs').value = '';
-    
     document.getElementById('submitBtn').innerHTML = '<i class="fas fa-save"></i> Simpan ke Database';
     document.getElementById('submitBtn').classList.remove('btn-warning');
     document.getElementById('submitBtn').classList.add('btn-success');
@@ -179,7 +198,6 @@ function applyScanResult() {
     document.getElementById('url').value = "{{ product.url }}";
     document.getElementById('description').value = "{{ product.description }}";
     document.getElementById('specs').value = {{ product.specs|tojson|safe }};
-    
     document.getElementById('submitBtn').innerHTML = '<i class="fas fa-save"></i> Simpan ke Database';
     document.getElementById('submitBtn').classList.remove('btn-warning');
     document.getElementById('submitBtn').classList.add('btn-success');
@@ -188,7 +206,6 @@ function applyScanResult() {
     {% endif %}
 }
 
-// Load data untuk edit
 {% if edit_data %}
 window.addEventListener('DOMContentLoaded', function() {
     document.getElementById('edit_id').value = '{{ edit_data.id }}';
@@ -200,7 +217,6 @@ window.addEventListener('DOMContentLoaded', function() {
     document.getElementById('url').value = '{{ edit_data.url }}';
     document.getElementById('description').value = '{{ edit_data.description }}';
     document.getElementById('specs').value = {{ edit_data.specs|tojson|safe }};
-    
     document.getElementById('submitBtn').innerHTML = '<i class="fas fa-edit"></i> Update Data';
     document.getElementById('submitBtn').classList.remove('btn-success');
     document.getElementById('submitBtn').classList.add('btn-warning');

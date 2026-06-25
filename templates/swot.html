@@ -11,78 +11,95 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2><i class="fas fa-chess-board"></i> Analisis SWOT</h2>
+    {% if current_user.role == 'admin' %}
+    <button class="btn btn-primary" onclick="resetForm()">
+        <i class="fas fa-plus"></i> Tambah Data
+    </button>
+    {% else %}
+    <span class="badge bg-secondary">Hanya Admin</span>
+    {% endif %}
 </div>
 
+<!-- FORM SWOT (CUMA ADMIN) -->
+{% if current_user.role == 'admin' %}
 <form method="POST" action="{{ url_for('routes.swot') }}" id="swotForm">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <input type="hidden" name="edit_id" id="edit_id" value="">
-    
-    <div class="mb-3">
-        <label for="project_name" class="form-label">Nama Proyek</label>
-        <input type="text" class="form-control" id="project_name" name="project_name" placeholder="Masukkan nama proyek..." required>
-    </div>
-    
-    <div class="row g-3">
-        <div class="col-md-6">
-            <div class="card h-100 border-success shadow">
-                <div class="card-header bg-success text-white text-center">
-                    <h4 class="mb-0"><i class="fas fa-check-circle"></i> STRENGTHS (Kekuatan)</h4>
+    <div class="card shadow mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="fas fa-edit"></i> Form SWOT</h5>
+        </div>
+        <div class="card-body">
+            <div class="mb-3">
+                <label for="project_name" class="form-label">Nama Proyek</label>
+                <input type="text" class="form-control" id="project_name" name="project_name" placeholder="Masukkan nama proyek...">
+            </div>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="card h-100 border-success">
+                        <div class="card-header bg-success text-white text-center">
+                            <h5 class="mb-0"><i class="fas fa-check-circle"></i> STRENGTHS</h5>
+                        </div>
+                        <div class="card-body">
+                            <textarea class="form-control" name="strengths" id="strengths" rows="4" placeholder="Masukkan kekuatan..."></textarea>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <textarea class="form-control" name="strengths" id="strengths" rows="6" placeholder="Masukkan kekuatan..."></textarea>
+                <div class="col-md-6">
+                    <div class="card h-100 border-danger">
+                        <div class="card-header bg-danger text-white text-center">
+                            <h5 class="mb-0"><i class="fas fa-times-circle"></i> WEAKNESSES</h5>
+                        </div>
+                        <div class="card-body">
+                            <textarea class="form-control" name="weaknesses" id="weaknesses" rows="4" placeholder="Masukkan kelemahan..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card h-100 border-info">
+                        <div class="card-header bg-info text-white text-center">
+                            <h5 class="mb-0"><i class="fas fa-arrow-up"></i> OPPORTUNITIES</h5>
+                        </div>
+                        <div class="card-body">
+                            <textarea class="form-control" name="opportunities" id="opportunities" rows="4" placeholder="Masukkan peluang..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card h-100 border-dark">
+                        <div class="card-header bg-dark text-white text-center">
+                            <h5 class="mb-0"><i class="fas fa-arrow-down"></i> THREATS</h5>
+                        </div>
+                        <div class="card-body">
+                            <textarea class="form-control" name="threats" id="threats" rows="4" placeholder="Masukkan ancaman..."></textarea>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="col-md-6">
-            <div class="card h-100 border-danger shadow">
-                <div class="card-header bg-danger text-white text-center">
-                    <h4 class="mb-0"><i class="fas fa-times-circle"></i> WEAKNESSES (Kelemahan)</h4>
-                </div>
-                <div class="card-body">
-                    <textarea class="form-control" name="weaknesses" id="weaknesses" rows="6" placeholder="Masukkan kelemahan..."></textarea>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="card h-100 border-info shadow">
-                <div class="card-header bg-info text-white text-center">
-                    <h4 class="mb-0"><i class="fas fa-arrow-up"></i> OPPORTUNITIES (Peluang)</h4>
-                </div>
-                <div class="card-body">
-                    <textarea class="form-control" name="opportunities" id="opportunities" rows="6" placeholder="Masukkan peluang..."></textarea>
+            <div class="row mt-4">
+                <div class="col-12 text-center">
+                    <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                        <i class="fas fa-save"></i> Simpan Analisis SWOT
+                    </button>
+                    <button type="button" class="btn btn-secondary btn-lg" onclick="resetForm()">
+                        <i class="fas fa-times"></i> Batal
+                    </button>
                 </div>
             </div>
-        </div>
-        <div class="col-md-6">
-            <div class="card h-100 border-dark shadow">
-                <div class="card-header bg-dark text-white text-center">
-                    <h4 class="mb-0"><i class="fas fa-arrow-down"></i> THREATS (Ancaman)</h4>
-                </div>
-                <div class="card-body">
-                    <textarea class="form-control" name="threats" id="threats" rows="6" placeholder="Masukkan ancaman..."></textarea>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="row mt-4">
-        <div class="col-12 text-center">
-            <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
-                <i class="fas fa-save"></i> Simpan Analisis SWOT
-            </button>
-            <button type="button" class="btn btn-secondary btn-lg" onclick="resetForm()">
-                <i class="fas fa-times"></i> Batal
-            </button>
         </div>
     </div>
 </form>
+{% endif %}
 
+<!-- DATA SWOT TERSIMPAN (SEMUA USER BISA LIHAT) -->
 {% if swot_list_json %}
-<div class="row mt-5">
-    <div class="col-12">
-        <h5><i class="fas fa-list"></i> Data SWOT Tersimpan</h5>
+<div class="card shadow">
+    <div class="card-header bg-secondary text-white">
+        <h5 class="mb-0"><i class="fas fa-list"></i> Data SWOT Tersimpan</h5>
+    </div>
+    <div class="card-body">
         <div class="table-responsive">
-            <table class="table table-bordered table-hover shadow">
+            <table class="table table-bordered table-hover">
                 <thead class="table-dark">
                     <tr>
                         <th>Nama Proyek</th>
@@ -98,18 +115,30 @@
                         <td>{{ item.created_at or '-' }}</td>
                         <td>{{ item.updated_at or '-' }}</td>
                         <td>
+                            <a href="{{ url_for('routes.view_swot', swot_id=item.id) }}" class="btn btn-sm btn-info">
+                                <i class="fas fa-eye"></i> Detail
+                            </a>
+                            {% if current_user.role == 'admin' %}
                             <button onclick="editSWOT('{{ item.id }}')" class="btn btn-sm btn-warning">
                                 <i class="fas fa-edit"></i> Edit
                             </button>
                             <a href="{{ url_for('routes.delete_swot', swot_id=item.id) }}" class="btn btn-sm btn-danger" onclick="return confirm('Yakin ingin menghapus data ini?')">
                                 <i class="fas fa-trash"></i> Hapus
                             </a>
+                            {% endif %}
                         </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
+    </div>
+</div>
+{% else %}
+<div class="card shadow">
+    <div class="card-body text-center py-5">
+        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+        <p class="text-muted">Belum ada data SWOT.</p>
     </div>
 </div>
 {% endif %}

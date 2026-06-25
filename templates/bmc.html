@@ -11,128 +11,127 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2><i class="fas fa-chart-pie"></i> Business Model Canvas</h2>
+    {% if current_user.role == 'admin' %}
+    <button class="btn btn-primary" onclick="resetForm()">
+        <i class="fas fa-plus"></i> Tambah Data
+    </button>
+    {% else %}
+    <span class="badge bg-secondary">Hanya Admin</span>
+    {% endif %}
 </div>
 
+<!-- FORM BMC (CUMA ADMIN) -->
+{% if current_user.role == 'admin' %}
 <form method="POST" action="{{ url_for('routes.bmc') }}" id="bmcForm">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <input type="hidden" name="edit_id" id="edit_id" value="">
-    
-    <div class="mb-3">
-        <label for="project_name" class="form-label">Nama Proyek</label>
-        <input type="text" class="form-control" id="project_name" name="project_name" placeholder="Masukkan nama proyek..." required>
-    </div>
-    
-    <div class="row g-2">
-        <div class="col-md-4">
-            <div class="card h-100 shadow-sm">
-                <div class="card-header bg-primary text-white text-center">
-                    <h6>Key Partners</h6>
+    <div class="card shadow mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="fas fa-edit"></i> Form BMC</h5>
+        </div>
+        <div class="card-body">
+            <div class="mb-3">
+                <label for="project_name" class="form-label">Nama Proyek</label>
+                <input type="text" class="form-control" id="project_name" name="project_name" placeholder="Masukkan nama proyek...">
+            </div>
+            <div class="row g-2">
+                <div class="col-md-4">
+                    <div class="card h-100 border-primary">
+                        <div class="card-header bg-primary text-white text-center"><h6>Key Partners</h6></div>
+                        <div class="card-body">
+                            <textarea class="form-control" name="key_partners" id="key_partners" rows="3" placeholder="Mitra kunci..."></textarea>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <textarea class="form-control" name="key_partners" id="key_partners" rows="4" placeholder="Mitra kunci..."></textarea>
+                <div class="col-md-4">
+                    <div class="card h-100 border-info">
+                        <div class="card-header bg-info text-white text-center"><h6>Key Activities</h6></div>
+                        <div class="card-body">
+                            <textarea class="form-control" name="key_activities" id="key_activities" rows="3" placeholder="Aktivitas utama..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100 border-warning">
+                        <div class="card-header bg-warning text-dark text-center"><h6>Key Resources</h6></div>
+                        <div class="card-body">
+                            <textarea class="form-control" name="key_resources" id="key_resources" rows="3" placeholder="Sumber daya..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100 border-success">
+                        <div class="card-header bg-success text-white text-center"><h6>Value Proposition</h6></div>
+                        <div class="card-body">
+                            <textarea class="form-control" name="value_proposition" id="value_proposition" rows="3" placeholder="Nilai yang ditawarkan..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100 border-danger">
+                        <div class="card-header bg-danger text-white text-center"><h6>Customer Relationships</h6></div>
+                        <div class="card-body">
+                            <textarea class="form-control" name="customer_relationships" id="customer_relationships" rows="3" placeholder="Hubungan pelanggan..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100 border-secondary">
+                        <div class="card-header bg-secondary text-white text-center"><h6>Channels</h6></div>
+                        <div class="card-body">
+                            <textarea class="form-control" name="channels" id="channels" rows="3" placeholder="Saluran distribusi..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100 border-dark">
+                        <div class="card-header bg-dark text-white text-center"><h6>Customer Segments</h6></div>
+                        <div class="card-body">
+                            <textarea class="form-control" name="customer_segments" id="customer_segments" rows="3" placeholder="Segmen pelanggan..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100 border-danger">
+                        <div class="card-header bg-danger text-white text-center"><h6>Cost Structure</h6></div>
+                        <div class="card-body">
+                            <textarea class="form-control" name="cost_structure" id="cost_structure" rows="3" placeholder="Struktur biaya..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100 border-success">
+                        <div class="card-header bg-success text-white text-center"><h6>Revenue Streams</h6></div>
+                        <div class="card-body">
+                            <textarea class="form-control" name="revenue_streams" id="revenue_streams" rows="3" placeholder="Aliran pendapatan..."></textarea>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card h-100 shadow-sm">
-                <div class="card-header bg-info text-white text-center">
-                    <h6>Key Activities</h6>
-                </div>
-                <div class="card-body">
-                    <textarea class="form-control" name="key_activities" id="key_activities" rows="4" placeholder="Aktivitas utama..."></textarea>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card h-100 shadow-sm">
-                <div class="card-header bg-warning text-dark text-center">
-                    <h6>Key Resources</h6>
-                </div>
-                <div class="card-body">
-                    <textarea class="form-control" name="key_resources" id="key_resources" rows="4" placeholder="Sumber daya..."></textarea>
+            <div class="row mt-4">
+                <div class="col-12 text-center">
+                    <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                        <i class="fas fa-save"></i> Simpan BMC
+                    </button>
+                    <button type="button" class="btn btn-secondary btn-lg" onclick="resetForm()">
+                        <i class="fas fa-times"></i> Batal
+                    </button>
                 </div>
             </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card h-100 shadow-sm">
-                <div class="card-header bg-success text-white text-center">
-                    <h6>Value Proposition</h6>
-                </div>
-                <div class="card-body">
-                    <textarea class="form-control" name="value_proposition" id="value_proposition" rows="4" placeholder="Nilai yang ditawarkan..."></textarea>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card h-100 shadow-sm">
-                <div class="card-header bg-danger text-white text-center">
-                    <h6>Customer Relationships</h6>
-                </div>
-                <div class="card-body">
-                    <textarea class="form-control" name="customer_relationships" id="customer_relationships" rows="4" placeholder="Hubungan pelanggan..."></textarea>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card h-100 shadow-sm">
-                <div class="card-header bg-secondary text-white text-center">
-                    <h6>Channels</h6>
-                </div>
-                <div class="card-body">
-                    <textarea class="form-control" name="channels" id="channels" rows="4" placeholder="Saluran distribusi..."></textarea>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card h-100 shadow-sm">
-                <div class="card-header bg-dark text-white text-center">
-                    <h6>Customer Segments</h6>
-                </div>
-                <div class="card-body">
-                    <textarea class="form-control" name="customer_segments" id="customer_segments" rows="4" placeholder="Segmen pelanggan..."></textarea>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card h-100 shadow-sm">
-                <div class="card-header bg-light text-dark text-center">
-                    <h6>Cost Structure</h6>
-                </div>
-                <div class="card-body">
-                    <textarea class="form-control" name="cost_structure" id="cost_structure" rows="4" placeholder="Struktur biaya..."></textarea>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card h-100 shadow-sm">
-                <div class="card-header bg-warning text-dark text-center">
-                    <h6>Revenue Streams</h6>
-                </div>
-                <div class="card-body">
-                    <textarea class="form-control" name="revenue_streams" id="revenue_streams" rows="4" placeholder="Aliran pendapatan..."></textarea>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="row mt-4">
-        <div class="col-12 text-center">
-            <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
-                <i class="fas fa-save"></i> Simpan Business Model Canvas
-            </button>
-            <button type="button" class="btn btn-secondary btn-lg" onclick="resetForm()">
-                <i class="fas fa-times"></i> Batal
-            </button>
         </div>
     </div>
 </form>
+{% endif %}
 
+<!-- DATA BMC TERSIMPAN (SEMUA USER BISA LIHAT) -->
 {% if bmc_list_json %}
-<div class="row mt-5">
-    <div class="col-12">
-        <h5><i class="fas fa-list"></i> Data BMC Tersimpan</h5>
+<div class="card shadow">
+    <div class="card-header bg-secondary text-white">
+        <h5 class="mb-0"><i class="fas fa-list"></i> Data BMC Tersimpan</h5>
+    </div>
+    <div class="card-body">
         <div class="table-responsive">
-            <table class="table table-bordered table-hover shadow">
+            <table class="table table-bordered table-hover">
                 <thead class="table-dark">
                     <tr>
                         <th>Nama Proyek</th>
@@ -148,12 +147,17 @@
                         <td>{{ item.created_at or '-' }}</td>
                         <td>{{ item.updated_at or '-' }}</td>
                         <td>
+                            <a href="{{ url_for('routes.view_bmc', bmc_id=item.id) }}" class="btn btn-sm btn-info">
+                                <i class="fas fa-eye"></i> Detail
+                            </a>
+                            {% if current_user.role == 'admin' %}
                             <button onclick="editBMC('{{ item.id }}')" class="btn btn-sm btn-warning">
                                 <i class="fas fa-edit"></i> Edit
                             </button>
                             <a href="{{ url_for('routes.delete_bmc', bmc_id=item.id) }}" class="btn btn-sm btn-danger" onclick="return confirm('Yakin ingin menghapus data ini?')">
                                 <i class="fas fa-trash"></i> Hapus
                             </a>
+                            {% endif %}
                         </td>
                     </tr>
                     {% endfor %}
@@ -162,11 +166,18 @@
         </div>
     </div>
 </div>
+{% else %}
+<div class="card shadow">
+    <div class="card-body text-center py-5">
+        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+        <p class="text-muted">Belum ada data BMC.</p>
+    </div>
+</div>
 {% endif %}
 
 <script>
 function editBMC(id) {
-    const bmcData = {{ bmc_list_json|default([])|tojson }};
+    const bmcData = {{ bmc_list_json|tojson }};
     const found = bmcData.find(b => String(b.id) === String(id));
     if (found) {
         document.getElementById('edit_id').value = found.id;
@@ -180,7 +191,7 @@ function editBMC(id) {
         document.getElementById('customer_segments').value = found.customer_segments || '';
         document.getElementById('cost_structure').value = found.cost_structure || '';
         document.getElementById('revenue_streams').value = found.revenue_streams || '';
-        document.getElementById('submitBtn').innerHTML = '<i class="fas fa-edit"></i> Update Business Model Canvas';
+        document.getElementById('submitBtn').innerHTML = '<i class="fas fa-edit"></i> Update BMC';
         document.getElementById('submitBtn').classList.remove('btn-primary');
         document.getElementById('submitBtn').classList.add('btn-warning');
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -199,7 +210,7 @@ function resetForm() {
     document.getElementById('customer_segments').value = '';
     document.getElementById('cost_structure').value = '';
     document.getElementById('revenue_streams').value = '';
-    document.getElementById('submitBtn').innerHTML = '<i class="fas fa-save"></i> Simpan Business Model Canvas';
+    document.getElementById('submitBtn').innerHTML = '<i class="fas fa-save"></i> Simpan BMC';
     document.getElementById('submitBtn').classList.remove('btn-warning');
     document.getElementById('submitBtn').classList.add('btn-primary');
 }
