@@ -10,7 +10,6 @@ from werkzeug.utils import secure_filename
 from app import db
 from models import User, Project, SWOT, PESTLE, BMC, ProductAnalysis
 
-# ==================== KONFIGURASI AWAL ====================
 UPLOAD_FOLDER = '/tmp'
 ALLOWED_EXTENSIONS = {'pdf', 'docx', 'xlsx', 'xls', 'doc'}
 
@@ -19,7 +18,6 @@ def allowed_file(filename):
 
 routes_bp = Blueprint('routes', __name__)
 
-# ==================== KONFIGURASI APIFY (DARI ENV) ====================
 APIFY_API_KEY = os.getenv('APIFY_API_KEY')
 APIFY_ACTOR_ID = os.getenv('APIFY_ACTOR_ID')
 
@@ -29,9 +27,6 @@ if not APIFY_ACTOR_ID:
 if not APIFY_API_KEY:
     print("⚠️ PERINGATAN: APIFY_API_KEY tidak ditemukan di environment!")
 
-print(f"🔧 APIFY_ACTOR_ID: {APIFY_ACTOR_ID}")
-
-# ==================== DEKORATOR AKSES ====================
 def roles_required(*roles):
     def decorator(f):
         @wraps(f)
@@ -46,7 +41,6 @@ def roles_required(*roles):
         return decorated_function
     return decorator
 
-# ==================== ROUTE DASHBOARD ====================
 @routes_bp.route('/')
 @routes_bp.route('/dashboard')
 @login_required
@@ -56,7 +50,6 @@ def dashboard():
     pestle_list = PESTLE.query.filter_by(user_id=current_user.id).all()
     bmc_list = BMC.query.filter_by(user_id=current_user.id).all()
     product_list = ProductAnalysis.query.filter_by(user_id=current_user.id).all()
-    
     return render_template('dashboard.html', 
                          title='Dashboard',
                          projects=projects,
@@ -65,7 +58,6 @@ def dashboard():
                          bmc_list=bmc_list,
                          product_list=product_list)
 
-# ==================== ROUTE PROYEK ====================
 @routes_bp.route('/projects')
 @login_required
 def projects():
@@ -82,11 +74,9 @@ def new_project():
         project_type = request.form.get('project_type', 'Main')
         status = request.form.get('status', 'On Track')
         google_drive_link = request.form.get('google_drive_link')
-
         if not name:
             flash('Nama proyek harus diisi.', 'danger')
             return render_template('project_form.html')
-
         new_project = Project(
             name=name,
             description=description,
@@ -95,14 +85,12 @@ def new_project():
             google_drive_link=google_drive_link,
             user_id=current_user.id
         )
-
         start_date = request.form.get('start_date')
         end_date = request.form.get('end_date')
         if start_date:
             new_project.start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
         if end_date:
             new_project.end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
-
         if 'file' in request.files:
             file = request.files['file']
             if file and file.filename and allowed_file(file.filename):
@@ -111,12 +99,10 @@ def new_project():
                 file_path = os.path.join(UPLOAD_FOLDER, unique_filename)
                 file.save(file_path)
                 new_project.file_path = file_path
-
         db.session.add(new_project)
         db.session.commit()
         flash('Proyek berhasil dibuat!', 'success')
         return redirect(url_for('routes.projects'))
-
     return render_template('project_form.html')
 
 @routes_bp.route('/project/<int:project_id>/edit', methods=['GET', 'POST'])
@@ -127,14 +113,12 @@ def edit_project(project_id):
     if project.user_id != current_user.id and current_user.role != 'admin':
         flash('Anda tidak memiliki akses ke proyek ini.', 'danger')
         return redirect(url_for('routes.projects'))
-
     if request.method == 'POST':
         project.name = request.form.get('name')
         project.description = request.form.get('description')
         project.project_type = request.form.get('project_type', 'Main')
         project.status = request.form.get('status', 'On Track')
         project.google_drive_link = request.form.get('google_drive_link')
-
         start_date = request.form.get('start_date')
         end_date = request.form.get('end_date')
         if start_date:
@@ -145,7 +129,6 @@ def edit_project(project_id):
             project.end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
         else:
             project.end_date = None
-
         if 'file' in request.files:
             file = request.files['file']
             if file and file.filename and allowed_file(file.filename):
@@ -156,11 +139,9 @@ def edit_project(project_id):
                 file_path = os.path.join(UPLOAD_FOLDER, unique_filename)
                 file.save(file_path)
                 project.file_path = file_path
-
         db.session.commit()
         flash('Proyek berhasil diperbarui!', 'success')
         return redirect(url_for('routes.view_project', project_id=project.id))
-
     return render_template('project_edit.html', project=project)
 
 @routes_bp.route('/project/<int:project_id>')
@@ -197,7 +178,6 @@ def delete_project(project_id):
     flash('Proyek berhasil dihapus!', 'success')
     return redirect(url_for('routes.projects'))
 
-# ==================== CRUD SWOT ====================
 @routes_bp.route('/swot', methods=['GET', 'POST'])
 @login_required
 def swot():
@@ -209,7 +189,6 @@ def swot():
             opportunities = request.form.get('opportunities')
             threats = request.form.get('threats')
             edit_id = request.form.get('edit_id')
-
             if edit_id:
                 swot_item = SWOT.query.get(edit_id)
                 if swot_item and swot_item.user_id == current_user.id:
@@ -234,7 +213,6 @@ def swot():
         except Exception as e:
             flash(f'Terjadi kesalahan: {e}', 'danger')
         return redirect(url_for('routes.swot'))
-
     swot_list = SWOT.query.filter_by(user_id=current_user.id).all()
     swot_list_json = [{
         'id': item.id,
@@ -260,7 +238,6 @@ def delete_swot(swot_id):
     flash('Data SWOT berhasil dihapus!', 'success')
     return redirect(url_for('routes.swot'))
 
-# ==================== CRUD PESTLE ====================
 @routes_bp.route('/pestle', methods=['GET', 'POST'])
 @login_required
 def pestle():
@@ -274,7 +251,6 @@ def pestle():
             legal = request.form.get('legal')
             environmental = request.form.get('environmental')
             edit_id = request.form.get('edit_id')
-
             if edit_id:
                 pestle_item = PESTLE.query.get(edit_id)
                 if pestle_item and pestle_item.user_id == current_user.id:
@@ -303,7 +279,6 @@ def pestle():
         except Exception as e:
             flash(f'Terjadi kesalahan: {e}', 'danger')
         return redirect(url_for('routes.pestle'))
-
     pestle_list = PESTLE.query.filter_by(user_id=current_user.id).all()
     pestle_list_json = [{
         'id': item.id,
@@ -331,7 +306,6 @@ def delete_pestle(pestle_id):
     flash('Data PESTLE berhasil dihapus!', 'success')
     return redirect(url_for('routes.pestle'))
 
-# ==================== CRUD BMC ====================
 @routes_bp.route('/bmc', methods=['GET', 'POST'])
 @login_required
 def bmc():
@@ -348,7 +322,6 @@ def bmc():
             cost_structure = request.form.get('cost_structure')
             revenue_streams = request.form.get('revenue_streams')
             edit_id = request.form.get('edit_id')
-
             if edit_id:
                 bmc_item = BMC.query.get(edit_id)
                 if bmc_item and bmc_item.user_id == current_user.id:
@@ -383,7 +356,6 @@ def bmc():
         except Exception as e:
             flash(f'Terjadi kesalahan: {e}', 'danger')
         return redirect(url_for('routes.bmc'))
-
     bmc_list = BMC.query.filter_by(user_id=current_user.id).all()
     bmc_list_json = [{
         'id': item.id,
@@ -414,21 +386,17 @@ def delete_bmc(bmc_id):
     flash('Data BMC berhasil dihapus!', 'success')
     return redirect(url_for('routes.bmc'))
 
-# ==================== ANALISIS PRODUK (APIFY API + CRUD) ====================
 @routes_bp.route('/product-analysis', methods=['GET', 'POST'])
 @login_required
 def product_analysis():
     product_data = None
     error = None
     edit_id = request.args.get('edit_id')
-
     edit_data = None
     if edit_id:
         edit_data = ProductAnalysis.query.filter_by(id=edit_id, user_id=current_user.id).first()
-
     if request.method == 'POST':
         action = request.form.get('action')
-        
         if action == 'save':
             try:
                 project_name = request.form.get('project_name')
@@ -442,7 +410,6 @@ def product_analysis():
                 description = request.form.get('description')
                 specs_json = request.form.get('specs_json')
                 edit_id = request.form.get('edit_id')
-
                 if edit_id:
                     item = ProductAnalysis.query.get(edit_id)
                     if item and item.user_id == current_user.id:
@@ -478,76 +445,62 @@ def product_analysis():
             except Exception as e:
                 flash(f'Terjadi kesalahan: {e}', 'danger')
                 db.session.rollback()
-
         elif action == 'analyze':
             url = request.form.get('product_url')
-            
             if not url:
                 error = "Silakan masukkan link produk."
             else:
                 try:
                     clean_url = url.split('?')[0]
-                    
                     run_payload = {
                         "country": "id",
                         "mode": "url",
                         "url": clean_url
                     }
-                    
                     run_response = requests.post(
                         f"https://api.apify.com/v2/acts/{APIFY_ACTOR_ID}/runs",
                         params={"token": APIFY_API_KEY},
                         json=run_payload,
                         timeout=60
                     )
-                    
                     if run_response.status_code == 201:
                         run_data = run_response.json()
                         run_id = run_data.get("data", {}).get("id")
-                        
                         if run_id:
                             max_wait = 60
                             wait_time = 0
                             result_data = None
-                            
                             while wait_time < max_wait:
                                 time.sleep(3)
                                 wait_time += 3
-                                
                                 status_response = requests.get(
                                     f"https://api.apify.com/v2/actor-runs/{run_id}",
                                     params={"token": APIFY_API_KEY},
                                     timeout=30
                                 )
-                                
                                 if status_response.status_code == 200:
                                     status_data = status_response.json()
                                     run_status = status_data.get("data", {}).get("status")
-                                    
                                     if run_status == "SUCCEEDED":
                                         result_response = requests.get(
                                             f"https://api.apify.com/v2/actor-runs/{run_id}/dataset/items",
                                             params={"token": APIFY_API_KEY},
                                             timeout=30
                                         )
-                                        
                                         if result_response.status_code == 200:
                                             result_data = result_response.json()
                                             break
                                     elif run_status in ["FAILED", "TIMED-OUT", "ABORTED"]:
                                         error = f"Run gagal: {run_status}"
                                         break
-                            
                             if result_data and len(result_data) > 0:
                                 product_info = result_data[0]
-                                
                                 product_name = (
                                     product_info.get('name') or 
                                     product_info.get('title') or 
                                     product_info.get('description') or 
                                     'Tidak ditemukan'
                                 )
-                                
                                 price = product_info.get('price_min')
                                 if not price:
                                     price = product_info.get('price')
@@ -555,19 +508,16 @@ def product_analysis():
                                     price = f"Rp {price:,.0f}".replace(",", ".")
                                 else:
                                     price = "Tidak ditemukan"
-                                
                                 sold = product_info.get('historical_sold')
                                 if sold:
                                     sold = f"{sold:,}".replace(",", ".")
                                 else:
                                     sold = "Tidak ditemukan"
-                                
                                 rating = product_info.get('rating_star')
                                 if rating:
                                     rating = f"{rating} ⭐"
                                 else:
                                     rating = "Tidak ditemukan"
-                                
                                 specs = {}
                                 attributes = product_info.get('attributes', [])
                                 if attributes:
@@ -577,7 +527,6 @@ def product_analysis():
                                             value = attr.get('value', '')
                                             if key and value:
                                                 specs[key] = value
-                                
                                 variants = []
                                 tier_variations = product_info.get('tier_variations', [])
                                 if tier_variations:
@@ -587,10 +536,8 @@ def product_analysis():
                                             var_options = tier.get('options', [])
                                             if var_name and var_options:
                                                 variants.append(f"{var_name}: {', '.join(var_options)}")
-                                
                                 if variants:
                                     specs['Varian'] = '; '.join(variants)
-                                
                                 product_data = {
                                     'product_name': product_name,
                                     'price': price,
@@ -608,11 +555,9 @@ def product_analysis():
                             error = "Gagal mendapatkan run ID dari Apify."
                     else:
                         error = f"Gagal menjalankan Actor: {run_response.status_code} - {run_response.text}"
-                        
                 except Exception as e:
                     error = f"Gagal memproses data: {str(e)}"
                     print(f"Error: {e}")
-
     saved_items = ProductAnalysis.query.filter_by(user_id=current_user.id).all()
     saved_items_json = [{
         'id': item.id,
@@ -629,7 +574,6 @@ def product_analysis():
         'created_at': item.created_at.isoformat() if item.created_at else None,
         'updated_at': item.updated_at.isoformat() if item.updated_at else None
     } for item in saved_items]
-
     return render_template('product_analysis.html', 
                           product=product_data, 
                           error=error, 

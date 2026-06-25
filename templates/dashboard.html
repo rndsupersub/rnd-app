@@ -12,9 +12,8 @@
 </div>
 
 <div class="row">
-    <!-- ============ KOLOM KIRI: MENU (CRUD DI SINI) ============ -->
+    <!-- ============ KOLOM KIRI: MENU ============ -->
     <div class="col-md-4 d-flex flex-column">
-        <!-- Manajemen Proyek -->
         <div class="card shadow mb-3">
             <div class="card-header bg-primary text-white">
                 <h5 class="mb-0"><i class="fas fa-project-diagram"></i> Manajemen Proyek</h5>
@@ -27,7 +26,6 @@
             </div>
         </div>
 
-        <!-- Analisis SWOT -->
         <div class="card shadow mb-3">
             <div class="card-header bg-warning text-dark">
                 <h5 class="mb-0"><i class="fas fa-chess-board"></i> Analisis SWOT</h5>
@@ -40,7 +38,6 @@
             </div>
         </div>
 
-        <!-- Analisis PESTLE -->
         <div class="card shadow mb-3">
             <div class="card-header bg-info text-white">
                 <h5 class="mb-0"><i class="fas fa-globe"></i> Analisis PESTLE</h5>
@@ -53,7 +50,6 @@
             </div>
         </div>
 
-        <!-- Business Model Canvas -->
         <div class="card shadow mb-3">
             <div class="card-header bg-success text-white">
                 <h5 class="mb-0"><i class="fas fa-chart-pie"></i> Business Model Canvas</h5>
@@ -66,7 +62,6 @@
             </div>
         </div>
 
-        <!-- Analisis Produk -->
         <div class="card shadow mb-3">
             <div class="card-header bg-primary text-white">
                 <h5 class="mb-0"><i class="fas fa-shopping-cart"></i> Analisis Produk</h5>
@@ -109,7 +104,7 @@
                     {% endfor %}
                 </div>
                 {% else %}
-                <p class="text-muted">Belum ada proyek. <a href="{{ url_for('routes.new_project') }}">Buat proyek baru</a></p>
+                <p class="text-muted">Belum ada proyek.</p>
                 {% endif %}
             </div>
         </div>
@@ -139,7 +134,7 @@
                     {% endfor %}
                 </div>
                 {% else %}
-                <p class="text-muted">Belum ada analisis SWOT. <a href="{{ url_for('routes.swot') }}">Buat sekarang</a></p>
+                <p class="text-muted">Belum ada analisis SWOT.</p>
                 {% endif %}
             </div>
         </div>
@@ -169,7 +164,7 @@
                     {% endfor %}
                 </div>
                 {% else %}
-                <p class="text-muted">Belum ada analisis PESTLE. <a href="{{ url_for('routes.pestle') }}">Buat sekarang</a></p>
+                <p class="text-muted">Belum ada analisis PESTLE.</p>
                 {% endif %}
             </div>
         </div>
@@ -199,7 +194,7 @@
                     {% endfor %}
                 </div>
                 {% else %}
-                <p class="text-muted">Belum ada Business Model Canvas. <a href="{{ url_for('routes.bmc') }}">Buat sekarang</a></p>
+                <p class="text-muted">Belum ada Business Model Canvas.</p>
                 {% endif %}
             </div>
         </div>
@@ -229,7 +224,7 @@
                     {% endfor %}
                 </div>
                 {% else %}
-                <p class="text-muted">Belum ada analisis produk. <a href="{{ url_for('routes.product_analysis') }}">Buat sekarang</a></p>
+                <p class="text-muted">Belum ada analisis produk.</p>
                 {% endif %}
             </div>
         </div>
