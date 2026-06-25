@@ -11,17 +11,12 @@ from app import db
 from models import User, Project, SWOT, PESTLE, BMC, ProductAnalysis
 
 # ==================== KONFIGURASI G.A.S. ====================
-# URL Web App dari Google Apps Script
 GAS_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbzhNnjKGZxdNeHdyVsyzcatW-7Jj0HWJZfEnK9g3EQyuNi6REJK0XmL2J7W2ViYpcW8-g/exec"
 
 def kirim_ke_gsheet(sheet_name, data):
-    """Kirim data ke Google Spreadsheet via G.A.S. Web App"""
     try:
         print(f"📤 Mengirim data ke GSheet: {sheet_name} - {data}")
-        payload = {
-            "sheetName": sheet_name,
-            "data": json.dumps(data)
-        }
+        payload = {"sheetName": sheet_name, "data": json.dumps(data)}
         response = requests.post(GAS_WEBHOOK_URL, data=payload, timeout=5)
         print(f"✅ GSheet: {response.text}")
     except Exception as e:
@@ -36,17 +31,13 @@ def allowed_file(filename):
 
 routes_bp = Blueprint('routes', __name__)
 
-# ==================== KONFIGURASI APIFY (DARI ENV) ====================
+# ==================== KONFIGURASI APIFY ====================
 APIFY_API_KEY = os.getenv('APIFY_API_KEY')
 APIFY_ACTOR_ID = os.getenv('APIFY_ACTOR_ID')
-
 if not APIFY_ACTOR_ID:
     APIFY_ACTOR_ID = 'xtracto~shopee-scraper'
-
 if not APIFY_API_KEY:
-    print("⚠️ PERINGATAN: APIFY_API_KEY tidak ditemukan di environment!")
-
-print(f"🔧 APIFY_ACTOR_ID: {APIFY_ACTOR_ID}")
+    print("⚠️ APIFY_API_KEY tidak ditemukan!")
 
 # ==================== DEKORATOR AKSES ====================
 def roles_required(*roles):
@@ -68,11 +59,12 @@ def roles_required(*roles):
 @routes_bp.route('/dashboard')
 @login_required
 def dashboard():
-    projects = Project.query.filter_by(user_id=current_user.id).all()
-    swot_list = SWOT.query.filter_by(user_id=current_user.id).all()
-    pestle_list = PESTLE.query.filter_by(user_id=current_user.id).all()
-    bmc_list = BMC.query.filter_by(user_id=current_user.id).all()
-    product_list = ProductAnalysis.query.filter_by(user_id=current_user.id).all()
+    # SEMUA USER LIHAT SEMUA DATA
+    projects = Project.query.all()
+    swot_list = SWOT.query.all()
+    pestle_list = PESTLE.query.all()
+    bmc_list = BMC.query.all()
+    product_list = ProductAnalysis.query.all()
     return render_template('dashboard.html', 
                          title='Dashboard',
                          projects=projects,
@@ -81,16 +73,16 @@ def dashboard():
                          bmc_list=bmc_list,
                          product_list=product_list)
 
-# ==================== ROUTE PROYEK ====================
+# ==================== CRUD PROYEK (CUMA ADMIN) ====================
 @routes_bp.route('/projects')
 @login_required
 def projects():
-    user_projects = Project.query.filter_by(user_id=current_user.id).all()
-    return render_template('project.html', projects=user_projects)
+    projects = Project.query.all()
+    return render_template('project.html', projects=projects)
 
 @routes_bp.route('/project/new', methods=['GET', 'POST'])
 @login_required
-@roles_required('admin', 'rnd_staff')
+@roles_required('admin')
 def new_project():
     if request.method == 'POST':
         name = request.form.get('name')
@@ -102,12 +94,8 @@ def new_project():
             flash('Nama proyek harus diisi.', 'danger')
             return render_template('project_form.html')
         new_project = Project(
-            name=name,
-            description=description,
-            project_type=project_type,
-            status=status,
-            google_drive_link=google_drive_link,
-            user_id=current_user.id
+            name=name, description=description, project_type=project_type,
+            status=status, google_drive_link=google_drive_link, user_id=current_user.id
         )
         start_date = request.form.get('start_date')
         end_date = request.form.get('end_date')
@@ -125,30 +113,20 @@ def new_project():
                 new_project.file_path = file_path
         db.session.add(new_project)
         db.session.commit()
-        
-        # ========== KIRIM KE G.SHEET ==========
         kirim_ke_gsheet('proyek', {
-            'nama_proyek': name,
-            'deskripsi': description or '',
-            'tipe': project_type,
-            'status': status,
-            'tanggal_mulai': start_date or '',
-            'tanggal_selesai': end_date or '',
+            'nama_proyek': name, 'deskripsi': description or '', 'tipe': project_type,
+            'status': status, 'tanggal_mulai': start_date or '', 'tanggal_selesai': end_date or '',
             'dibuat_oleh': current_user.username
         })
-        
         flash('Proyek berhasil dibuat!', 'success')
         return redirect(url_for('routes.projects'))
     return render_template('project_form.html')
 
 @routes_bp.route('/project/<int:project_id>/edit', methods=['GET', 'POST'])
 @login_required
-@roles_required('admin', 'rnd_staff')
+@roles_required('admin')
 def edit_project(project_id):
     project = Project.query.get_or_404(project_id)
-    if project.user_id != current_user.id and current_user.role != 'admin':
-        flash('Anda tidak memiliki akses ke proyek ini.', 'danger')
-        return redirect(url_for('routes.projects'))
     if request.method == 'POST':
         project.name = request.form.get('name')
         project.description = request.form.get('description')
@@ -180,45 +158,39 @@ def edit_project(project_id):
         return redirect(url_for('routes.view_project', project_id=project.id))
     return render_template('project_edit.html', project=project)
 
+@routes_bp.route('/project/<int:project_id>/delete')
+@login_required
+@roles_required('admin')
+def delete_project(project_id):
+    project = Project.query.get_or_404(project_id)
+    db.session.delete(project)
+    db.session.commit()
+    flash('Proyek berhasil dihapus!', 'success')
+    return redirect(url_for('routes.projects'))
+
 @routes_bp.route('/project/<int:project_id>')
 @login_required
 def view_project(project_id):
     project = Project.query.get_or_404(project_id)
-    if project.user_id != current_user.id and current_user.role != 'admin':
-        flash('Anda tidak memiliki akses ke proyek ini.', 'danger')
-        return redirect(url_for('routes.projects'))
     return render_template('project_detail.html', project=project)
 
 @routes_bp.route('/project/<int:project_id>/download')
 @login_required
 def download_file(project_id):
     project = Project.query.get_or_404(project_id)
-    if project.user_id != current_user.id and current_user.role != 'admin':
-        flash('Anda tidak memiliki akses.', 'danger')
-        return redirect(url_for('routes.projects'))
     if not project.file_path or not os.path.exists(project.file_path):
         flash('File tidak ditemukan.', 'danger')
         return redirect(url_for('routes.view_project', project_id=project.id))
     return send_file(project.file_path, as_attachment=True)
 
-@routes_bp.route('/project/<int:project_id>/delete')
-@login_required
-@roles_required('admin', 'rnd_staff')
-def delete_project(project_id):
-    project = Project.query.get_or_404(project_id)
-    if project.user_id != current_user.id and current_user.role != 'admin':
-        flash('Anda tidak memiliki akses.', 'danger')
-        return redirect(url_for('routes.projects'))
-    db.session.delete(project)
-    db.session.commit()
-    flash('Proyek berhasil dihapus!', 'success')
-    return redirect(url_for('routes.projects'))
-
-# ==================== CRUD SWOT ====================
+# ==================== CRUD SWOT (CUMA ADMIN) ====================
 @routes_bp.route('/swot', methods=['GET', 'POST'])
 @login_required
 def swot():
     if request.method == 'POST':
+        if current_user.role != 'admin':
+            flash('Anda tidak memiliki akses.', 'danger')
+            return redirect(url_for('routes.dashboard'))
         try:
             project_name = request.form.get('project_name')
             strengths = request.form.get('strengths')
@@ -228,7 +200,7 @@ def swot():
             edit_id = request.form.get('edit_id')
             if edit_id:
                 swot_item = SWOT.query.get(edit_id)
-                if swot_item and swot_item.user_id == current_user.id:
+                if swot_item:
                     swot_item.project_name = project_name
                     swot_item.strengths = strengths
                     swot_item.weaknesses = weaknesses
@@ -237,37 +209,23 @@ def swot():
                     flash('Data SWOT berhasil diupdate!', 'success')
             else:
                 new_swot = SWOT(
-                    project_name=project_name,
-                    strengths=strengths,
-                    weaknesses=weaknesses,
-                    opportunities=opportunities,
-                    threats=threats,
-                    user_id=current_user.id
+                    project_name=project_name, strengths=strengths, weaknesses=weaknesses,
+                    opportunities=opportunities, threats=threats, user_id=current_user.id
                 )
                 db.session.add(new_swot)
                 flash('Data SWOT berhasil disimpan!', 'success')
             db.session.commit()
-            
-            # ========== KIRIM KE G.SHEET ==========
             kirim_ke_gsheet('swot', {
-                'nama_proyek': project_name,
-                'strengths': strengths,
-                'weaknesses': weaknesses,
-                'opportunities': opportunities,
-                'threats': threats,
-                'dibuat_oleh': current_user.username
+                'nama_proyek': project_name, 'strengths': strengths, 'weaknesses': weaknesses,
+                'opportunities': opportunities, 'threats': threats, 'dibuat_oleh': current_user.username
             })
         except Exception as e:
             flash(f'Terjadi kesalahan: {e}', 'danger')
         return redirect(url_for('routes.swot'))
-    swot_list = SWOT.query.filter_by(user_id=current_user.id).all()
+    swot_list = SWOT.query.all()
     swot_list_json = [{
-        'id': item.id,
-        'project_name': item.project_name,
-        'strengths': item.strengths,
-        'weaknesses': item.weaknesses,
-        'opportunities': item.opportunities,
-        'threats': item.threats,
+        'id': item.id, 'project_name': item.project_name, 'strengths': item.strengths,
+        'weaknesses': item.weaknesses, 'opportunities': item.opportunities, 'threats': item.threats,
         'created_at': item.created_at.isoformat() if item.created_at else None,
         'updated_at': item.updated_at.isoformat() if item.updated_at else None
     } for item in swot_list]
@@ -275,21 +233,22 @@ def swot():
 
 @routes_bp.route('/swot/<int:swot_id>/delete')
 @login_required
+@roles_required('admin')
 def delete_swot(swot_id):
     swot_item = SWOT.query.get_or_404(swot_id)
-    if swot_item.user_id != current_user.id:
-        flash('Anda tidak memiliki akses.', 'danger')
-        return redirect(url_for('routes.swot'))
     db.session.delete(swot_item)
     db.session.commit()
     flash('Data SWOT berhasil dihapus!', 'success')
     return redirect(url_for('routes.swot'))
 
-# ==================== CRUD PESTLE ====================
+# ==================== CRUD PESTLE (CUMA ADMIN) ====================
 @routes_bp.route('/pestle', methods=['GET', 'POST'])
 @login_required
 def pestle():
     if request.method == 'POST':
+        if current_user.role != 'admin':
+            flash('Anda tidak memiliki akses.', 'danger')
+            return redirect(url_for('routes.dashboard'))
         try:
             project_name = request.form.get('project_name')
             political = request.form.get('political')
@@ -301,7 +260,7 @@ def pestle():
             edit_id = request.form.get('edit_id')
             if edit_id:
                 pestle_item = PESTLE.query.get(edit_id)
-                if pestle_item and pestle_item.user_id == current_user.id:
+                if pestle_item:
                     pestle_item.project_name = project_name
                     pestle_item.political = political
                     pestle_item.economic = economic
@@ -312,43 +271,26 @@ def pestle():
                     flash('Data PESTLE berhasil diupdate!', 'success')
             else:
                 new_pestle = PESTLE(
-                    project_name=project_name,
-                    political=political,
-                    economic=economic,
-                    social=social,
-                    technological=technological,
-                    legal=legal,
-                    environmental=environmental,
+                    project_name=project_name, political=political, economic=economic,
+                    social=social, technological=technological, legal=legal, environmental=environmental,
                     user_id=current_user.id
                 )
                 db.session.add(new_pestle)
                 flash('Data PESTLE berhasil disimpan!', 'success')
             db.session.commit()
-            
-            # ========== KIRIM KE G.SHEET ==========
             kirim_ke_gsheet('pestle', {
-                'nama_proyek': project_name,
-                'political': political,
-                'economic': economic,
-                'social': social,
-                'technological': technological,
-                'legal': legal,
-                'environmental': environmental,
-                'dibuat_oleh': current_user.username
+                'nama_proyek': project_name, 'political': political, 'economic': economic,
+                'social': social, 'technological': technological, 'legal': legal,
+                'environmental': environmental, 'dibuat_oleh': current_user.username
             })
         except Exception as e:
             flash(f'Terjadi kesalahan: {e}', 'danger')
         return redirect(url_for('routes.pestle'))
-    pestle_list = PESTLE.query.filter_by(user_id=current_user.id).all()
+    pestle_list = PESTLE.query.all()
     pestle_list_json = [{
-        'id': item.id,
-        'project_name': item.project_name,
-        'political': item.political,
-        'economic': item.economic,
-        'social': item.social,
-        'technological': item.technological,
-        'legal': item.legal,
-        'environmental': item.environmental,
+        'id': item.id, 'project_name': item.project_name, 'political': item.political,
+        'economic': item.economic, 'social': item.social, 'technological': item.technological,
+        'legal': item.legal, 'environmental': item.environmental,
         'created_at': item.created_at.isoformat() if item.created_at else None,
         'updated_at': item.updated_at.isoformat() if item.updated_at else None
     } for item in pestle_list]
@@ -356,21 +298,22 @@ def pestle():
 
 @routes_bp.route('/pestle/<int:pestle_id>/delete')
 @login_required
+@roles_required('admin')
 def delete_pestle(pestle_id):
     pestle_item = PESTLE.query.get_or_404(pestle_id)
-    if pestle_item.user_id != current_user.id:
-        flash('Anda tidak memiliki akses.', 'danger')
-        return redirect(url_for('routes.pestle'))
     db.session.delete(pestle_item)
     db.session.commit()
     flash('Data PESTLE berhasil dihapus!', 'success')
     return redirect(url_for('routes.pestle'))
 
-# ==================== CRUD BMC ====================
+# ==================== CRUD BMC (CUMA ADMIN) ====================
 @routes_bp.route('/bmc', methods=['GET', 'POST'])
 @login_required
 def bmc():
     if request.method == 'POST':
+        if current_user.role != 'admin':
+            flash('Anda tidak memiliki akses.', 'danger')
+            return redirect(url_for('routes.dashboard'))
         try:
             project_name = request.form.get('project_name')
             key_partners = request.form.get('key_partners')
@@ -385,7 +328,7 @@ def bmc():
             edit_id = request.form.get('edit_id')
             if edit_id:
                 bmc_item = BMC.query.get(edit_id)
-                if bmc_item and bmc_item.user_id == current_user.id:
+                if bmc_item:
                     bmc_item.project_name = project_name
                     bmc_item.key_partners = key_partners
                     bmc_item.key_activities = key_activities
@@ -399,51 +342,34 @@ def bmc():
                     flash('Data BMC berhasil diupdate!', 'success')
             else:
                 new_bmc = BMC(
-                    project_name=project_name,
-                    key_partners=key_partners,
-                    key_activities=key_activities,
-                    key_resources=key_resources,
-                    value_proposition=value_proposition,
-                    customer_relationships=customer_relationships,
-                    channels=channels,
-                    customer_segments=customer_segments,
-                    cost_structure=cost_structure,
-                    revenue_streams=revenue_streams,
+                    project_name=project_name, key_partners=key_partners,
+                    key_activities=key_activities, key_resources=key_resources,
+                    value_proposition=value_proposition, customer_relationships=customer_relationships,
+                    channels=channels, customer_segments=customer_segments,
+                    cost_structure=cost_structure, revenue_streams=revenue_streams,
                     user_id=current_user.id
                 )
                 db.session.add(new_bmc)
                 flash('Data BMC berhasil disimpan!', 'success')
             db.session.commit()
-            
-            # ========== KIRIM KE G.SHEET ==========
             kirim_ke_gsheet('bmc', {
-                'nama_proyek': project_name,
-                'key_partners': key_partners,
-                'key_activities': key_activities,
-                'key_resources': key_resources,
-                'value_proposition': value_proposition,
-                'customer_relationships': customer_relationships,
-                'channels': channels,
-                'customer_segments': customer_segments,
-                'cost_structure': cost_structure,
-                'revenue_streams': revenue_streams,
+                'nama_proyek': project_name, 'key_partners': key_partners,
+                'key_activities': key_activities, 'key_resources': key_resources,
+                'value_proposition': value_proposition, 'customer_relationships': customer_relationships,
+                'channels': channels, 'customer_segments': customer_segments,
+                'cost_structure': cost_structure, 'revenue_streams': revenue_streams,
                 'dibuat_oleh': current_user.username
             })
         except Exception as e:
             flash(f'Terjadi kesalahan: {e}', 'danger')
         return redirect(url_for('routes.bmc'))
-    bmc_list = BMC.query.filter_by(user_id=current_user.id).all()
+    bmc_list = BMC.query.all()
     bmc_list_json = [{
-        'id': item.id,
-        'project_name': item.project_name,
-        'key_partners': item.key_partners,
-        'key_activities': item.key_activities,
-        'key_resources': item.key_resources,
-        'value_proposition': item.value_proposition,
-        'customer_relationships': item.customer_relationships,
-        'channels': item.channels,
-        'customer_segments': item.customer_segments,
-        'cost_structure': item.cost_structure,
+        'id': item.id, 'project_name': item.project_name,
+        'key_partners': item.key_partners, 'key_activities': item.key_activities,
+        'key_resources': item.key_resources, 'value_proposition': item.value_proposition,
+        'customer_relationships': item.customer_relationships, 'channels': item.channels,
+        'customer_segments': item.customer_segments, 'cost_structure': item.cost_structure,
         'revenue_streams': item.revenue_streams,
         'created_at': item.created_at.isoformat() if item.created_at else None,
         'updated_at': item.updated_at.isoformat() if item.updated_at else None
@@ -452,11 +378,9 @@ def bmc():
 
 @routes_bp.route('/bmc/<int:bmc_id>/delete')
 @login_required
+@roles_required('admin')
 def delete_bmc(bmc_id):
     bmc_item = BMC.query.get_or_404(bmc_id)
-    if bmc_item.user_id != current_user.id:
-        flash('Anda tidak memiliki akses.', 'danger')
-        return redirect(url_for('routes.bmc'))
     db.session.delete(bmc_item)
     db.session.commit()
     flash('Data BMC berhasil dihapus!', 'success')
@@ -471,10 +395,13 @@ def product_analysis():
     edit_id = request.args.get('edit_id')
     edit_data = None
     if edit_id:
-        edit_data = ProductAnalysis.query.filter_by(id=edit_id, user_id=current_user.id).first()
+        edit_data = ProductAnalysis.query.filter_by(id=edit_id).first()
     if request.method == 'POST':
         action = request.form.get('action')
         if action == 'save':
+            if current_user.role != 'admin':
+                flash('Anda tidak memiliki akses.', 'danger')
+                return redirect(url_for('routes.dashboard'))
             try:
                 project_name = request.form.get('project_name')
                 product_name = request.form.get('product_name')
@@ -489,7 +416,7 @@ def product_analysis():
                 edit_id = request.form.get('edit_id')
                 if edit_id:
                     item = ProductAnalysis.query.get(edit_id)
-                    if item and item.user_id == current_user.id:
+                    if item:
                         item.project_name = project_name
                         item.product_name = product_name
                         item.price = price
@@ -503,35 +430,20 @@ def product_analysis():
                         flash('Data analisis produk berhasil diupdate!', 'success')
                 else:
                     new_item = ProductAnalysis(
-                        project_name=project_name,
-                        product_name=product_name,
-                        price=price,
-                        sold=sold,
-                        rating=rating,
-                        platform=platform,
-                        url=url,
-                        image=image,
-                        description=description,
-                        specs=specs_json,
+                        project_name=project_name, product_name=product_name,
+                        price=price, sold=sold, rating=rating, platform=platform,
+                        url=url, image=image, description=description, specs=specs_json,
                         user_id=current_user.id
                     )
                     db.session.add(new_item)
                     flash('Data analisis produk berhasil disimpan!', 'success')
                 db.session.commit()
-                
-                # ========== KIRIM KE G.SHEET ==========
                 kirim_ke_gsheet('produk', {
-                    'nama_produk': product_name,
-                    'harga': price,
-                    'terjual': sold,
-                    'rating': rating,
-                    'platform': platform,
-                    'url': url,
-                    'deskripsi': description,
-                    'spesifikasi': specs_json,
+                    'nama_produk': product_name, 'harga': price, 'terjual': sold,
+                    'rating': rating, 'platform': platform, 'url': url,
+                    'deskripsi': description, 'spesifikasi': specs_json,
                     'dibuat_oleh': current_user.username
                 })
-                
                 return redirect(url_for('routes.product_analysis'))
             except Exception as e:
                 flash(f'Terjadi kesalahan: {e}', 'danger')
@@ -543,31 +455,22 @@ def product_analysis():
             else:
                 try:
                     clean_url = url.split('?')[0]
-                    run_payload = {
-                        "country": "id",
-                        "mode": "url",
-                        "url": clean_url
-                    }
+                    run_payload = {"country": "id", "mode": "url", "url": clean_url}
                     run_response = requests.post(
                         f"https://api.apify.com/v2/acts/{APIFY_ACTOR_ID}/runs",
-                        params={"token": APIFY_API_KEY},
-                        json=run_payload,
-                        timeout=60
+                        params={"token": APIFY_API_KEY}, json=run_payload, timeout=60
                     )
                     if run_response.status_code == 201:
                         run_data = run_response.json()
                         run_id = run_data.get("data", {}).get("id")
                         if run_id:
-                            max_wait = 60
-                            wait_time = 0
-                            result_data = None
+                            max_wait, wait_time, result_data = 60, 0, None
                             while wait_time < max_wait:
                                 time.sleep(3)
                                 wait_time += 3
                                 status_response = requests.get(
                                     f"https://api.apify.com/v2/actor-runs/{run_id}",
-                                    params={"token": APIFY_API_KEY},
-                                    timeout=30
+                                    params={"token": APIFY_API_KEY}, timeout=30
                                 )
                                 if status_response.status_code == 200:
                                     status_data = status_response.json()
@@ -575,8 +478,7 @@ def product_analysis():
                                     if run_status == "SUCCEEDED":
                                         result_response = requests.get(
                                             f"https://api.apify.com/v2/actor-runs/{run_id}/dataset/items",
-                                            params={"token": APIFY_API_KEY},
-                                            timeout=30
+                                            params={"token": APIFY_API_KEY}, timeout=30
                                         )
                                         if result_response.status_code == 200:
                                             result_data = result_response.json()
@@ -586,15 +488,8 @@ def product_analysis():
                                         break
                             if result_data and len(result_data) > 0:
                                 product_info = result_data[0]
-                                product_name = (
-                                    product_info.get('name') or 
-                                    product_info.get('title') or 
-                                    product_info.get('description') or 
-                                    'Tidak ditemukan'
-                                )
-                                price = product_info.get('price_min')
-                                if not price:
-                                    price = product_info.get('price')
+                                product_name = product_info.get('name') or product_info.get('title') or product_info.get('description') or 'Tidak ditemukan'
+                                price = product_info.get('price_min') or product_info.get('price')
                                 if price:
                                     price = f"Rp {price:,.0f}".replace(",", ".")
                                 else:
@@ -630,119 +525,88 @@ def product_analysis():
                                 if variants:
                                     specs['Varian'] = '; '.join(variants)
                                 product_data = {
-                                    'product_name': product_name,
-                                    'price': price,
-                                    'sold': sold,
-                                    'rating': rating,
-                                    'platform': 'Shopee' if 'shopee' in url.lower() else 'Tokopedia' if 'tokopedia' in url.lower() else 'Lainnya',
-                                    'url': clean_url,
-                                    'image': product_info.get('image', ''),
+                                    'product_name': product_name, 'price': price, 'sold': sold,
+                                    'rating': rating, 'platform': 'Shopee' if 'shopee' in url.lower() else 'Tokopedia' if 'tokopedia' in url.lower() else 'Lainnya',
+                                    'url': clean_url, 'image': product_info.get('image', ''),
                                     'description': product_info.get('description', ''),
                                     'specs': specs
                                 }
                             elif not error:
                                 error = "Tidak ada data produk yang ditemukan."
-                        else:
-                            error = "Gagal mendapatkan run ID dari Apify."
                     else:
                         error = f"Gagal menjalankan Actor: {run_response.status_code} - {run_response.text}"
                 except Exception as e:
                     error = f"Gagal memproses data: {str(e)}"
                     print(f"Error: {e}")
-    saved_items = ProductAnalysis.query.filter_by(user_id=current_user.id).all()
+    saved_items = ProductAnalysis.query.all()
     saved_items_json = [{
-        'id': item.id,
-        'project_name': item.project_name,
-        'product_name': item.product_name,
-        'price': item.price,
-        'sold': item.sold,
-        'rating': item.rating,
-        'platform': item.platform,
-        'url': item.url,
-        'image': item.image,
-        'description': item.description,
+        'id': item.id, 'project_name': item.project_name, 'product_name': item.product_name,
+        'price': item.price, 'sold': item.sold, 'rating': item.rating, 'platform': item.platform,
+        'url': item.url, 'image': item.image, 'description': item.description,
         'specs': json.loads(item.specs) if item.specs else {},
         'created_at': item.created_at.isoformat() if item.created_at else None,
         'updated_at': item.updated_at.isoformat() if item.updated_at else None
     } for item in saved_items]
     return render_template('product_analysis.html', 
-                          product=product_data, 
-                          error=error, 
-                          saved_items=saved_items_json,
-                          edit_data=edit_data)
+                          product=product_data, error=error,
+                          saved_items=saved_items_json, edit_data=edit_data)
 
 @routes_bp.route('/product-analysis/<int:item_id>/delete')
 @login_required
+@roles_required('admin')
 def delete_product_analysis(item_id):
     item = ProductAnalysis.query.get_or_404(item_id)
-    if item.user_id != current_user.id:
-        flash('Anda tidak memiliki akses.', 'danger')
-        return redirect(url_for('routes.product_analysis'))
     db.session.delete(item)
     db.session.commit()
     flash('Data analisis produk berhasil dihapus!', 'success')
     return redirect(url_for('routes.product_analysis'))
 
 # ==================== ROUTE DETAIL READ-ONLY ====================
-
 @routes_bp.route('/view_swot/<int:swot_id>')
 @login_required
 def view_swot(swot_id):
     swot = SWOT.query.get_or_404(swot_id)
-    if swot.user_id != current_user.id:
-        flash('Anda tidak memiliki akses.', 'danger')
-        return redirect(url_for('routes.dashboard'))
     return render_template('view_swot.html', swot=swot)
 
 @routes_bp.route('/view_pestle/<int:pestle_id>')
 @login_required
 def view_pestle(pestle_id):
     pestle = PESTLE.query.get_or_404(pestle_id)
-    if pestle.user_id != current_user.id:
-        flash('Anda tidak memiliki akses.', 'danger')
-        return redirect(url_for('routes.dashboard'))
     return render_template('view_pestle.html', pestle=pestle)
 
 @routes_bp.route('/view_bmc/<int:bmc_id>')
 @login_required
 def view_bmc(bmc_id):
     bmc = BMC.query.get_or_404(bmc_id)
-    if bmc.user_id != current_user.id:
-        flash('Anda tidak memiliki akses.', 'danger')
-        return redirect(url_for('routes.dashboard'))
     return render_template('view_bmc.html', bmc=bmc)
 
 @routes_bp.route('/view_product/<int:product_id>')
 @login_required
 def view_product(product_id):
     product = ProductAnalysis.query.get_or_404(product_id)
-    if product.user_id != current_user.id:
-        flash('Anda tidak memiliki akses.', 'danger')
-        return redirect(url_for('routes.dashboard'))
     return render_template('view_product.html', product=product)
 
-# ==================== ROUTE DAFTAR SEMUA DATA (READ-ONLY) ====================
-
+# ==================== ROUTE DAFTAR SEMUA DATA ====================
 @routes_bp.route('/daftar_swot')
 @login_required
 def daftar_swot():
-    swot_list = SWOT.query.filter_by(user_id=current_user.id).all()
+    swot_list = SWOT.query.all()
     return render_template('daftar_swot.html', swot_list=swot_list)
 
 @routes_bp.route('/daftar_pestle')
 @login_required
 def daftar_pestle():
-    pestle_list = PESTLE.query.filter_by(user_id=current_user.id).all()
+    pestle_list = PESTLE.query.all()
     return render_template('daftar_pestle.html', pestle_list=pestle_list)
 
 @routes_bp.route('/daftar_bmc')
 @login_required
 def daftar_bmc():
-    bmc_list = BMC.query.filter_by(user_id=current_user.id).all()
+    bmc_list = BMC.query.all()
     return render_template('daftar_bmc.html', bmc_list=bmc_list)
 
 @routes_bp.route('/daftar_product')
 @login_required
 def daftar_product():
-    product_list = ProductAnalysis.query.filter_by(user_id=current_user.id).all()
+    product_list = ProductAnalysis.query.all()
     return render_template('daftar_product.html', product_list=product_list)

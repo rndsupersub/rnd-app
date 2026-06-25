@@ -15,6 +15,11 @@ def register():
             password = request.form.get('password')
             role = request.form.get('role', 'viewer')
             
+            # Validasi role cuma admin atau viewer
+            if role not in ['admin', 'viewer']:
+                flash('Role tidak valid!', 'danger')
+                return render_template('register.html')
+            
             if User.query.filter_by(username=username).first():
                 flash('Username sudah terdaftar!', 'danger')
                 return render_template('register.html')

@@ -52,9 +52,6 @@ class SWOT(db.Model):
     project_id = db.Column(db.Integer, db.ForeignKey('projects.id'), nullable=True)
     project = db.relationship('Project', backref='swots')
 
-    def __repr__(self):
-        return f'<SWOT for user {self.user_id}>'
-
 class PESTLE(db.Model):
     __tablename__ = 'pestle'
     id = db.Column(db.Integer, primary_key=True)
@@ -70,9 +67,6 @@ class PESTLE(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     project_id = db.Column(db.Integer, db.ForeignKey('projects.id'), nullable=True)
     project = db.relationship('Project', backref='pestles')
-
-    def __repr__(self):
-        return f'<PESTLE for user {self.user_id}>'
 
 class BMC(db.Model):
     __tablename__ = 'bmc'
@@ -93,10 +87,6 @@ class BMC(db.Model):
     project_id = db.Column(db.Integer, db.ForeignKey('projects.id'), nullable=True)
     project = db.relationship('Project', backref='bmcs')
 
-    def __repr__(self):
-        return f'<BMC for user {self.user_id}>'
-
-# ==================== TABEL PRODUCT ANALYSIS ====================
 class ProductAnalysis(db.Model):
     __tablename__ = 'product_analysis'
     id = db.Column(db.Integer, primary_key=True)
@@ -109,10 +99,7 @@ class ProductAnalysis(db.Model):
     url = db.Column(db.String(500))
     image = db.Column(db.String(500))
     description = db.Column(db.Text)
-    specs = db.Column(db.Text)  # JSON string
+    specs = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-
-    def __repr__(self):
-        return f'<ProductAnalysis {self.product_name}>'
