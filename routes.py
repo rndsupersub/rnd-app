@@ -14,13 +14,98 @@ from models import User, Project, SWOT, PESTLE, BMC, ProductAnalysis
 GAS_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbzhNnjKGZxdNeHdyVsyzcatW-7Jj0HWJZfEnK9g3EQyuNi6REJK0XmL2J7W2ViYpcW8-g/exec"
 
 def kirim_ke_gsheet(sheet_name, data):
+    """Kirim 1 data ke Google Spreadsheet via G.A.S. Web App"""
     try:
-        print(f"📤 Mengirim data ke GSheet: {sheet_name} - {data}")
-        payload = {"sheetName": sheet_name, "data": json.dumps(data)}
+        payload = {
+            "sheetName": sheet_name,
+            "data": json.dumps(data)
+        }
         response = requests.post(GAS_WEBHOOK_URL, data=payload, timeout=5)
         print(f"✅ GSheet: {response.text}")
     except Exception as e:
         print(f"❌ GSheet Error: {e}")
+
+def sync_all_to_gsheet():
+    """Sinkronkan SEMUA data ke Google Spreadsheet (untuk edit/hapus)"""
+    try:
+        print("📤 Sinkronisasi semua data ke GSheet...")
+        
+        # Ambil semua data dari database
+        projects = Project.query.all()
+        swot_list = SWOT.query.all()
+        pestle_list = PESTLE.query.all()
+        bmc_list = BMC.query.all()
+        product_list = ProductAnalysis.query.all()
+        
+        # ===== PROYEK =====
+        for p in projects:
+            kirim_ke_gsheet('proyek', {
+                'nama_proyek': p.name,
+                'deskripsi': p.description or '',
+                'tipe': p.project_type,
+                'status': p.status,
+                'tanggal_mulai': p.start_date.isoformat() if p.start_date else '',
+                'tanggal_selesai': p.end_date.isoformat() if p.end_date else '',
+                'dibuat_oleh': User.query.get(p.user_id).username if p.user_id else ''
+            })
+        
+        # ===== SWOT =====
+        for s in swot_list:
+            kirim_ke_gsheet('swot', {
+                'nama_proyek': s.project_name or '',
+                'strengths': s.strengths or '',
+                'weaknesses': s.weaknesses or '',
+                'opportunities': s.opportunities or '',
+                'threats': s.threats or '',
+                'dibuat_oleh': User.query.get(s.user_id).username if s.user_id else ''
+            })
+        
+        # ===== PESTLE =====
+        for p in pestle_list:
+            kirim_ke_gsheet('pestle', {
+                'nama_proyek': p.project_name or '',
+                'political': p.political or '',
+                'economic': p.economic or '',
+                'social': p.social or '',
+                'technological': p.technological or '',
+                'legal': p.legal or '',
+                'environmental': p.environmental or '',
+                'dibuat_oleh': User.query.get(p.user_id).username if p.user_id else ''
+            })
+        
+        # ===== BMC =====
+        for b in bmc_list:
+            kirim_ke_gsheet('bmc', {
+                'nama_proyek': b.project_name or '',
+                'key_partners': b.key_partners or '',
+                'key_activities': b.key_activities or '',
+                'key_resources': b.key_resources or '',
+                'value_proposition': b.value_proposition or '',
+                'customer_relationships': b.customer_relationships or '',
+                'channels': b.channels or '',
+                'customer_segments': b.customer_segments or '',
+                'cost_structure': b.cost_structure or '',
+                'revenue_streams': b.revenue_streams or '',
+                'dibuat_oleh': User.query.get(b.user_id).username if b.user_id else ''
+            })
+        
+        # ===== PRODUK =====
+        for pr in product_list:
+            kirim_ke_gsheet('produk', {
+                'nama_produk': pr.product_name or '',
+                'harga': pr.price or '',
+                'terjual': pr.sold or '',
+                'rating': pr.rating or '',
+                'platform': pr.platform or '',
+                'url': pr.url or '',
+                'deskripsi': pr.description or '',
+                'spesifikasi': pr.specs or '',
+                'dibuat_oleh': User.query.get(pr.user_id).username if pr.user_id else ''
+            })
+        
+        print("✅ Semua data berhasil disinkronkan ke GSheet!")
+    except Exception as e:
+        print(f"❌ GSheet Sync Error: {e}")
 
 # ==================== KONFIGURASI AWAL ====================
 UPLOAD_FOLDER = '/tmp'
@@ -112,11 +197,18 @@ def new_project():
                 new_project.file_path = file_path
         db.session.add(new_project)
         db.session.commit()
+        
+        # ========== KIRIM KE G.SHEET ==========
         kirim_ke_gsheet('proyek', {
-            'nama_proyek': name, 'deskripsi': description or '', 'tipe': project_type,
-            'status': status, 'tanggal_mulai': start_date or '', 'tanggal_selesai': end_date or '',
+            'nama_proyek': name,
+            'deskripsi': description or '',
+            'tipe': project_type,
+            'status': status,
+            'tanggal_mulai': start_date or '',
+            'tanggal_selesai': end_date or '',
             'dibuat_oleh': current_user.username
         })
+        
         flash('Proyek berhasil dibuat!', 'success')
         return redirect(url_for('routes.projects'))
     return render_template('project_form.html')
@@ -153,6 +245,10 @@ def edit_project(project_id):
                 file.save(file_path)
                 project.file_path = file_path
         db.session.commit()
+        
+        # ========== SINCRON KE G.SHEET ==========
+        sync_all_to_gsheet()
+        
         flash('Proyek berhasil diperbarui!', 'success')
         return redirect(url_for('routes.view_project', project_id=project.id))
     return render_template('project_edit.html', project=project)
@@ -162,6 +258,10 @@ def edit_project(project_id):
 @roles_required('admin')
 def delete_project(project_id):
     project = Project.query.get_or_404(project_id)
+    
+    # ========== SINCRON KE G.SHEET SEBELUM HAPUS ==========
+    sync_all_to_gsheet()
+    
     db.session.delete(project)
     db.session.commit()
     flash('Proyek berhasil dihapus!', 'success')
@@ -214,9 +314,15 @@ def swot():
                 db.session.add(new_swot)
                 flash('Data SWOT berhasil disimpan!', 'success')
             db.session.commit()
+            
+            # ========== KIRIM KE G.SHEET ==========
             kirim_ke_gsheet('swot', {
-                'nama_proyek': project_name, 'strengths': strengths, 'weaknesses': weaknesses,
-                'opportunities': opportunities, 'threats': threats, 'dibuat_oleh': current_user.username
+                'nama_proyek': project_name,
+                'strengths': strengths,
+                'weaknesses': weaknesses,
+                'opportunities': opportunities,
+                'threats': threats,
+                'dibuat_oleh': current_user.username
             })
         except Exception as e:
             flash(f'Terjadi kesalahan: {e}', 'danger')
@@ -235,6 +341,10 @@ def swot():
 @roles_required('admin')
 def delete_swot(swot_id):
     swot_item = SWOT.query.get_or_404(swot_id)
+    
+    # ========== SINCRON KE G.SHEET SEBELUM HAPUS ==========
+    sync_all_to_gsheet()
+    
     db.session.delete(swot_item)
     db.session.commit()
     flash('Data SWOT berhasil dihapus!', 'success')
@@ -277,10 +387,17 @@ def pestle():
                 db.session.add(new_pestle)
                 flash('Data PESTLE berhasil disimpan!', 'success')
             db.session.commit()
+            
+            # ========== KIRIM KE G.SHEET ==========
             kirim_ke_gsheet('pestle', {
-                'nama_proyek': project_name, 'political': political, 'economic': economic,
-                'social': social, 'technological': technological, 'legal': legal,
-                'environmental': environmental, 'dibuat_oleh': current_user.username
+                'nama_proyek': project_name,
+                'political': political,
+                'economic': economic,
+                'social': social,
+                'technological': technological,
+                'legal': legal,
+                'environmental': environmental,
+                'dibuat_oleh': current_user.username
             })
         except Exception as e:
             flash(f'Terjadi kesalahan: {e}', 'danger')
@@ -300,6 +417,10 @@ def pestle():
 @roles_required('admin')
 def delete_pestle(pestle_id):
     pestle_item = PESTLE.query.get_or_404(pestle_id)
+    
+    # ========== SINCRON KE G.SHEET SEBELUM HAPUS ==========
+    sync_all_to_gsheet()
+    
     db.session.delete(pestle_item)
     db.session.commit()
     flash('Data PESTLE berhasil dihapus!', 'success')
@@ -351,12 +472,19 @@ def bmc():
                 db.session.add(new_bmc)
                 flash('Data BMC berhasil disimpan!', 'success')
             db.session.commit()
+            
+            # ========== KIRIM KE G.SHEET ==========
             kirim_ke_gsheet('bmc', {
-                'nama_proyek': project_name, 'key_partners': key_partners,
-                'key_activities': key_activities, 'key_resources': key_resources,
-                'value_proposition': value_proposition, 'customer_relationships': customer_relationships,
-                'channels': channels, 'customer_segments': customer_segments,
-                'cost_structure': cost_structure, 'revenue_streams': revenue_streams,
+                'nama_proyek': project_name,
+                'key_partners': key_partners,
+                'key_activities': key_activities,
+                'key_resources': key_resources,
+                'value_proposition': value_proposition,
+                'customer_relationships': customer_relationships,
+                'channels': channels,
+                'customer_segments': customer_segments,
+                'cost_structure': cost_structure,
+                'revenue_streams': revenue_streams,
                 'dibuat_oleh': current_user.username
             })
         except Exception as e:
@@ -380,6 +508,10 @@ def bmc():
 @roles_required('admin')
 def delete_bmc(bmc_id):
     bmc_item = BMC.query.get_or_404(bmc_id)
+    
+    # ========== SINCRON KE G.SHEET SEBELUM HAPUS ==========
+    sync_all_to_gsheet()
+    
     db.session.delete(bmc_item)
     db.session.commit()
     flash('Data BMC berhasil dihapus!', 'success')
@@ -437,12 +569,20 @@ def product_analysis():
                     db.session.add(new_item)
                     flash('Data analisis produk berhasil disimpan!', 'success')
                 db.session.commit()
+                
+                # ========== KIRIM KE G.SHEET ==========
                 kirim_ke_gsheet('produk', {
-                    'nama_produk': product_name, 'harga': price, 'terjual': sold,
-                    'rating': rating, 'platform': platform, 'url': url,
-                    'deskripsi': description, 'spesifikasi': specs_json,
+                    'nama_produk': product_name,
+                    'harga': price,
+                    'terjual': sold,
+                    'rating': rating,
+                    'platform': platform,
+                    'url': url,
+                    'deskripsi': description,
+                    'spesifikasi': specs_json,
                     'dibuat_oleh': current_user.username
                 })
+                
                 return redirect(url_for('routes.product_analysis'))
             except Exception as e:
                 flash(f'Terjadi kesalahan: {e}', 'danger')
@@ -555,6 +695,10 @@ def product_analysis():
 @roles_required('admin')
 def delete_product_analysis(item_id):
     item = ProductAnalysis.query.get_or_404(item_id)
+    
+    # ========== SINCRON KE G.SHEET SEBELUM HAPUS ==========
+    sync_all_to_gsheet()
+    
     db.session.delete(item)
     db.session.commit()
     flash('Data analisis produk berhasil dihapus!', 'success')
