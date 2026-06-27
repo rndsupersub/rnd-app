@@ -11,7 +11,7 @@ from app import db
 from models import User, Project, SWOT, PESTLE, BMC, ProductAnalysis
 
 # ==================== KONFIGURASI G.A.S. ====================
-GAS_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbyFcZzGsBpXsqAt3FgxB3YBHJGKxYeGh8ov8c5-WYCYWSTZ4uYsB9PfvK61V8p_Y6Pf7Q/exec"
+GAS_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwGm_Q0Yofq0B_W0fqnK4ibwsLgcTlPphtahlL8csddaYna6OOKDKwVC7HDiTI6BXns9Q/exec"
 
 def kirim_ke_gsheet(sheet_name, data, clear=False):
     """Kirim data ke Google Spreadsheet via G.A.S. Web App"""
