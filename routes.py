@@ -11,7 +11,7 @@ from app import db
 from models import User, Project, SWOT, PESTLE, BMC, ProductAnalysis
 
 # ==================== KONFIGURASI G.A.S. ====================
-GAS_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbzhNnjKGZxdNeHdyVsyzcatW-7Jj0HWJZfEnK9g3EQyuNi6REJK0XmL2J7W2ViYpcW8-g/exec"
+GAS_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbyFcZzGsBpXsqAt3FgxB3YBHJGKxYeGh8ov8c5-WYCYWSTZ4uYsB9PfvK61V8p_Y6Pf7Q/exec"
 
 def kirim_ke_gsheet(sheet_name, data, clear=False):
     """Kirim data ke Google Spreadsheet via G.A.S. Web App"""
@@ -38,136 +38,75 @@ def sync_all_to_gsheet():
         product_list = ProductAnalysis.query.all()
         
         # ===== PROYEK =====
-        if projects:
+        kirim_ke_gsheet('proyek', {}, clear=True)
+        for p in projects:
             kirim_ke_gsheet('proyek', {
-                'nama_proyek': projects[0].name,
-                'deskripsi': projects[0].description or '',
-                'tipe': projects[0].project_type,
-                'status': projects[0].status,
-                'tanggal_mulai': projects[0].start_date.isoformat() if projects[0].start_date else '',
-                'tanggal_selesai': projects[0].end_date.isoformat() if projects[0].end_date else '',
-                'dibuat_oleh': User.query.get(projects[0].user_id).username if projects[0].user_id else ''
-            }, clear=True)
-            for p in projects[1:]:
-                kirim_ke_gsheet('proyek', {
-                    'nama_proyek': p.name,
-                    'deskripsi': p.description or '',
-                    'tipe': p.project_type,
-                    'status': p.status,
-                    'tanggal_mulai': p.start_date.isoformat() if p.start_date else '',
-                    'tanggal_selesai': p.end_date.isoformat() if p.end_date else '',
-                    'dibuat_oleh': User.query.get(p.user_id).username if p.user_id else ''
-                })
-        else:
-            kirim_ke_gsheet('proyek', {}, clear=True)
+                'nama_proyek': p.name,
+                'deskripsi': p.description or '',
+                'tipe': p.project_type,
+                'status': p.status,
+                'tanggal_mulai': p.start_date.isoformat() if p.start_date else '',
+                'tanggal_selesai': p.end_date.isoformat() if p.end_date else '',
+                'dibuat_oleh': User.query.get(p.user_id).username if p.user_id else ''
+            })
         
         # ===== SWOT =====
-        if swot_list:
+        kirim_ke_gsheet('swot', {}, clear=True)
+        for s in swot_list:
             kirim_ke_gsheet('swot', {
-                'nama_proyek': swot_list[0].project_name or '',
-                'strengths': swot_list[0].strengths or '',
-                'weaknesses': swot_list[0].weaknesses or '',
-                'opportunities': swot_list[0].opportunities or '',
-                'threats': swot_list[0].threats or '',
-                'dibuat_oleh': User.query.get(swot_list[0].user_id).username if swot_list[0].user_id else ''
-            }, clear=True)
-            for s in swot_list[1:]:
-                kirim_ke_gsheet('swot', {
-                    'nama_proyek': s.project_name or '',
-                    'strengths': s.strengths or '',
-                    'weaknesses': s.weaknesses or '',
-                    'opportunities': s.opportunities or '',
-                    'threats': s.threats or '',
-                    'dibuat_oleh': User.query.get(s.user_id).username if s.user_id else ''
-                })
-        else:
-            kirim_ke_gsheet('swot', {}, clear=True)
+                'nama_proyek': s.project_name or '',
+                'strengths': s.strengths or '',
+                'weaknesses': s.weaknesses or '',
+                'opportunities': s.opportunities or '',
+                'threats': s.threats or '',
+                'dibuat_oleh': User.query.get(s.user_id).username if s.user_id else ''
+            })
         
         # ===== PESTLE =====
-        if pestle_list:
+        kirim_ke_gsheet('pestle', {}, clear=True)
+        for p in pestle_list:
             kirim_ke_gsheet('pestle', {
-                'nama_proyek': pestle_list[0].project_name or '',
-                'political': pestle_list[0].political or '',
-                'economic': pestle_list[0].economic or '',
-                'social': pestle_list[0].social or '',
-                'technological': pestle_list[0].technological or '',
-                'legal': pestle_list[0].legal or '',
-                'environmental': pestle_list[0].environmental or '',
-                'dibuat_oleh': User.query.get(pestle_list[0].user_id).username if pestle_list[0].user_id else ''
-            }, clear=True)
-            for p in pestle_list[1:]:
-                kirim_ke_gsheet('pestle', {
-                    'nama_proyek': p.project_name or '',
-                    'political': p.political or '',
-                    'economic': p.economic or '',
-                    'social': p.social or '',
-                    'technological': p.technological or '',
-                    'legal': p.legal or '',
-                    'environmental': p.environmental or '',
-                    'dibuat_oleh': User.query.get(p.user_id).username if p.user_id else ''
-                })
-        else:
-            kirim_ke_gsheet('pestle', {}, clear=True)
+                'nama_proyek': p.project_name or '',
+                'political': p.political or '',
+                'economic': p.economic or '',
+                'social': p.social or '',
+                'technological': p.technological or '',
+                'legal': p.legal or '',
+                'environmental': p.environmental or '',
+                'dibuat_oleh': User.query.get(p.user_id).username if p.user_id else ''
+            })
         
         # ===== BMC =====
-        if bmc_list:
+        kirim_ke_gsheet('bmc', {}, clear=True)
+        for b in bmc_list:
             kirim_ke_gsheet('bmc', {
-                'nama_proyek': bmc_list[0].project_name or '',
-                'key_partners': bmc_list[0].key_partners or '',
-                'key_activities': bmc_list[0].key_activities or '',
-                'key_resources': bmc_list[0].key_resources or '',
-                'value_proposition': bmc_list[0].value_proposition or '',
-                'customer_relationships': bmc_list[0].customer_relationships or '',
-                'channels': bmc_list[0].channels or '',
-                'customer_segments': bmc_list[0].customer_segments or '',
-                'cost_structure': bmc_list[0].cost_structure or '',
-                'revenue_streams': bmc_list[0].revenue_streams or '',
-                'dibuat_oleh': User.query.get(bmc_list[0].user_id).username if bmc_list[0].user_id else ''
-            }, clear=True)
-            for b in bmc_list[1:]:
-                kirim_ke_gsheet('bmc', {
-                    'nama_proyek': b.project_name or '',
-                    'key_partners': b.key_partners or '',
-                    'key_activities': b.key_activities or '',
-                    'key_resources': b.key_resources or '',
-                    'value_proposition': b.value_proposition or '',
-                    'customer_relationships': b.customer_relationships or '',
-                    'channels': b.channels or '',
-                    'customer_segments': b.customer_segments or '',
-                    'cost_structure': b.cost_structure or '',
-                    'revenue_streams': b.revenue_streams or '',
-                    'dibuat_oleh': User.query.get(b.user_id).username if b.user_id else ''
-                })
-        else:
-            kirim_ke_gsheet('bmc', {}, clear=True)
+                'nama_proyek': b.project_name or '',
+                'key_partners': b.key_partners or '',
+                'key_activities': b.key_activities or '',
+                'key_resources': b.key_resources or '',
+                'value_proposition': b.value_proposition or '',
+                'customer_relationships': b.customer_relationships or '',
+                'channels': b.channels or '',
+                'customer_segments': b.customer_segments or '',
+                'cost_structure': b.cost_structure or '',
+                'revenue_streams': b.revenue_streams or '',
+                'dibuat_oleh': User.query.get(b.user_id).username if b.user_id else ''
+            })
         
         # ===== PRODUK =====
-        if product_list:
+        kirim_ke_gsheet('produk', {}, clear=True)
+        for pr in product_list:
             kirim_ke_gsheet('produk', {
-                'nama_produk': product_list[0].product_name or '',
-                'harga': product_list[0].price or '',
-                'terjual': product_list[0].sold or '',
-                'rating': product_list[0].rating or '',
-                'platform': product_list[0].platform or '',
-                'url': product_list[0].url or '',
-                'deskripsi': product_list[0].description or '',
-                'spesifikasi': product_list[0].specs or '',
-                'dibuat_oleh': User.query.get(product_list[0].user_id).username if product_list[0].user_id else ''
-            }, clear=True)
-            for pr in product_list[1:]:
-                kirim_ke_gsheet('produk', {
-                    'nama_produk': pr.product_name or '',
-                    'harga': pr.price or '',
-                    'terjual': pr.sold or '',
-                    'rating': pr.rating or '',
-                    'platform': pr.platform or '',
-                    'url': pr.url or '',
-                    'deskripsi': pr.description or '',
-                    'spesifikasi': pr.specs or '',
-                    'dibuat_oleh': User.query.get(pr.user_id).username if pr.user_id else ''
-                })
-        else:
-            kirim_ke_gsheet('produk', {}, clear=True)
+                'nama_produk': pr.product_name or '',
+                'harga': pr.price or '',
+                'terjual': pr.sold or '',
+                'rating': pr.rating or '',
+                'platform': pr.platform or '',
+                'url': pr.url or '',
+                'deskripsi': pr.description or '',
+                'spesifikasi': pr.specs or '',
+                'dibuat_oleh': User.query.get(pr.user_id).username if pr.user_id else ''
+            })
         
         print("✅ Semua data berhasil disinkronkan ke GSheet!")
     except Exception as e:
