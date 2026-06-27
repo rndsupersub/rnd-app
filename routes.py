@@ -26,18 +26,12 @@ def kirim_ke_gsheet(sheet_name, data, clear=False):
     except Exception as e:
         print(f"❌ GSheet Error: {e}")
 
-def sync_all_to_gsheet():
-    """Sinkronkan SEMUA data ke Google Spreadsheet (clear + rewrite)"""
+# ==================== SYNC PER SHEET ====================
+def sync_proyek_to_gsheet():
+    """Sinkronkan data proyek ke Google Spreadsheet (clear + rewrite)"""
     try:
-        print("📤 Sinkronisasi semua data ke GSheet (clear + rewrite)...")
-        
+        print("📤 Sinkronisasi data proyek ke GSheet...")
         projects = Project.query.all()
-        swot_list = SWOT.query.all()
-        pestle_list = PESTLE.query.all()
-        bmc_list = BMC.query.all()
-        product_list = ProductAnalysis.query.all()
-        
-        # ===== PROYEK =====
         kirim_ke_gsheet('proyek', {}, clear=True)
         for p in projects:
             kirim_ke_gsheet('proyek', {
@@ -49,8 +43,15 @@ def sync_all_to_gsheet():
                 'tanggal_selesai': p.end_date.isoformat() if p.end_date else '',
                 'dibuat_oleh': User.query.get(p.user_id).username if p.user_id else ''
             })
-        
-        # ===== SWOT =====
+        print("✅ Data proyek berhasil disinkronkan ke GSheet!")
+    except Exception as e:
+        print(f"❌ GSheet Sync Error: {e}")
+
+def sync_swot_to_gsheet():
+    """Sinkronkan data SWOT ke Google Spreadsheet (clear + rewrite)"""
+    try:
+        print("📤 Sinkronisasi data SWOT ke GSheet...")
+        swot_list = SWOT.query.all()
         kirim_ke_gsheet('swot', {}, clear=True)
         for s in swot_list:
             kirim_ke_gsheet('swot', {
@@ -61,8 +62,15 @@ def sync_all_to_gsheet():
                 'threats': s.threats or '',
                 'dibuat_oleh': User.query.get(s.user_id).username if s.user_id else ''
             })
-        
-        # ===== PESTLE =====
+        print("✅ Data SWOT berhasil disinkronkan ke GSheet!")
+    except Exception as e:
+        print(f"❌ GSheet Sync Error: {e}")
+
+def sync_pestle_to_gsheet():
+    """Sinkronkan data PESTLE ke Google Spreadsheet (clear + rewrite)"""
+    try:
+        print("📤 Sinkronisasi data PESTLE ke GSheet...")
+        pestle_list = PESTLE.query.all()
         kirim_ke_gsheet('pestle', {}, clear=True)
         for p in pestle_list:
             kirim_ke_gsheet('pestle', {
@@ -75,8 +83,15 @@ def sync_all_to_gsheet():
                 'environmental': p.environmental or '',
                 'dibuat_oleh': User.query.get(p.user_id).username if p.user_id else ''
             })
-        
-        # ===== BMC =====
+        print("✅ Data PESTLE berhasil disinkronkan ke GSheet!")
+    except Exception as e:
+        print(f"❌ GSheet Sync Error: {e}")
+
+def sync_bmc_to_gsheet():
+    """Sinkronkan data BMC ke Google Spreadsheet (clear + rewrite)"""
+    try:
+        print("📤 Sinkronisasi data BMC ke GSheet...")
+        bmc_list = BMC.query.all()
         kirim_ke_gsheet('bmc', {}, clear=True)
         for b in bmc_list:
             kirim_ke_gsheet('bmc', {
@@ -92,8 +107,15 @@ def sync_all_to_gsheet():
                 'revenue_streams': b.revenue_streams or '',
                 'dibuat_oleh': User.query.get(b.user_id).username if b.user_id else ''
             })
-        
-        # ===== PRODUK =====
+        print("✅ Data BMC berhasil disinkronkan ke GSheet!")
+    except Exception as e:
+        print(f"❌ GSheet Sync Error: {e}")
+
+def sync_product_to_gsheet():
+    """Sinkronkan data Produk ke Google Spreadsheet (clear + rewrite)"""
+    try:
+        print("📤 Sinkronisasi data Produk ke GSheet...")
+        product_list = ProductAnalysis.query.all()
         kirim_ke_gsheet('produk', {}, clear=True)
         for pr in product_list:
             kirim_ke_gsheet('produk', {
@@ -107,8 +129,7 @@ def sync_all_to_gsheet():
                 'spesifikasi': pr.specs or '',
                 'dibuat_oleh': User.query.get(pr.user_id).username if pr.user_id else ''
             })
-        
-        print("✅ Semua data berhasil disinkronkan ke GSheet!")
+        print("✅ Data Produk berhasil disinkronkan ke GSheet!")
     except Exception as e:
         print(f"❌ GSheet Sync Error: {e}")
 
@@ -162,7 +183,7 @@ def dashboard():
                          bmc_list=bmc_list,
                          product_list=product_list)
 
-# ==================== CRUD PROYEK (CUMA ADMIN) ====================
+# ==================== CRUD PROYEK ====================
 @routes_bp.route('/projects')
 @login_required
 def projects():
@@ -250,7 +271,7 @@ def edit_project(project_id):
                 project.file_path = file_path
         db.session.commit()
         
-        sync_all_to_gsheet()
+        sync_proyek_to_gsheet()
         
         flash('Proyek berhasil diperbarui!', 'success')
         return redirect(url_for('routes.view_project', project_id=project.id))
@@ -265,7 +286,7 @@ def delete_project(project_id):
     db.session.delete(project)
     db.session.commit()
     
-    sync_all_to_gsheet()
+    sync_proyek_to_gsheet()
     
     flash('Proyek berhasil dihapus!', 'success')
     return redirect(url_for('routes.projects'))
@@ -285,7 +306,7 @@ def download_file(project_id):
         return redirect(url_for('routes.view_project', project_id=project.id))
     return send_file(project.file_path, as_attachment=True)
 
-# ==================== CRUD SWOT (CUMA ADMIN) ====================
+# ==================== CRUD SWOT ====================
 @routes_bp.route('/swot', methods=['GET', 'POST'])
 @login_required
 def swot():
@@ -347,12 +368,12 @@ def delete_swot(swot_id):
     db.session.delete(swot_item)
     db.session.commit()
     
-    sync_all_to_gsheet()
+    sync_swot_to_gsheet()
     
     flash('Data SWOT berhasil dihapus!', 'success')
     return redirect(url_for('routes.swot'))
 
-# ==================== CRUD PESTLE (CUMA ADMIN) ====================
+# ==================== CRUD PESTLE ====================
 @routes_bp.route('/pestle', methods=['GET', 'POST'])
 @login_required
 def pestle():
@@ -422,12 +443,12 @@ def delete_pestle(pestle_id):
     db.session.delete(pestle_item)
     db.session.commit()
     
-    sync_all_to_gsheet()
+    sync_pestle_to_gsheet()
     
     flash('Data PESTLE berhasil dihapus!', 'success')
     return redirect(url_for('routes.pestle'))
 
-# ==================== CRUD BMC (CUMA ADMIN) ====================
+# ==================== CRUD BMC ====================
 @routes_bp.route('/bmc', methods=['GET', 'POST'])
 @login_required
 def bmc():
@@ -512,7 +533,7 @@ def delete_bmc(bmc_id):
     db.session.delete(bmc_item)
     db.session.commit()
     
-    sync_all_to_gsheet()
+    sync_bmc_to_gsheet()
     
     flash('Data BMC berhasil dihapus!', 'success')
     return redirect(url_for('routes.bmc'))
@@ -698,7 +719,7 @@ def delete_product_analysis(item_id):
     db.session.delete(item)
     db.session.commit()
     
-    sync_all_to_gsheet()
+    sync_product_to_gsheet()
     
     flash('Data analisis produk berhasil dihapus!', 'success')
     return redirect(url_for('routes.product_analysis'))
