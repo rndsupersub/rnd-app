@@ -323,10 +323,11 @@ def edit_project(project_id):
 def delete_project(project_id):
     project = Project.query.get_or_404(project_id)
     
-    sync_all_to_gsheet()
-    
     db.session.delete(project)
     db.session.commit()
+    
+    sync_all_to_gsheet()
+    
     flash('Proyek berhasil dihapus!', 'success')
     return redirect(url_for('routes.projects'))
 
@@ -404,10 +405,11 @@ def swot():
 def delete_swot(swot_id):
     swot_item = SWOT.query.get_or_404(swot_id)
     
-    sync_all_to_gsheet()
-    
     db.session.delete(swot_item)
     db.session.commit()
+    
+    sync_all_to_gsheet()
+    
     flash('Data SWOT berhasil dihapus!', 'success')
     return redirect(url_for('routes.swot'))
 
@@ -478,10 +480,11 @@ def pestle():
 def delete_pestle(pestle_id):
     pestle_item = PESTLE.query.get_or_404(pestle_id)
     
-    sync_all_to_gsheet()
-    
     db.session.delete(pestle_item)
     db.session.commit()
+    
+    sync_all_to_gsheet()
+    
     flash('Data PESTLE berhasil dihapus!', 'success')
     return redirect(url_for('routes.pestle'))
 
@@ -567,10 +570,11 @@ def bmc():
 def delete_bmc(bmc_id):
     bmc_item = BMC.query.get_or_404(bmc_id)
     
-    sync_all_to_gsheet()
-    
     db.session.delete(bmc_item)
     db.session.commit()
+    
+    sync_all_to_gsheet()
+    
     flash('Data BMC berhasil dihapus!', 'success')
     return redirect(url_for('routes.bmc'))
 
@@ -752,10 +756,11 @@ def product_analysis():
 def delete_product_analysis(item_id):
     item = ProductAnalysis.query.get_or_404(item_id)
     
-    sync_all_to_gsheet()
-    
     db.session.delete(item)
     db.session.commit()
+    
+    sync_all_to_gsheet()
+    
     flash('Data analisis produk berhasil dihapus!', 'success')
     return redirect(url_for('routes.product_analysis'))
 
