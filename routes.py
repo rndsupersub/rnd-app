@@ -13,12 +13,13 @@ from models import User, Project, SWOT, PESTLE, BMC, ProductAnalysis
 # ==================== KONFIGURASI G.A.S. ====================
 GAS_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbzhNnjKGZxdNeHdyVsyzcatW-7Jj0HWJZfEnK9g3EQyuNi6REJK0XmL2J7W2ViYpcW8-g/exec"
 
-def kirim_ke_gsheet(sheet_name, data):
-    """Kirim 1 data ke Google Spreadsheet via G.A.S. Web App"""
+def kirim_ke_gsheet(sheet_name, data, clear=False):
+    """Kirim data ke Google Spreadsheet via G.A.S. Web App"""
     try:
         payload = {
             "sheetName": sheet_name,
-            "data": json.dumps(data)
+            "data": json.dumps(data),
+            "clear": str(clear).lower()
         }
         response = requests.post(GAS_WEBHOOK_URL, data=payload, timeout=5)
         print(f"✅ GSheet: {response.text}")
@@ -26,11 +27,10 @@ def kirim_ke_gsheet(sheet_name, data):
         print(f"❌ GSheet Error: {e}")
 
 def sync_all_to_gsheet():
-    """Sinkronkan SEMUA data ke Google Spreadsheet (untuk edit/hapus)"""
+    """Sinkronkan SEMUA data ke Google Spreadsheet (clear dulu, baru tulis ulang)"""
     try:
-        print("📤 Sinkronisasi semua data ke GSheet...")
+        print("📤 Sinkronisasi semua data ke GSheet (clear + rewrite)...")
         
-        # Ambil semua data dari database
         projects = Project.query.all()
         swot_list = SWOT.query.all()
         pestle_list = PESTLE.query.all()
@@ -38,70 +38,131 @@ def sync_all_to_gsheet():
         product_list = ProductAnalysis.query.all()
         
         # ===== PROYEK =====
-        for p in projects:
+        if projects:
+            first = projects[0]
             kirim_ke_gsheet('proyek', {
-                'nama_proyek': p.name,
-                'deskripsi': p.description or '',
-                'tipe': p.project_type,
-                'status': p.status,
-                'tanggal_mulai': p.start_date.isoformat() if p.start_date else '',
-                'tanggal_selesai': p.end_date.isoformat() if p.end_date else '',
-                'dibuat_oleh': User.query.get(p.user_id).username if p.user_id else ''
-            })
+                'nama_proyek': first.name,
+                'deskripsi': first.description or '',
+                'tipe': first.project_type,
+                'status': first.status,
+                'tanggal_mulai': first.start_date.isoformat() if first.start_date else '',
+                'tanggal_selesai': first.end_date.isoformat() if first.end_date else '',
+                'dibuat_oleh': User.query.get(first.user_id).username if first.user_id else ''
+            }, clear=True)
+            for p in projects[1:]:
+                kirim_ke_gsheet('proyek', {
+                    'nama_proyek': p.name,
+                    'deskripsi': p.description or '',
+                    'tipe': p.project_type,
+                    'status': p.status,
+                    'tanggal_mulai': p.start_date.isoformat() if p.start_date else '',
+                    'tanggal_selesai': p.end_date.isoformat() if p.end_date else '',
+                    'dibuat_oleh': User.query.get(p.user_id).username if p.user_id else ''
+                })
         
         # ===== SWOT =====
-        for s in swot_list:
+        if swot_list:
+            first = swot_list[0]
             kirim_ke_gsheet('swot', {
-                'nama_proyek': s.project_name or '',
-                'strengths': s.strengths or '',
-                'weaknesses': s.weaknesses or '',
-                'opportunities': s.opportunities or '',
-                'threats': s.threats or '',
-                'dibuat_oleh': User.query.get(s.user_id).username if s.user_id else ''
-            })
+                'nama_proyek': first.project_name or '',
+                'strengths': first.strengths or '',
+                'weaknesses': first.weaknesses or '',
+                'opportunities': first.opportunities or '',
+                'threats': first.threats or '',
+                'dibuat_oleh': User.query.get(first.user_id).username if first.user_id else ''
+            }, clear=True)
+            for s in swot_list[1:]:
+                kirim_ke_gsheet('swot', {
+                    'nama_proyek': s.project_name or '',
+                    'strengths': s.strengths or '',
+                    'weaknesses': s.weaknesses or '',
+                    'opportunities': s.opportunities or '',
+                    'threats': s.threats or '',
+                    'dibuat_oleh': User.query.get(s.user_id).username if s.user_id else ''
+                })
         
         # ===== PESTLE =====
-        for p in pestle_list:
+        if pestle_list:
+            first = pestle_list[0]
             kirim_ke_gsheet('pestle', {
-                'nama_proyek': p.project_name or '',
-                'political': p.political or '',
-                'economic': p.economic or '',
-                'social': p.social or '',
-                'technological': p.technological or '',
-                'legal': p.legal or '',
-                'environmental': p.environmental or '',
-                'dibuat_oleh': User.query.get(p.user_id).username if p.user_id else ''
-            })
+                'nama_proyek': first.project_name or '',
+                'political': first.political or '',
+                'economic': first.economic or '',
+                'social': first.social or '',
+                'technological': first.technological or '',
+                'legal': first.legal or '',
+                'environmental': first.environmental or '',
+                'dibuat_oleh': User.query.get(first.user_id).username if first.user_id else ''
+            }, clear=True)
+            for p in pestle_list[1:]:
+                kirim_ke_gsheet('pestle', {
+                    'nama_proyek': p.project_name or '',
+                    'political': p.political or '',
+                    'economic': p.economic or '',
+                    'social': p.social or '',
+                    'technological': p.technological or '',
+                    'legal': p.legal or '',
+                    'environmental': p.environmental or '',
+                    'dibuat_oleh': User.query.get(p.user_id).username if p.user_id else ''
+                })
         
         # ===== BMC =====
-        for b in bmc_list:
+        if bmc_list:
+            first = bmc_list[0]
             kirim_ke_gsheet('bmc', {
-                'nama_proyek': b.project_name or '',
-                'key_partners': b.key_partners or '',
-                'key_activities': b.key_activities or '',
-                'key_resources': b.key_resources or '',
-                'value_proposition': b.value_proposition or '',
-                'customer_relationships': b.customer_relationships or '',
-                'channels': b.channels or '',
-                'customer_segments': b.customer_segments or '',
-                'cost_structure': b.cost_structure or '',
-                'revenue_streams': b.revenue_streams or '',
-                'dibuat_oleh': User.query.get(b.user_id).username if b.user_id else ''
-            })
+                'nama_proyek': first.project_name or '',
+                'key_partners': first.key_partners or '',
+                'key_activities': first.key_activities or '',
+                'key_resources': first.key_resources or '',
+                'value_proposition': first.value_proposition or '',
+                'customer_relationships': first.customer_relationships or '',
+                'channels': first.channels or '',
+                'customer_segments': first.customer_segments or '',
+                'cost_structure': first.cost_structure or '',
+                'revenue_streams': first.revenue_streams or '',
+                'dibuat_oleh': User.query.get(first.user_id).username if first.user_id else ''
+            }, clear=True)
+            for b in bmc_list[1:]:
+                kirim_ke_gsheet('bmc', {
+                    'nama_proyek': b.project_name or '',
+                    'key_partners': b.key_partners or '',
+                    'key_activities': b.key_activities or '',
+                    'key_resources': b.key_resources or '',
+                    'value_proposition': b.value_proposition or '',
+                    'customer_relationships': b.customer_relationships or '',
+                    'channels': b.channels or '',
+                    'customer_segments': b.customer_segments or '',
+                    'cost_structure': b.cost_structure or '',
+                    'revenue_streams': b.revenue_streams or '',
+                    'dibuat_oleh': User.query.get(b.user_id).username if b.user_id else ''
+                })
         
         # ===== PRODUK =====
-        for pr in product_list:
+        if product_list:
+            first = product_list[0]
             kirim_ke_gsheet('produk', {
-                'nama_produk': pr.product_name or '',
-                'harga': pr.price or '',
-                'terjual': pr.sold or '',
-                'rating': pr.rating or '',
-                'platform': pr.platform or '',
-                'url': pr.url or '',
-                'deskripsi': pr.description or '',
-                'spesifikasi': pr.specs or '',
-                'dibuat_oleh': User.query.get(pr.user_id).username if pr.user_id else ''
-            })
+                'nama_produk': first.product_name or '',
+                'harga': first.price or '',
+                'terjual': first.sold or '',
+                'rating': first.rating or '',
+                'platform': first.platform or '',
+                'url': first.url or '',
+                'deskripsi': first.description or '',
+                'spesifikasi': first.specs or '',
+                'dibuat_oleh': User.query.get(first.user_id).username if first.user_id else ''
+            }, clear=True)
+            for pr in product_list[1:]:
+                kirim_ke_gsheet('produk', {
+                    'nama_produk': pr.product_name or '',
+                    'harga': pr.price or '',
+                    'terjual': pr.sold or '',
+                    'rating': pr.rating or '',
+                    'platform': pr.platform or '',
+                    'url': pr.url or '',
+                    'deskripsi': pr.description or '',
+                    'spesifikasi': pr.specs or '',
+                    'dibuat_oleh': User.query.get(pr.user_id).username if pr.user_id else ''
+                })
         
         print("✅ Semua data berhasil disinkronkan ke GSheet!")
     except Exception as e:
@@ -198,7 +259,6 @@ def new_project():
         db.session.add(new_project)
         db.session.commit()
         
-        # ========== KIRIM KE G.SHEET ==========
         kirim_ke_gsheet('proyek', {
             'nama_proyek': name,
             'deskripsi': description or '',
@@ -246,7 +306,6 @@ def edit_project(project_id):
                 project.file_path = file_path
         db.session.commit()
         
-        # ========== SINCRON KE G.SHEET ==========
         sync_all_to_gsheet()
         
         flash('Proyek berhasil diperbarui!', 'success')
@@ -259,7 +318,6 @@ def edit_project(project_id):
 def delete_project(project_id):
     project = Project.query.get_or_404(project_id)
     
-    # ========== SINCRON KE G.SHEET SEBELUM HAPUS ==========
     sync_all_to_gsheet()
     
     db.session.delete(project)
@@ -315,7 +373,6 @@ def swot():
                 flash('Data SWOT berhasil disimpan!', 'success')
             db.session.commit()
             
-            # ========== KIRIM KE G.SHEET ==========
             kirim_ke_gsheet('swot', {
                 'nama_proyek': project_name,
                 'strengths': strengths,
@@ -342,7 +399,6 @@ def swot():
 def delete_swot(swot_id):
     swot_item = SWOT.query.get_or_404(swot_id)
     
-    # ========== SINCRON KE G.SHEET SEBELUM HAPUS ==========
     sync_all_to_gsheet()
     
     db.session.delete(swot_item)
@@ -388,7 +444,6 @@ def pestle():
                 flash('Data PESTLE berhasil disimpan!', 'success')
             db.session.commit()
             
-            # ========== KIRIM KE G.SHEET ==========
             kirim_ke_gsheet('pestle', {
                 'nama_proyek': project_name,
                 'political': political,
@@ -418,7 +473,6 @@ def pestle():
 def delete_pestle(pestle_id):
     pestle_item = PESTLE.query.get_or_404(pestle_id)
     
-    # ========== SINCRON KE G.SHEET SEBELUM HAPUS ==========
     sync_all_to_gsheet()
     
     db.session.delete(pestle_item)
@@ -473,7 +527,6 @@ def bmc():
                 flash('Data BMC berhasil disimpan!', 'success')
             db.session.commit()
             
-            # ========== KIRIM KE G.SHEET ==========
             kirim_ke_gsheet('bmc', {
                 'nama_proyek': project_name,
                 'key_partners': key_partners,
@@ -509,7 +562,6 @@ def bmc():
 def delete_bmc(bmc_id):
     bmc_item = BMC.query.get_or_404(bmc_id)
     
-    # ========== SINCRON KE G.SHEET SEBELUM HAPUS ==========
     sync_all_to_gsheet()
     
     db.session.delete(bmc_item)
@@ -570,7 +622,6 @@ def product_analysis():
                     flash('Data analisis produk berhasil disimpan!', 'success')
                 db.session.commit()
                 
-                # ========== KIRIM KE G.SHEET ==========
                 kirim_ke_gsheet('produk', {
                     'nama_produk': product_name,
                     'harga': price,
@@ -696,7 +747,6 @@ def product_analysis():
 def delete_product_analysis(item_id):
     item = ProductAnalysis.query.get_or_404(item_id)
     
-    # ========== SINCRON KE G.SHEET SEBELUM HAPUS ==========
     sync_all_to_gsheet()
     
     db.session.delete(item)
