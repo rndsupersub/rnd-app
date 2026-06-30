@@ -3,6 +3,7 @@
 {% block title %}Analisis Produk - R&D System{% endblock %}
 
 {% block content %}
+
 <div class="mb-4">
     <a href="{{ url_for('routes.dashboard') }}" class="btn btn-secondary btn-sm">
         <i class="fas fa-arrow-left"></i> Kembali ke Dashboard
@@ -11,44 +12,52 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2><i class="fas fa-shopping-cart"></i> Analisis Produk E-commerce</h2>
-    {% if current_user.role == 'admin' %}
-    <button class="btn btn-primary" onclick="resetForm()">
-        <i class="fas fa-plus"></i> Tambah Data
-    </button>
-    {% else %}
-    <span class="badge bg-secondary">Hanya Admin</span>
-    {% endif %}
 </div>
 
-<!-- FORM ANALISIS PRODUK (CUMA ADMIN) -->
-{% if current_user.role == 'admin' %}
+<!-- ============ FORM INPUT MANUAL ============ -->
 <div class="card shadow mb-4">
     <div class="card-header bg-primary text-white">
-        <h5 class="mb-0"><i class="fas fa-edit"></i> Input Data Produk</h5>
+        <h5 class="mb-0"><i class="fas fa-edit"></i> Input Data Produk (Manual)</h5>
     </div>
     <div class="card-body">
-        <form method="POST" action="{{ url_for('routes.product_analysis') }}" id="productForm">
+        <form method="POST" action="{{ url_for('routes.product_analysis') }}">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="hidden" name="edit_id" id="edit_id" value="">
             <input type="hidden" name="action" value="save">
+
             <div class="row">
+                <!-- Nama Proyek -->
+                <div class="col-md-6 mb-3">
+                    <label for="project_name" class="form-label">Nama Proyek (opsional)</label>
+                    <input type="text" class="form-control" id="project_name" name="project_name" placeholder="Nama proyek...">
+                </div>
+
+                <!-- Nama Produk -->
                 <div class="col-md-6 mb-3">
                     <label for="product_name" class="form-label">Nama Produk <span class="text-danger">*</span></label>
                     <input type="text" class="form-control" id="product_name" name="product_name" placeholder="Nama produk..." required>
                 </div>
-                <div class="col-md-6 mb-3">
+
+                <!-- Harga -->
+                <div class="col-md-4 mb-3">
                     <label for="price" class="form-label">Harga</label>
                     <input type="text" class="form-control" id="price" name="price" placeholder="Rp 100.000">
                 </div>
-                <div class="col-md-6 mb-3">
+
+                <!-- Terjual -->
+                <div class="col-md-4 mb-3">
                     <label for="sold" class="form-label">Terjual</label>
                     <input type="text" class="form-control" id="sold" name="sold" placeholder="500">
                 </div>
-                <div class="col-md-6 mb-3">
+
+                <!-- Rating -->
+                <div class="col-md-4 mb-3">
                     <label for="rating" class="form-label">Rating</label>
                     <input type="text" class="form-control" id="rating" name="rating" placeholder="4.5 ⭐">
                 </div>
-                <div class="col-md-6 mb-3">
+
+                <!-- Platform -->
+                <div class="col-md-4 mb-3">
                     <label for="platform" class="form-label">Platform</label>
                     <select class="form-select" id="platform" name="platform">
                         <option value="Shopee">Shopee</option>
@@ -56,19 +65,64 @@
                         <option value="Lainnya">Lainnya</option>
                     </select>
                 </div>
-                <div class="col-md-6 mb-3">
+
+                <!-- URL -->
+                <div class="col-md-8 mb-3">
                     <label for="url" class="form-label">Link Produk</label>
                     <input type="url" class="form-control" id="url" name="url" placeholder="https://...">
                 </div>
+
+                <!-- ===== FIELD BARU ===== -->
+
+                <!-- Warna -->
+                <div class="col-md-4 mb-3">
+                    <label for="color" class="form-label">Warna yang Tersedia</label>
+                    <input type="text" class="form-control" id="color" name="color" placeholder="Merah, Biru, Hijau">
+                </div>
+
+                <!-- Penjualan per Bulan -->
+                <div class="col-md-4 mb-3">
+                    <label for="monthly_sales" class="form-label">Penjualan per Bulan</label>
+                    <input type="number" class="form-control" id="monthly_sales" name="monthly_sales" placeholder="500">
+                </div>
+
+                <!-- Ukuran/Dimensi -->
+                <div class="col-md-4 mb-3">
+                    <label for="dimension" class="form-label">Ukuran / Dimensi</label>
+                    <input type="text" class="form-control" id="dimension" name="dimension" placeholder="30x40 cm, M, XL">
+                </div>
+
+                <!-- Merk/Brand -->
+                <div class="col-md-4 mb-3">
+                    <label for="brand" class="form-label">Merk / Brand</label>
+                    <input type="text" class="form-control" id="brand" name="brand" placeholder="Nike, Samsung, dll">
+                </div>
+
+                <!-- Market Tier -->
+                <div class="col-md-4 mb-3">
+                    <label for="market_tier" class="form-label">Market Tier</label>
+                    <select class="form-select" id="market_tier" name="market_tier">
+                        <option value="">Pilih Tier</option>
+                        <option value="Bottom Class">Bottom Class</option>
+                        <option value="Middle Class">Middle Class</option>
+                        <option value="Top Class">Top Class</option>
+                    </select>
+                </div>
+
+                <!-- Deskripsi -->
                 <div class="col-12 mb-3">
                     <label for="description" class="form-label">Deskripsi</label>
                     <textarea class="form-control" id="description" name="description" rows="2" placeholder="Deskripsi produk..."></textarea>
                 </div>
+
+                <!-- Spesifikasi (JSON) -->
                 <div class="col-12 mb-3">
                     <label for="specs" class="form-label">Spesifikasi (JSON)</label>
                     <textarea class="form-control" id="specs" name="specs" rows="3" placeholder='{"Warna": "Merah", "Ukuran": "M"}'></textarea>
                     <small class="text-muted">Format JSON: {"key": "value", "key2": "value2"}</small>
                 </div>
+
+                <!-- Tombol -->
                 <div class="col-12">
                     <button type="submit" class="btn btn-success" id="submitBtn">
                         <i class="fas fa-save"></i> Simpan ke Database
@@ -81,44 +135,8 @@
         </form>
     </div>
 </div>
-{% endif %}
 
-<!-- FORM SCAN LINK (CUMA ADMIN) -->
-{% if current_user.role == 'admin' %}
-<div class="card shadow mb-4">
-    <div class="card-header bg-info text-white">
-        <h5 class="mb-0"><i class="fas fa-search"></i> Scan Link Produk (Otomatis)</h5>
-    </div>
-    <div class="card-body">
-        <form method="POST" action="{{ url_for('routes.product_analysis') }}">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <input type="hidden" name="action" value="analyze">
-            <div class="input-group">
-                <input type="url" class="form-control" name="product_url" placeholder="https://shopee.co.id/... atau https://www.tokopedia.com/..." required>
-                <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-search"></i> Analisis
-                </button>
-            </div>
-            <small class="text-muted">Support Shopee, Tokopedia, dan marketplace lainnya. (Gratis)</small>
-        </form>
-        {% if error %}
-        <div class="alert alert-danger mt-3">
-            <i class="fas fa-exclamation-circle"></i> {{ error }}
-        </div>
-        {% endif %}
-        {% if product %}
-        <div class="alert alert-success mt-3">
-            <i class="fas fa-check-circle"></i> <strong>Hasil Scan:</strong> {{ product.product_name }} - {{ product.price }}
-            <button class="btn btn-sm btn-success float-end" onclick="applyScanResult()">
-                <i class="fas fa-arrow-right"></i> Gunakan Data Ini
-            </button>
-        </div>
-        {% endif %}
-    </div>
-</div>
-{% endif %}
-
-<!-- DATA PRODUK TERSIMPAN (SEMUA USER BISA LIHAT) -->
+<!-- ============ DATA TERSIMPAN ============ -->
 {% if saved_items %}
 <div class="card shadow">
     <div class="card-header bg-secondary text-white">
@@ -132,6 +150,8 @@
                         <th>Nama Produk</th>
                         <th>Harga</th>
                         <th>Platform</th>
+                        <th>Brand</th>
+                        <th>Market Tier</th>
                         <th>Tanggal Dibuat</th>
                         <th>Action</th>
                     </tr>
@@ -142,19 +162,16 @@
                         <td>{{ item.product_name }}</td>
                         <td>{{ item.price }}</td>
                         <td>{{ item.platform }}</td>
+                        <td>{{ item.brand or '-' }}</td>
+                        <td>{{ item.market_tier or '-' }}</td>
                         <td>{{ item.created_at[:10] if item.created_at else '-' }}</td>
                         <td>
-                            <a href="{{ url_for('routes.view_product', product_id=item.id) }}" class="btn btn-sm btn-info">
-                                <i class="fas fa-eye"></i> Detail
-                            </a>
-                            {% if current_user.role == 'admin' %}
                             <a href="{{ url_for('routes.product_analysis', edit_id=item.id) }}" class="btn btn-sm btn-warning">
                                 <i class="fas fa-edit"></i> Edit
                             </a>
                             <a href="{{ url_for('routes.delete_product_analysis', item_id=item.id) }}" class="btn btn-sm btn-danger" onclick="return confirm('Yakin ingin menghapus data ini?')">
                                 <i class="fas fa-trash"></i> Hapus
                             </a>
-                            {% endif %}
                         </td>
                     </tr>
                     {% endfor %}
@@ -163,18 +180,12 @@
         </div>
     </div>
 </div>
-{% else %}
-<div class="card shadow">
-    <div class="card-body text-center py-5">
-        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
-        <p class="text-muted">Belum ada analisis produk.</p>
-    </div>
-</div>
 {% endif %}
 
 <script>
 function resetForm() {
     document.getElementById('edit_id').value = '';
+    document.getElementById('project_name').value = '';
     document.getElementById('product_name').value = '';
     document.getElementById('price').value = '';
     document.getElementById('sold').value = '';
@@ -183,32 +194,23 @@ function resetForm() {
     document.getElementById('url').value = '';
     document.getElementById('description').value = '';
     document.getElementById('specs').value = '';
+    // Field baru
+    document.getElementById('color').value = '';
+    document.getElementById('monthly_sales').value = '';
+    document.getElementById('dimension').value = '';
+    document.getElementById('brand').value = '';
+    document.getElementById('market_tier').value = '';
+
     document.getElementById('submitBtn').innerHTML = '<i class="fas fa-save"></i> Simpan ke Database';
     document.getElementById('submitBtn').classList.remove('btn-warning');
     document.getElementById('submitBtn').classList.add('btn-success');
 }
 
-function applyScanResult() {
-    {% if product %}
-    document.getElementById('product_name').value = "{{ product.product_name }}";
-    document.getElementById('price').value = "{{ product.price }}";
-    document.getElementById('sold').value = "{{ product.sold }}";
-    document.getElementById('rating').value = "{{ product.rating }}";
-    document.getElementById('platform').value = "{{ product.platform }}";
-    document.getElementById('url').value = "{{ product.url }}";
-    document.getElementById('description').value = "{{ product.description }}";
-    document.getElementById('specs').value = {{ product.specs|tojson|safe }};
-    document.getElementById('submitBtn').innerHTML = '<i class="fas fa-save"></i> Simpan ke Database';
-    document.getElementById('submitBtn').classList.remove('btn-warning');
-    document.getElementById('submitBtn').classList.add('btn-success');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    alert('Data hasil scan sudah diisi ke form! Klik "Simpan ke Database" untuk menyimpan.');
-    {% endif %}
-}
-
+// Load data untuk edit
 {% if edit_data %}
 window.addEventListener('DOMContentLoaded', function() {
     document.getElementById('edit_id').value = '{{ edit_data.id }}';
+    document.getElementById('project_name').value = '{{ edit_data.project_name }}';
     document.getElementById('product_name').value = '{{ edit_data.product_name }}';
     document.getElementById('price').value = '{{ edit_data.price }}';
     document.getElementById('sold').value = '{{ edit_data.sold }}';
@@ -216,11 +218,19 @@ window.addEventListener('DOMContentLoaded', function() {
     document.getElementById('platform').value = '{{ edit_data.platform }}';
     document.getElementById('url').value = '{{ edit_data.url }}';
     document.getElementById('description').value = '{{ edit_data.description }}';
-    document.getElementById('specs').value = {{ edit_data.specs|tojson|safe }};
+    document.getElementById('specs').value = '{{ edit_data.specs }}';
+    // Field baru
+    document.getElementById('color').value = '{{ edit_data.color }}';
+    document.getElementById('monthly_sales').value = '{{ edit_data.monthly_sales }}';
+    document.getElementById('dimension').value = '{{ edit_data.dimension }}';
+    document.getElementById('brand').value = '{{ edit_data.brand }}';
+    document.getElementById('market_tier').value = '{{ edit_data.market_tier }}';
+
     document.getElementById('submitBtn').innerHTML = '<i class="fas fa-edit"></i> Update Data';
     document.getElementById('submitBtn').classList.remove('btn-success');
     document.getElementById('submitBtn').classList.add('btn-warning');
 });
 {% endif %}
 </script>
+
 {% endblock %}

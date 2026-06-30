@@ -20,6 +20,7 @@ class User(UserMixin, db.Model):
     def __repr__(self):
         return f'<User {self.username}>'
 
+
 class Project(db.Model):
     __tablename__ = 'projects'
     id = db.Column(db.Integer, primary_key=True)
@@ -38,6 +39,7 @@ class Project(db.Model):
     def __repr__(self):
         return f'<Project {self.name}>'
 
+
 class SWOT(db.Model):
     __tablename__ = 'swot'
     id = db.Column(db.Integer, primary_key=True)
@@ -51,6 +53,10 @@ class SWOT(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     project_id = db.Column(db.Integer, db.ForeignKey('projects.id'), nullable=True)
     project = db.relationship('Project', backref='swots')
+
+    def __repr__(self):
+        return f'<SWOT for user {self.user_id}>'
+
 
 class PESTLE(db.Model):
     __tablename__ = 'pestle'
@@ -67,6 +73,10 @@ class PESTLE(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     project_id = db.Column(db.Integer, db.ForeignKey('projects.id'), nullable=True)
     project = db.relationship('Project', backref='pestles')
+
+    def __repr__(self):
+        return f'<PESTLE for user {self.user_id}>'
+
 
 class BMC(db.Model):
     __tablename__ = 'bmc'
@@ -87,10 +97,18 @@ class BMC(db.Model):
     project_id = db.Column(db.Integer, db.ForeignKey('projects.id'), nullable=True)
     project = db.relationship('Project', backref='bmcs')
 
+    def __repr__(self):
+        return f'<BMC for user {self.user_id}>'
+
+
+# ==================== TABEL PRODUCT ANALYSIS (MANUAL) ====================
+
 class ProductAnalysis(db.Model):
     __tablename__ = 'product_analysis'
     id = db.Column(db.Integer, primary_key=True)
     project_name = db.Column(db.String(200), nullable=True)
+
+    # Field utama
     product_name = db.Column(db.String(500), nullable=False)
     price = db.Column(db.String(100))
     sold = db.Column(db.String(100))
@@ -99,7 +117,20 @@ class ProductAnalysis(db.Model):
     url = db.Column(db.String(500))
     image = db.Column(db.String(500))
     description = db.Column(db.Text)
-    specs = db.Column(db.Text)
+    specs = db.Column(db.Text)  # JSON string (tetap dipertahankan)
+
+    # ===== FIELD BARU (MANUAL) =====
+    color = db.Column(db.String(200), nullable=True)           # Warna yang tersedia
+    monthly_sales = db.Column(db.Integer, nullable=True)       # Penjualan per bulan (integer)
+    dimension = db.Column(db.String(200), nullable=True)       # Ukuran/Dimensi
+    brand = db.Column(db.String(200), nullable=True)           # Merk/Brand
+    market_tier = db.Column(db.String(50), nullable=True)      # Bottom/Middle/Top Class
+
+    # Timestamp
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+
+    def __repr__(self):
+        return f'<ProductAnalysis {self.product_name}>'

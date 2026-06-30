@@ -3,11 +3,13 @@
 {% block title %}Detail Analisis Produk - R&D System{% endblock %}
 
 {% block content %}
+
 <div class="card shadow">
     <div class="card-header bg-primary text-white">
         <h4 class="mb-0"><i class="fas fa-shopping-cart"></i> Detail Analisis Produk</h4>
     </div>
     <div class="card-body">
+
         <div class="row mb-3">
             <div class="col-md-6">
                 <strong>Nama Produk:</strong>
@@ -22,44 +24,101 @@
                 <p>{{ product.updated_at.strftime('%d-%m-%Y %H:%M') if product.updated_at else '-' }}</p>
             </div>
         </div>
+
         <hr>
+
         <div class="row">
+            <!-- Harga -->
             <div class="col-md-4 mb-3">
                 <div class="border p-3 rounded bg-light">
                     <h5 class="text-success">💰 Harga</h5>
                     <p class="text-muted">{{ product.price or '-' }}</p>
                 </div>
             </div>
+
+            <!-- Terjual -->
             <div class="col-md-4 mb-3">
                 <div class="border p-3 rounded bg-light">
                     <h5 class="text-warning">📦 Terjual</h5>
                     <p class="text-muted">{{ product.sold or '-' }}</p>
                 </div>
             </div>
+
+            <!-- Rating -->
             <div class="col-md-4 mb-3">
                 <div class="border p-3 rounded bg-light">
                     <h5 class="text-primary">⭐ Rating</h5>
                     <p class="text-muted">{{ product.rating or '-' }}</p>
                 </div>
             </div>
+
+            <!-- Platform -->
             <div class="col-md-4 mb-3">
                 <div class="border p-3 rounded bg-light">
                     <h5 class="text-info">🛒 Platform</h5>
                     <p class="text-muted">{{ product.platform or '-' }}</p>
                 </div>
             </div>
+
+            <!-- Link -->
             <div class="col-md-8 mb-3">
                 <div class="border p-3 rounded bg-light">
                     <h5 class="text-secondary">🔗 Link</h5>
                     <a href="{{ product.url }}" target="_blank" class="text-break">{{ product.url or '-' }}</a>
                 </div>
             </div>
+
+            <!-- ===== FIELD BARU ===== -->
+
+            <!-- Warna -->
+            <div class="col-md-4 mb-3">
+                <div class="border p-3 rounded bg-light">
+                    <h5 class="text-danger">🎨 Warna</h5>
+                    <p class="text-muted">{{ product.color or '-' }}</p>
+                </div>
+            </div>
+
+            <!-- Penjualan per Bulan -->
+            <div class="col-md-4 mb-3">
+                <div class="border p-3 rounded bg-light">
+                    <h5 class="text-success">📊 Penjualan / Bulan</h5>
+                    <p class="text-muted">{{ product.monthly_sales or '-' }}</p>
+                </div>
+            </div>
+
+            <!-- Ukuran/Dimensi -->
+            <div class="col-md-4 mb-3">
+                <div class="border p-3 rounded bg-light">
+                    <h5 class="text-warning">📏 Ukuran / Dimensi</h5>
+                    <p class="text-muted">{{ product.dimension or '-' }}</p>
+                </div>
+            </div>
+
+            <!-- Merk/Brand -->
+            <div class="col-md-4 mb-3">
+                <div class="border p-3 rounded bg-light">
+                    <h5 class="text-dark">🏷️ Brand</h5>
+                    <p class="text-muted">{{ product.brand or '-' }}</p>
+                </div>
+            </div>
+
+            <!-- Market Tier -->
+            <div class="col-md-4 mb-3">
+                <div class="border p-3 rounded bg-light">
+                    <h5 class="text-info">📈 Market Tier</h5>
+                    <p class="text-muted">{{ product.market_tier or '-' }}</p>
+                </div>
+            </div>
+
+            <!-- Deskripsi -->
             <div class="col-12 mb-3">
                 <div class="border p-3 rounded bg-light">
                     <h5 class="text-dark">📝 Deskripsi</h5>
                     <p class="text-muted">{{ product.description or '-' }}</p>
                 </div>
             </div>
+
+            <!-- Spesifikasi (JSON) -->
             <div class="col-12 mb-3">
                 <div class="border p-3 rounded bg-light">
                     <h5 class="text-dark">📋 Spesifikasi</h5>
@@ -83,11 +142,14 @@
                 </div>
             </div>
         </div>
+
         <div class="mt-3 text-center">
             <a href="{{ url_for('routes.dashboard') }}" class="btn btn-secondary">
                 <i class="fas fa-arrow-left"></i> Kembali ke Dashboard
             </a>
         </div>
+
     </div>
 </div>
+
 {% endblock %}

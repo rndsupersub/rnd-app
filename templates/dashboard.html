@@ -3,28 +3,6 @@
 {% block title %}Dashboard - R&D System{% endblock %}
 
 {% block content %}
-<style>
-    .list-group-item {
-        display: flex !important;
-        justify-content: space-between !important;
-        align-items: center !important;
-        padding: 8px 12px !important;
-        border-radius: 4px !important;
-        margin-bottom: 4px !important;
-        background-color: #f8f9fa !important;
-    }
-    .list-group-item:hover {
-        background-color: #e9ecef !important;
-    }
-    .list-group-item .badge {
-        font-size: 11px !important;
-        padding: 3px 8px !important;
-    }
-    .list-group-item .btn-sm {
-        padding: 2px 8px !important;
-        font-size: 12px !important;
-    }
-</style>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2><i class="fas fa-chart-pie"></i> Dashboard R&D</h2>
@@ -35,96 +13,80 @@
 </div>
 
 <div class="row">
-    <!-- KOLOM KIRI: MENU -->
+
+    <!-- ============ KOLOM KIRI: MENU ============ -->
     <div class="col-md-4 d-flex flex-column">
-        <!-- Manajemen Proyek (CUMA ADMIN BISA LIHAT TOMBOL BUKA) -->
+
+        <!-- Manajemen Proyek -->
         <div class="card shadow mb-3">
             <div class="card-header bg-primary text-white">
                 <h5 class="mb-0"><i class="fas fa-project-diagram"></i> Manajemen Proyek</h5>
             </div>
             <div class="card-body">
                 <p class="text-muted">Buka manajemen proyek</p>
-                {% if current_user.role == 'admin' %}
                 <a href="{{ url_for('routes.projects') }}" class="btn btn-primary btn-sm">
                     <i class="fas fa-arrow-right"></i> Buka
                 </a>
-                {% else %}
-                <span class="badge bg-secondary">Hanya Admin</span>
-                {% endif %}
             </div>
         </div>
 
-        <!-- Analisis SWOT (CUMA ADMIN BISA LIHAT TOMBOL BUKA) -->
+        <!-- Analisis SWOT -->
         <div class="card shadow mb-3">
             <div class="card-header bg-warning text-dark">
                 <h5 class="mb-0"><i class="fas fa-chess-board"></i> Analisis SWOT</h5>
             </div>
             <div class="card-body">
                 <p class="text-muted">Identifikasi Strengths, Weaknesses, Opportunities, Threats.</p>
-                {% if current_user.role == 'admin' %}
                 <a href="{{ url_for('routes.swot') }}" class="btn btn-warning btn-sm">
                     <i class="fas fa-arrow-right"></i> Buka
                 </a>
-                {% else %}
-                <span class="badge bg-secondary">Hanya Admin</span>
-                {% endif %}
             </div>
         </div>
 
-        <!-- Analisis PESTLE (CUMA ADMIN BISA LIHAT TOMBOL BUKA) -->
+        <!-- Analisis PESTLE -->
         <div class="card shadow mb-3">
             <div class="card-header bg-info text-white">
                 <h5 class="mb-0"><i class="fas fa-globe"></i> Analisis PESTLE</h5>
             </div>
             <div class="card-body">
                 <p class="text-muted">Analisis Political, Economic, Social, Technological, Legal, Environmental.</p>
-                {% if current_user.role == 'admin' %}
                 <a href="{{ url_for('routes.pestle') }}" class="btn btn-info btn-sm">
                     <i class="fas fa-arrow-right"></i> Buka
                 </a>
-                {% else %}
-                <span class="badge bg-secondary">Hanya Admin</span>
-                {% endif %}
             </div>
         </div>
 
-        <!-- BMC (CUMA ADMIN BISA LIHAT TOMBOL BUKA) -->
+        <!-- Business Model Canvas -->
         <div class="card shadow mb-3">
             <div class="card-header bg-success text-white">
                 <h5 class="mb-0"><i class="fas fa-chart-pie"></i> Business Model Canvas</h5>
             </div>
             <div class="card-body">
                 <p class="text-muted">Visualisasikan bisnis model proyek R&D.</p>
-                {% if current_user.role == 'admin' %}
                 <a href="{{ url_for('routes.bmc') }}" class="btn btn-success btn-sm">
                     <i class="fas fa-arrow-right"></i> Buka
                 </a>
-                {% else %}
-                <span class="badge bg-secondary">Hanya Admin</span>
-                {% endif %}
             </div>
         </div>
 
-        <!-- Analisis Produk (CUMA ADMIN BISA LIHAT TOMBOL BUKA) -->
+        <!-- Analisis Produk -->
         <div class="card shadow mb-3">
             <div class="card-header bg-primary text-white">
                 <h5 class="mb-0"><i class="fas fa-shopping-cart"></i> Analisis Produk</h5>
             </div>
             <div class="card-body">
                 <p class="text-muted">Analisis produk dari link Shopee, Tokopedia, dll.</p>
-                {% if current_user.role == 'admin' %}
                 <a href="{{ url_for('routes.product_analysis') }}" class="btn btn-primary btn-sm">
                     <i class="fas fa-arrow-right"></i> Buka
                 </a>
-                {% else %}
-                <span class="badge bg-secondary">Hanya Admin</span>
-                {% endif %}
             </div>
         </div>
+
     </div>
 
-    <!-- KOLOM KANAN: DATA RINGKASAN (SEMUA USER BISA LIHAT) -->
+    <!-- ============ KOLOM KANAN: DATA RINGKASAN ============ -->
     <div class="col-md-8 d-flex flex-column">
+
         <!-- PROYEK -->
         <div class="card shadow mb-3">
             <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
@@ -133,18 +95,21 @@
             </div>
             <div class="card-body">
                 {% if projects %}
-                <div class="list-group">
-                    {% for project in projects[:10] %}
-                    <div class="list-group-item d-flex justify-content-between align-items-center">
-                        <span>
-                            <strong>{{ project.name }}</strong>
-                            <span class="badge {% if project.status == 'Completed' %}bg-success{% elif project.status == 'Delayed' %}bg-danger{% elif project.status == 'On Track' %}bg-primary{% else %}bg-secondary{% endif %} ms-2">
-                                {{ project.status }}
-                            </span>
-                        </span>
-                        <a href="{{ url_for('routes.view_project', project_id=project.id) }}" class="btn btn-sm btn-info">
-                            <i class="fas fa-eye"></i>
-                        </a>
+                <div class="row">
+                    {% for project in projects[:6] %}
+                    <div class="col-md-4 mb-2">
+                        <div class="card h-100 text-center">
+                            <div class="card-body">
+                                <h6 class="card-title">{{ project.name }}</h6>
+                                <span class="badge {% if project.status == 'Completed' %}bg-success{% elif project.status == 'Delayed' %}bg-danger{% elif project.status == 'On Track' %}bg-primary{% else %}bg-secondary{% endif %}">
+                                    {{ project.status }}
+                                </span>
+                                <br><br>
+                                <a href="{{ url_for('routes.view_project', project_id=project.id) }}" class="btn btn-sm btn-info">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </div>
+                        </div>
                     </div>
                     {% endfor %}
                 </div>
@@ -162,16 +127,19 @@
             </div>
             <div class="card-body">
                 {% if swot_list %}
-                <div class="list-group">
-                    {% for item in swot_list[:10] %}
-                    <div class="list-group-item d-flex justify-content-between align-items-center">
-                        <span>
-                            {{ item.project_name or 'SWOT' }}
-                            <small class="text-muted">({{ item.created_at.strftime('%d-%m-%Y') if item.created_at else '-' }})</small>
-                        </span>
-                        <a href="{{ url_for('routes.view_swot', swot_id=item.id) }}" class="btn btn-sm btn-info">
-                            <i class="fas fa-eye"></i>
-                        </a>
+                <div class="row">
+                    {% for item in swot_list[:6] %}
+                    <div class="col-md-4 mb-2">
+                        <div class="card h-100 text-center">
+                            <div class="card-body">
+                                <h6 class="card-title">{{ item.project_name or 'SWOT' }}</h6>
+                                <small class="text-muted">{{ item.created_at.strftime('%d-%m-%Y') if item.created_at else '-' }}</small>
+                                <br><br>
+                                <a href="{{ url_for('routes.view_swot', swot_id=item.id) }}" class="btn btn-sm btn-info">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </div>
+                        </div>
                     </div>
                     {% endfor %}
                 </div>
@@ -189,16 +157,19 @@
             </div>
             <div class="card-body">
                 {% if pestle_list %}
-                <div class="list-group">
-                    {% for item in pestle_list[:10] %}
-                    <div class="list-group-item d-flex justify-content-between align-items-center">
-                        <span>
-                            {{ item.project_name or 'PESTLE' }}
-                            <small class="text-muted">({{ item.created_at.strftime('%d-%m-%Y') if item.created_at else '-' }})</small>
-                        </span>
-                        <a href="{{ url_for('routes.view_pestle', pestle_id=item.id) }}" class="btn btn-sm btn-info">
-                            <i class="fas fa-eye"></i>
-                        </a>
+                <div class="row">
+                    {% for item in pestle_list[:6] %}
+                    <div class="col-md-4 mb-2">
+                        <div class="card h-100 text-center">
+                            <div class="card-body">
+                                <h6 class="card-title">{{ item.project_name or 'PESTLE' }}</h6>
+                                <small class="text-muted">{{ item.created_at.strftime('%d-%m-%Y') if item.created_at else '-' }}</small>
+                                <br><br>
+                                <a href="{{ url_for('routes.view_pestle', pestle_id=item.id) }}" class="btn btn-sm btn-info">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </div>
+                        </div>
                     </div>
                     {% endfor %}
                 </div>
@@ -216,16 +187,19 @@
             </div>
             <div class="card-body">
                 {% if bmc_list %}
-                <div class="list-group">
-                    {% for item in bmc_list[:10] %}
-                    <div class="list-group-item d-flex justify-content-between align-items-center">
-                        <span>
-                            {{ item.project_name or 'BMC' }}
-                            <small class="text-muted">({{ item.created_at.strftime('%d-%m-%Y') if item.created_at else '-' }})</small>
-                        </span>
-                        <a href="{{ url_for('routes.view_bmc', bmc_id=item.id) }}" class="btn btn-sm btn-info">
-                            <i class="fas fa-eye"></i>
-                        </a>
+                <div class="row">
+                    {% for item in bmc_list[:6] %}
+                    <div class="col-md-4 mb-2">
+                        <div class="card h-100 text-center">
+                            <div class="card-body">
+                                <h6 class="card-title">{{ item.project_name or 'BMC' }}</h6>
+                                <small class="text-muted">{{ item.created_at.strftime('%d-%m-%Y') if item.created_at else '-' }}</small>
+                                <br><br>
+                                <a href="{{ url_for('routes.view_bmc', bmc_id=item.id) }}" class="btn btn-sm btn-info">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </div>
+                        </div>
                     </div>
                     {% endfor %}
                 </div>
@@ -243,16 +217,21 @@
             </div>
             <div class="card-body">
                 {% if product_list %}
-                <div class="list-group">
-                    {% for item in product_list[:10] %}
-                    <div class="list-group-item d-flex justify-content-between align-items-center">
-                        <span>
-                            {{ item.product_name or 'Produk' }}
-                            <small class="text-muted">({{ item.platform or '-' }})</small>
-                        </span>
-                        <a href="{{ url_for('routes.view_product', product_id=item.id) }}" class="btn btn-sm btn-info">
-                            <i class="fas fa-eye"></i>
-                        </a>
+                <div class="row">
+                    {% for item in product_list[:6] %}
+                    <div class="col-md-4 mb-2">
+                        <div class="card h-100 text-center">
+                            <div class="card-body">
+                                <h6 class="card-title">{{ item.product_name or 'Produk' }}</h6>
+                                <small class="text-muted">{{ item.platform or '-' }}</small>
+                                <br>
+                                <small class="text-muted">Brand: {{ item.brand or '-' }}</small>
+                                <br><br>
+                                <a href="{{ url_for('routes.view_product', product_id=item.id) }}" class="btn btn-sm btn-info">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </div>
+                        </div>
                     </div>
                     {% endfor %}
                 </div>
@@ -261,6 +240,8 @@
                 {% endif %}
             </div>
         </div>
+
     </div>
 </div>
+
 {% endblock %}
