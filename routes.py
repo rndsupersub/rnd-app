@@ -4,6 +4,7 @@ from functools import wraps
 from datetime import datetime
 import os
 import json
+import requests
 from werkzeug.utils import secure_filename
 from app import db
 from models import User, Project, SWOT, PESTLE, BMC, ProductAnalysis
@@ -17,6 +18,55 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 routes_bp = Blueprint('routes', __name__)
+
+# ==================== KONFIGURASI GAS (GOOGLE APPS SCRIPT) ====================
+
+GAS_URL = "https://script.google.com/macros/s/AKfycbxmUVM2ErjnSpCYRtnvaC_TkyEV58H4-TNf3av5oLwopdhDSsT-ZYuXr1BrB7M13E-wMQ/exec"
+
+def sync_to_spreadsheet():
+    """Kirim semua data produk ke Google Spreadsheet (sync total)"""
+    try:
+        # Ambil semua data produk milik user
+        all_products = ProductAnalysis.query.filter_by(user_id=current_user.id).all()
+        
+        # Buat array of arrays (baris per produk)
+        data_rows = []
+        for p in all_products:
+            row = [
+                p.product_name or '',
+                p.price or '',
+                p.sold or '',
+                p.rating or '',
+                p.platform or '',
+                p.url or '',
+                p.description or '',
+                p.specs or '',
+                p.color or '',
+                p.monthly_sales or '',
+                p.dimension or '',
+                p.brand or '',
+                p.market_tier or ''
+            ]
+            data_rows.append(row)
+        
+        # Kirim ke GAS dengan clear = true (hapus semua data lama)
+        payload = {
+            'sheetName': 'produk',
+            'data': json.dumps(data_rows),
+            'clear': 'true'
+        }
+        
+        response = requests.post(GAS_URL, data=payload, timeout=10)
+        if response.status_code == 200:
+            result = response.json()
+            if result.get('status') == 'success':
+                print(f"✅ Sync berhasil: {len(data_rows)} produk tersimpan ke spreadsheet")
+            else:
+                print(f"⚠️ GAS error: {result.get('message')}")
+        else:
+            print(f"❌ Gagal sync: HTTP {response.status_code}")
+    except Exception as e:
+        print(f"❌ Error sync: {str(e)}")
 
 # ==================== DEKORATOR AKSES ====================
 
@@ -436,7 +486,7 @@ def product_analysis():
                 description = request.form.get('description')
                 specs_json = request.form.get('specs_json')
 
-                # ===== FIELD BARU =====
+                # Field baru
                 color = request.form.get('color')
                 monthly_sales = request.form.get('monthly_sales')
                 dimension = request.form.get('dimension')
@@ -459,12 +509,17 @@ def product_analysis():
                         item.image = image
                         item.description = description
                         item.specs = specs_json
-                        # Field baru
                         item.color = color
                         item.monthly_sales = int(monthly_sales) if monthly_sales else None
                         item.dimension = dimension
                         item.brand = brand
                         item.market_tier = market_tier
+                        
+                        db.session.commit()
+                        
+                        # ===== SYNC KE SPREADSHEET =====
+                        sync_to_spreadsheet()
+                        
                         flash('Data analisis produk berhasil diupdate!', 'success')
                 else:
                     # CREATE
@@ -487,9 +542,13 @@ def product_analysis():
                         user_id=current_user.id
                     )
                     db.session.add(new_item)
+                    db.session.commit()
+                    
+                    # ===== SYNC KE SPREADSHEET =====
+                    sync_to_spreadsheet()
+                    
                     flash('Data analisis produk berhasil disimpan!', 'success')
 
-                db.session.commit()
                 return redirect(url_for('routes.product_analysis'))
 
             except Exception as e:
@@ -510,7 +569,6 @@ def product_analysis():
         'image': item.image,
         'description': item.description,
         'specs': json.loads(item.specs) if item.specs else {},
-        # Field baru
         'color': item.color,
         'monthly_sales': item.monthly_sales,
         'dimension': item.dimension,
@@ -534,8 +592,13 @@ def delete_product_analysis(item_id):
     if item.user_id != current_user.id:
         flash('Anda tidak memiliki akses.', 'danger')
         return redirect(url_for('routes.product_analysis'))
+    
     db.session.delete(item)
     db.session.commit()
+    
+    # ===== SYNC KE SPREADSHEET =====
+    sync_to_spreadsheet()
+    
     flash('Data analisis produk berhasil dihapus!', 'success')
     return redirect(url_for('routes.product_analysis'))
 
